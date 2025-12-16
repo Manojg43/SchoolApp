@@ -14,11 +14,9 @@ class LoginApiView(APIView):
         user = authenticate(username=username, password=password)
         
         if user:
-            # READ-ONLY SAFE: Use filter().first() instead of get_or_create()
-            token_obj = Token.objects.filter(user=user).first()
-            if not token_obj:
-                return Response({'error': 'Token not found. Read-only mode prevents creating one.'}, status=500)
-            token = token_obj
+        if user:
+            # Supabase is Writable: Create token if missing
+            token, created = Token.objects.get_or_create(user=user)
             
             # Gather standard permissions
             all_permissions = user.get_all_permissions() # returns {'app.perm', ...}
