@@ -18,7 +18,7 @@ class AchievementViewSet(viewsets.ModelViewSet):
         queryset = Achievement.objects.all()
         school_id = get_current_school_id()
         if school_id:
-            queryset = queryset.filter(school__code=school_id)
+            queryset = queryset.filter(school__school_id=school_id)
         return queryset
 
 class AcademicYearViewSet(viewsets.ModelViewSet):
@@ -30,7 +30,7 @@ class AcademicYearViewSet(viewsets.ModelViewSet):
         queryset = AcademicYear.objects.all()
         school_id = get_current_school_id()
         if school_id:
-            queryset = queryset.filter(school__code=school_id)
+            queryset = queryset.filter(school__school_id=school_id)
         return queryset
 
 class ClassViewSet(viewsets.ModelViewSet):
@@ -42,7 +42,7 @@ class ClassViewSet(viewsets.ModelViewSet):
         queryset = Class.objects.all()
         school_id = get_current_school_id()
         if school_id:
-            queryset = queryset.filter(school__code=school_id)
+            queryset = queryset.filter(school__school_id=school_id)
         return queryset
 
 class SectionViewSet(viewsets.ModelViewSet):
@@ -54,5 +54,5 @@ class SectionViewSet(viewsets.ModelViewSet):
         queryset = Section.objects.all()
         school_id = get_current_school_id()
         if school_id:
-            queryset = queryset.filter(school__code=school_id)
+            queryset = queryset.filter(school__school_id=school_id)
         return queryset
