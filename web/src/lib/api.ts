@@ -148,7 +148,58 @@ export async function getStaff(schoolId?: string): Promise<Staff[]> {
     // User asked for "CRUD at UI level", implying backend exists.
     // Let's assume /staff/ endpoint is NOT there based on my `staff/views.py` read.
     // I will add `StaffViewSet` to `backend/staff/views.py` quickly.
-    return fetchWithSchool('/staff/list/', schoolId);
+    return fetchWithSchool('/staff/', schoolId);
+}
+
+export async function createStaff(data: any, schoolId?: string): Promise<Staff> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/staff/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error(`Failed to create staff: ${res.statusText}`);
+    return res.json();
+}
+
+export async function updateStaff(id: number, data: any, schoolId?: string): Promise<Staff> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/staff/${id}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error(`Failed to update staff: ${res.statusText}`);
+    return res.json();
+}
+
+export async function deleteStaff(id: number, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/staff/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to delete staff: ${res.statusText}`);
 }
 
 // Classes & Sections (Helpers for Dropdowns)

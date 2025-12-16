@@ -94,34 +94,29 @@ class StaffDashboardView(APIView):
             "salary": salary_info
         })
 
-class StaffListView(APIView):
-    permission_classes = [IsAuthenticated]
+from rest_framework import viewsets
+from .serializers import StaffSerializer
 
-    def get(self, request):
-        # Return list of staff for the school
-        if request.user.is_superuser:
-            staff_members = CoreUser.objects.filter(
+class StaffViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = StaffSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            qs = CoreUser.objects.filter(
                 role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_Accountant, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
             ).exclude(is_superuser=True)
         else:
-            staff_members = CoreUser.objects.filter(
-                school=request.user.school,
+            qs = CoreUser.objects.filter(
+                school=user.school,
                 role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_Accountant, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
             )
-            
-        data = []
-        for s in staff_members:
-            data.append({
-                "id": s.id,
-                "user_id": s.user_id,
-                "first_name": s.first_name,
-                "last_name": s.last_name,
-                "email": s.email,
-                "mobile": s.mobile,
-                "role": s.get_role_display(),
-                # "designation": s.staff_profile.designation if hasattr(s, 'staff_profile') else "" # Optimize later
-            })
-        return Response(data)
+        return qs.select_related('staff_profile')
+
+    def perform_create(self, serializer):
+        # Auto-assign school from admin user
+        serializer.save(school=self.request.user.school)
 
 class GenerateSchoolQR(APIView):
     permission_classes = [IsAuthenticated]
