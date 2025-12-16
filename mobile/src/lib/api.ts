@@ -1,9 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Replace with your Laptop's Local IP for Emulator/Device access
-// 10.0.2.2 is for Android Emulator to access host localhost
-// For physical device, use actual IP e.g. 'http://192.168.1.5:8000/api'
-const BASE_URL = 'http://10.0.2.2:8000/api';
+// Production URL
+const BASE_URL = 'https://schoolapp-6vwg.onrender.com/api';
 
 export async function apiRequest(endpoint: string, method: string = 'GET', body?: any) {
     const token = await AsyncStorage.getItem('auth_token');

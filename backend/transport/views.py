@@ -14,7 +14,6 @@ class VehicleViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_queryset(self):
-//...
         user = self.request.user
         if user.is_superuser:
             return Vehicle.objects.all()

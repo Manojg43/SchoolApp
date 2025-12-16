@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Student, Attendance, Fee, StudentHistory
+from .models import Student, StudentHistory, Attendance, Fee
+from schools.models import Class, Section, AcademicYear
 from schools.models import School
 
 class StudentSerializer(serializers.ModelSerializer):
