@@ -14,7 +14,6 @@ class LoginApiView(APIView):
         user = authenticate(username=username, password=password)
         
         if user:
-        if user:
             # Supabase is Writable: Create token if missing
             token, created = Token.objects.get_or_create(user=user)
             
