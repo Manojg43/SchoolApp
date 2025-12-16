@@ -1,119 +1,139 @@
 'use client';
 
-import { useLanguage } from "@/context/LanguageContext";
-import { useAuth } from "@/context/AuthContext"; // New Import
-import { useRouter } from "next/navigation"; // New Import
+import React, { useEffect, useState } from 'react';
+import { useAuth, PermissionGuard } from '@/context/AuthContext';
+import KPICard from '@/components/ui/KPICard';
+import { getDashboardStats, getStudents, getStaff, getFees, type Student, type Fee } from '@/lib/api';
+import { BarChart3, Users, GraduationCap, IndianRupee, AlertCircle } from 'lucide-react';
+import DataTable, { Column } from '@/components/ui/DataTable';
 import { motion } from "framer-motion";
-import { School, Users, FileText, Trophy } from "lucide-react";
-import { Carousel } from "@/components/ui/Carousel";
-import { useEffect, useState } from "react";
-import { getAchievements, getDashboardStats, type Achievement } from "@/lib/api";
 
-export default function Home() {
-  const { t, setLanguage, language } = useLanguage();
-  const { user, loading: authLoading } = useAuth(); // 1. Get Auth State
-  const router = useRouter();
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [stats, setStats] = useState({ students: 0, schools: 0 });
-  const [dataLoading, setDataLoading] = useState(true);
+export default function Dashboard() {
+  const { user, hasPermission } = useAuth();
+  const [stats, setStats] = useState({ students: 0, schools: 0, staff: 0, collected: 0, pending: 0 });
+  const [recentStudents, setRecentStudents] = useState<Student[]>([]);
+  const [recentFees, setRecentFees] = useState<Fee[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 2. Protect Route
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
+    async function load() {
+      setLoading(true);
+      try {
+        // Parallel fetching
+        const [sList, stList, fList] = await Promise.all([
+          hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL']) ? getStudents() : Promise.resolve([]),
+          hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL']) ? getStaff() : Promise.resolve([]),
+          hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'ACCOUNTANT']) ? getFees() : Promise.resolve([])
+        ]);
 
-  // 3. Load Data only if User exists
-  useEffect(() => {
-    if (user) {
-      async function loadData() {
-        try {
-          const [achData, statsData] = await Promise.all([
-            getAchievements(),
-            getDashboardStats()
-          ]);
-          setAchievements(achData);
-          setStats(statsData);
-        } catch (error) {
-          console.error("Failed to load dashboard data", error);
-        } finally {
-          setDataLoading(false);
-        }
+        const totalStudents = sList.length;
+        const totalStaff = stList.length;
+        const collected = fList.filter(f => f.status === 'PAID').reduce((acc, curr) => acc + Number(curr.amount), 0);
+        const pending = fList.filter(f => f.status === 'PENDING').reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+        setStats({
+          students: totalStudents,
+          schools: 1, // Static for single tenant
+          staff: totalStaff,
+          collected,
+          pending
+        });
+
+        setRecentStudents(sList.slice(0, 5));
+        setRecentFees(fList.slice(0, 5));
+
+      } catch (e) {
+        console.error("Dashboard Load Error", e);
+      } finally {
+        setLoading(false);
       }
-      loadData();
     }
-  }, [user]);
 
-  // 4. Show Loading State while checking auth
-  if (authLoading || (!user && !authLoading)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+    if (user) load();
+  }, [user, hasPermission]);
+
+  const studentColumns: Column<Student>[] = [
+    { header: "Name", accessorKey: (row) => `${row.first_name} ${row.last_name}` },
+    { header: "Review", accessorKey: (row) => row.is_active ? "Active" : "Inactive" },
+  ];
+
+  const feeColumns: Column<Fee>[] = [
+    { header: "Title", accessorKey: "title" },
+    { header: "Amount", accessorKey: (row) => `₹${row.amount}` },
+    { header: "Status", accessorKey: "status" },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]">
-      {/* Navbar / Header would go here */}
+    <div className="space-y-6 p-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500">Welcome back, {user?.first_name || 'User'}</p>
+        </div>
+      </div>
 
-      <main className="container mx-auto p-4 sm:p-8 flex flex-col gap-12">
+      {/* KPI Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard
+          label="Total Students"
+          value={stats.students}
+          icon={GraduationCap}
+          className="bg-blue-50 text-blue-700"
+        />
+        <KPICard
+          label="Total Staff"
+          value={stats.staff}
+          icon={Users}
+          className="bg-purple-50 text-purple-700"
+        />
+        <KPICard
+          label="Fees Collected"
+          value={`₹${stats.collected}`}
+          icon={IndianRupee}
+          color="success"
+        />
+        <KPICard
+          label="Fees Pending"
+          value={`₹${stats.pending}`}
+          icon={AlertCircle}
+          color="danger"
+        />
+      </div>
 
-        {/* Hero / Welcome Section */}
-        <section className="flex flex-col gap-6 items-center sm:items-start">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full flex justify-between items-center"
-          >
-            <div>
-              <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">{t('title')}</h1>
-              <p className="text-xl text-gray-600 mt-2">{t('welcome')}</p>
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Students */}
+        <PermissionGuard perm={['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL']}>
+          <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden h-full">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-md font-semibold text-gray-900">Recent Admissions</h3>
             </div>
-
-            <div className="flex gap-2">
-              {['en', 'hi', 'mr'].map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => setLanguage(lang as any)}
-                  className={`px-3 py-1 text-sm font-medium rounded-full transition-all border ${language === lang
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    }`}
-                >
-                  {lang.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        </section>
-
-        {/* Featured Achievements Carousel */}
-        <section>
-          <div className="flex items-center gap-2 mb-6">
-            <Trophy className="text-yellow-500" />
-            <h2 className="text-2xl font-bold text-gray-900">School Achievements</h2>
+            <DataTable columns={studentColumns} data={recentStudents} isLoading={loading} />
           </div>
-          {dataLoading ? (
-            <div className="h-[400px] bg-gray-200 animate-pulse rounded-xl" />
-          ) : achievements.length > 0 ? (
-            <Carousel items={achievements as any} />
-          ) : (
-            <div className="h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-gray-400">
-              No achievements found. Add some in Django Admin!
-            </div>
-          )}
-        </section>
+        </PermissionGuard>
 
-        {/* Stats / Dashboard Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <DashboardCard icon={<Users className="w-8 h-8" />} title={t('students')} value={stats.students} delay={0.1} />
-          <DashboardCard icon={<School className="w-8 h-8" />} title={t('schools')} value={stats.schools} delay={0.2} />
-          <DashboardCard icon={<FileText className="w-8 h-8" />} title={t('fee_invoice')} value="Latest #001" isInvoice delay={0.3} />
-        </section>
-      </main>
+        {/* Recent Fees */}
+        <PermissionGuard perm={['is_superuser', 'SCHOOL_ADMIN', 'ACCOUNTANT']}>
+          <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden h-full">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-md font-semibold text-gray-900">Recent Invoices</h3>
+            </div>
+            <DataTable columns={feeColumns} data={recentFees} isLoading={loading} />
+          </div>
+        </PermissionGuard>
+      </div>
     </div>
+  );
+}
+
+function DashboardCard({ icon, title, value, className = "" }: any) {
+  return (
+    <KPICard
+      label={title}
+      value={value}
+      icon={() => <div className="text-blue-600">{icon}</div>}
+      className={className}
+    />
   );
 }
 

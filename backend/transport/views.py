@@ -2,12 +2,19 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import Vehicle, Route, Stop, TransportSubscription
 from .serializers import VehicleSerializer, RouteSerializer, StopSerializer, TransportSubscriptionSerializer
+from core.permissions import IsSchoolAdmin
 
 class VehicleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = VehicleSerializer
 
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsSchoolAdmin()]
+        return [IsAuthenticated()]
+
     def get_queryset(self):
+//...
         user = self.request.user
         if user.is_superuser:
             return Vehicle.objects.all()

@@ -9,8 +9,10 @@ from .models import Student, StudentHistory, Attendance, Fee
 from .serializers import StudentSerializer, FeeSerializer
 from schools.models import Class, AcademicYear, Section
 
+from core.permissions import IsSchoolAdmin, IsTeacher
+
 class StudentViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated] # Teachers can manage students
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     
@@ -32,9 +34,15 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         return Attendance.objects.filter(school=self.request.user.school)
 
 class FeeViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated] # Logic in get_permissions
     queryset = Fee.objects.all()
     serializer_class = FeeSerializer
+    
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+             # Only School Admin or Accountant should manage fees
+             return [IsSchoolAdmin()] # Todo: Add IsAccountant
+        return [IsAuthenticated()]
     
     def get_queryset(self):
         if self.request.user.is_superuser:

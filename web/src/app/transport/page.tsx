@@ -5,7 +5,7 @@ import { useAuth, PermissionGuard } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { Bus, MapPin, Trash2, Plus } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
-import { getVehicles, createVehicle, deleteVehicle, getRoutes, type Vehicle, type Route } from "@/lib/api";
+import { getVehicles, createVehicle, deleteVehicle, getRoutes, createRoute, deleteRoute, type Vehicle, type Route } from "@/lib/api";
 
 export default function TransportPage() {
     const { t } = useLanguage();
@@ -48,6 +48,19 @@ export default function TransportPage() {
             load();
         } catch (e) {
             alert("Failed to create vehicle");
+        }
+    };
+
+    const handleAddRoute = async () => {
+        const name = prompt("Enter Route Name (e.g. North City Route):");
+        if (!name) return;
+
+        // MVP: Empty stops for now, or prompt for 1 stop
+        try {
+            await createRoute({ name, stops: [] }); // Backend serializer must support empty stops or we handle it
+            load();
+        } catch (e) {
+            alert("Failed to create route");
         }
     };
 
@@ -110,7 +123,7 @@ export default function TransportPage() {
                             <MapPin className="w-5 h-5" /> Routes
                         </h2>
                         {hasPermission(['is_superuser', 'SCHOOL_ADMIN']) && (
-                            <button onClick={() => alert("Add Route Modal (Pending)")} className="p-1 hover:bg-white rounded-full transition-colors">
+                            <button onClick={handleAddRoute} className="p-1 hover:bg-white rounded-full transition-colors">
                                 <Plus className="w-5 h-5 text-green-700" />
                             </button>
                         )}

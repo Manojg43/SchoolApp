@@ -306,8 +306,7 @@ export async function deleteStudent(id: number, schoolId?: string): Promise<void
 
     if (!res.ok) throw new Error(`Failed to delete student: ${res.statusText}`);
 }
-if (!res.ok) throw new Error(`Failed to delete student: ${res.statusText}`);
-}
+
 
 // Transport
 export interface Vehicle {
@@ -363,4 +362,36 @@ export async function deleteVehicle(id: number, schoolId?: string): Promise<void
 
 export async function getRoutes(schoolId?: string): Promise<Route[]> {
     return fetchWithSchool('/transport/routes/', schoolId);
+}
+
+export async function createRoute(data: any, schoolId?: string): Promise<Route> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/transport/routes/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`Failed to create route: ${res.statusText}`);
+    return res.json();
+}
+
+export async function deleteRoute(id: number, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/transport/routes/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to delete route: ${res.statusText}`);
 }
