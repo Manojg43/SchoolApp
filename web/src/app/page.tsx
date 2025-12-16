@@ -77,25 +77,25 @@ export default function Dashboard() {
         <KPICard
           label="Total Students"
           value={stats.students}
-          icon={GraduationCap}
+          icon={<GraduationCap className="h-6 w-6" />}
           className="bg-blue-50 text-blue-700"
         />
         <KPICard
           label="Total Staff"
           value={stats.staff}
-          icon={Users}
+          icon={<Users className="h-6 w-6" />}
           className="bg-purple-50 text-purple-700"
         />
         <KPICard
           label="Fees Collected"
           value={`₹${stats.collected}`}
-          icon={IndianRupee}
+          icon={<IndianRupee className="h-6 w-6" />}
           color="success"
         />
         <KPICard
           label="Fees Pending"
           value={`₹${stats.pending}`}
-          icon={AlertCircle}
+          icon={<AlertCircle className="h-6 w-6" />}
           color="error"
         />
       </div>
