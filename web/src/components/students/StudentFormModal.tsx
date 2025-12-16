@@ -44,9 +44,16 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
     // Fetch Metadata
     useEffect(() => {
         async function loadMeta() {
-            const [c, s] = await Promise.all([getClasses(), getSections()]);
-            setClasses(c);
-            setSections(s);
+            try {
+                // console.log("Fetching Classes and Sections...");
+                const [c, s] = await Promise.all([getClasses(), getSections()]);
+                // console.log("Fetched Data:", c, s);
+                setClasses(c);
+                setSections(s);
+            } catch (err: any) {
+                console.error("Failed to load metadata:", err);
+                alert(`Failed to load Classes/Sections: ${err.message || 'Unknown Error'}. Check Console.`);
+            }
         }
         if (isOpen) loadMeta();
     }, [isOpen]);
