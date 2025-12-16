@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-t=cmf(bv7x!%xc+&l_d-#pnlj*l@=3tgg$feqn7zn92zd(b%&t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
 
 
 # Application definition
@@ -157,6 +157,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://web-kappa-bice-45.vercel.app",
     "https://schoolapp-web.vercel.app",
+    "https://schoolapp-6vwg.onrender.com",
 ]
 
 
