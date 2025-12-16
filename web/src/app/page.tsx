@@ -96,7 +96,7 @@ export default function Dashboard() {
           label="Fees Pending"
           value={`₹${stats.pending}`}
           icon={AlertCircle}
-          color="danger"
+          color="error"
         />
       </div>
 
@@ -123,40 +123,5 @@ export default function Dashboard() {
         </PermissionGuard>
       </div>
     </div>
-  );
-}
-
-function DashboardCard({ icon, title, value, className = "" }: any) {
-  return (
-    <KPICard
-      label={title}
-      value={value}
-      icon={() => <div className="text-blue-600">{icon}</div>}
-      className={className}
-    />
-  );
-}
-
-function DashboardCard({ icon, title, value, isInvoice = false, delay = 0 }: any) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      whileHover={{ y: -5 }}
-      className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex items-center gap-4"
-    >
-      <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-        {icon}
-      </div>
-      <div>
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">{title}</h2>
-        {isInvoice ? (
-          <button className="text-blue-600 font-bold hover:underline mt-1">{value}</button>
-        ) : (
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-        )}
-      </div>
-    </motion.div>
   );
 }
