@@ -3,7 +3,7 @@
 const API_BASE_URL = 'https://schoolapp-6vwg.onrender.com/api';
 
 // For demo purposes, we default to a specific school if not determined dynamically
-const DEFAULT_SCHOOL_ID = 'SCHOOL-A';
+const DEFAULT_SCHOOL_ID = ''; // Changed from 'SCHOOL-A' to allow superuser access (no header = all schools)
 
 export async function fetchWithSchool(endpoint: string, schoolId: string | undefined = undefined) {
     // Priority: Argument -> LocalStorage -> Default (fallback)
