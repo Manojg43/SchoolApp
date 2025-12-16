@@ -34,11 +34,11 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
     const [loading, setLoading] = useState(false);
 
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<StudentFormValues>({
-        resolver: zodResolver(studentSchema),
+        resolver: zodResolver(studentSchema) as any,
         defaultValues: {
             gender: 'M',
             current_class: undefined
-        }
+        } as any
     });
 
     // Fetch Metadata
