@@ -35,6 +35,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
 class FeeSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.first_name', read_only=True)
+    class_name = serializers.CharField(source='student.current_class.name', read_only=True)
     
     class Meta:
         model = Fee

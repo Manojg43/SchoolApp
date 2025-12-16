@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Student, StudentHistory, Attendance, Fee
-from .serializers import StudentSerializer
+from .serializers import StudentSerializer, FeeSerializer
 from schools.models import Class, AcademicYear, Section
 
 class StudentViewSet(viewsets.ModelViewSet):
@@ -34,11 +34,15 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 class FeeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = Fee.objects.all()
+    serializer_class = FeeSerializer
     
     def get_queryset(self):
         if self.request.user.is_superuser:
             return Fee.objects.all()
         return Fee.objects.filter(school=self.request.user.school)
+
+    def perform_create(self, serializer):
+        serializer.save(school=self.request.user.school)
 
 class PromoteStudentsView(APIView):
     permission_classes = [IsAuthenticated]
