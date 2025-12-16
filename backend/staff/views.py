@@ -30,38 +30,6 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 class StaffDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
-class StaffListView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        # Return list of staff for the school
-        if request.user.is_superuser:
-            staff_members = CoreUser.objects.filter(
-                role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_Accountant, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
-            ).exclude(is_superuser=True)
-        else:
-            staff_members = CoreUser.objects.filter(
-                school=request.user.school,
-                role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_Accountant, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
-            )
-            
-        data = []
-        for s in staff_members:
-            data.append({
-                "id": s.id,
-                "user_id": s.user_id,
-                "first_name": s.first_name,
-                "last_name": s.last_name,
-                "email": s.email,
-                "mobile": s.mobile,
-                "role": s.get_role_display(),
-                # "designation": s.staff_profile.designation if hasattr(s, 'staff_profile') else "" # Optimize later
-            })
-        return Response(data)
-
-    def get_queryset(self):
-         return CoreUser.objects.none() # Dummy for viewset if needed
-
     def get(self, request):
         user = request.user
         today = datetime.date.today()
@@ -125,6 +93,35 @@ class StaffListView(APIView):
             },
             "salary": salary_info
         })
+
+class StaffListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Return list of staff for the school
+        if request.user.is_superuser:
+            staff_members = CoreUser.objects.filter(
+                role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_Accountant, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
+            ).exclude(is_superuser=True)
+        else:
+            staff_members = CoreUser.objects.filter(
+                school=request.user.school,
+                role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_Accountant, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
+            )
+            
+        data = []
+        for s in staff_members:
+            data.append({
+                "id": s.id,
+                "user_id": s.user_id,
+                "first_name": s.first_name,
+                "last_name": s.last_name,
+                "email": s.email,
+                "mobile": s.mobile,
+                "role": s.get_role_display(),
+                # "designation": s.staff_profile.designation if hasattr(s, 'staff_profile') else "" # Optimize later
+            })
+        return Response(data)
 
 class GenerateSchoolQR(APIView):
     permission_classes = [IsAuthenticated]
