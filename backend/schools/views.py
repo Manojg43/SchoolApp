@@ -1,15 +1,18 @@
 from rest_framework import viewsets
 from .models import School, Achievement, AcademicYear, Class, Section
 from .serializers import SchoolSerializer, AchievementSerializer, AcademicYearSerializer, ClassSerializer, SectionSerializer
+from core.permissions import StandardPermission
 from core.middleware import get_current_school_id
 
 class SchoolViewSet(viewsets.ModelViewSet):
     queryset = School.objects.all()
     serializer_class = SchoolSerializer
+    permission_classes = [StandardPermission]
 
 class AchievementViewSet(viewsets.ModelViewSet):
     queryset = Achievement.objects.all()
     serializer_class = AchievementSerializer
+    permission_classes = [StandardPermission]
 
     def get_queryset(self):
         queryset = Achievement.objects.all()
@@ -21,6 +24,7 @@ class AchievementViewSet(viewsets.ModelViewSet):
 class AcademicYearViewSet(viewsets.ModelViewSet):
     queryset = AcademicYear.objects.all()
     serializer_class = AcademicYearSerializer
+    permission_classes = [StandardPermission]
 
     def get_queryset(self):
         queryset = AcademicYear.objects.all()
@@ -32,6 +36,7 @@ class AcademicYearViewSet(viewsets.ModelViewSet):
 class ClassViewSet(viewsets.ModelViewSet):
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
+    permission_classes = [StandardPermission]
 
     def get_queryset(self):
         queryset = Class.objects.all()
@@ -43,6 +48,7 @@ class ClassViewSet(viewsets.ModelViewSet):
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()
     serializer_class = SectionSerializer
+    permission_classes = [StandardPermission]
 
     def get_queryset(self):
         queryset = Section.objects.all()
