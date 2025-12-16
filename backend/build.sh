@@ -13,4 +13,7 @@ python manage.py shell -c "from django.contrib.auth import get_user_model; User 
 echo "Running setup_roles to update permissions..."
 python manage.py setup_roles
 
+echo "Seeding default Classes/Sections..."
+python manage.py seed_school_data
+
 echo "Build script completed."
