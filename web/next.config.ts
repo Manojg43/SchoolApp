@@ -1,16 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  trailingSlash: true,
   async rewrites() {
+    // Default to the Render Backend if API_URL is not set
+    const apiUrl = process.env.API_URL || 'https://schoolapp-6vwg.onrender.com';
+    console.log('Proxying API requests to:', apiUrl); // Helpful for deployment logs
+
     return [
       {
-        source: '/api/:path*/',
-        destination: `${process.env.API_URL || 'http://127.0.0.1:8000'}/:path*/`,
-      },
-      {
         source: '/api/:path*',
-        destination: `${process.env.API_URL || 'http://127.0.0.1:8000'}/:path*`, // Proxy to Backend
+        destination: `${apiUrl}/api/:path*`,
       },
     ];
   },

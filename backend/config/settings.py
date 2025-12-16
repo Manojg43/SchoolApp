@@ -98,10 +98,7 @@ load_dotenv()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'file:' + str(BASE_DIR / 'db.sqlite3') + '?mode=ro',
-        'OPTIONS': {
-            'uri': True,
-        },
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
