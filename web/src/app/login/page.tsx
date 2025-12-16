@@ -37,7 +37,8 @@ export default function LoginPage() {
         setServerError('');
 
         try {
-            const res = await fetch('/api/login/', {
+            // BYPASS PROXY: Direct connection to Render Backend
+            const res = await fetch('https://schoolapp-6vwg.onrender.com/api/login/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
