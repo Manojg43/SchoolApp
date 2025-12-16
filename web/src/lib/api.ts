@@ -150,3 +150,75 @@ export async function getStaff(schoolId?: string): Promise<Staff[]> {
     // I will add `StaffViewSet` to `backend/staff/views.py` quickly.
     return fetchWithSchool('/staff/list/', schoolId);
 }
+
+// Classes & Sections (Helpers for Dropdowns)
+export interface ClassItem {
+    id: number;
+    name: string;
+}
+
+export interface SectionItem {
+    id: number;
+    name: string;
+    class_id: number;
+}
+
+export async function getClasses(schoolId?: string): Promise<ClassItem[]> {
+    return fetchWithSchool('/classes/', schoolId);
+}
+
+export async function getSections(schoolId?: string): Promise<SectionItem[]> {
+    return fetchWithSchool('/sections/', schoolId);
+}
+
+// Student CRUD
+export async function createStudent(data: any, schoolId?: string): Promise<Student> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/students/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error(`Failed to create student: ${res.statusText}`);
+    return res.json();
+}
+
+export async function updateStudent(id: number, data: any, schoolId?: string): Promise<Student> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/students/${id}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error(`Failed to update student: ${res.statusText}`);
+    return res.json();
+}
+
+export async function deleteStudent(id: number, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/students/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to delete student: ${res.statusText}`);
+}

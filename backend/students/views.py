@@ -6,12 +6,16 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Student, StudentHistory, Attendance, Fee
+from .serializers import StudentSerializer
 from schools.models import Class, AcademicYear, Section
 
 class StudentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = Student.objects.all()
-    serializer_class = None # TODO: Add Serializers later if needed, but for now just validation
+    serializer_class = StudentSerializer
+    
+    def perform_create(self, serializer):
+        serializer.save(school=self.request.user.school)
     
     def get_queryset(self):
         if self.request.user.is_superuser:

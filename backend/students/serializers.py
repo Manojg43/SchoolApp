@@ -3,6 +3,10 @@ from .models import Student, Attendance, Fee, StudentHistory
 from schools.models import School
 
 class StudentSerializer(serializers.ModelSerializer):
+    current_class = serializers.PrimaryKeyRelatedField(queryset=Class.objects.all())
+    section = serializers.PrimaryKeyRelatedField(queryset=Section.objects.all(), required=False, allow_null=True)
+    academic_year = serializers.PrimaryKeyRelatedField(queryset=AcademicYear.objects.all())
+
     class_name = serializers.CharField(source='current_class.name', read_only=True)
     section_name = serializers.CharField(source='section.name', read_only=True)
     year_name = serializers.CharField(source='academic_year.name', read_only=True)
