@@ -5,6 +5,8 @@ from core.models import CoreUser
 from students.models import Student, Attendance, Fee
 from staff.models import StaffProfile
 from schools.models import Class, Section
+from transport.models import Vehicle, Route
+from finance.models import Invoice, FeeCategory
 
 class Command(BaseCommand):
     help = 'Setup default Groups and Permissions for the Application'
