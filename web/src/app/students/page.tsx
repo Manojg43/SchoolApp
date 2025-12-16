@@ -27,10 +27,19 @@ export default function StudentList() {
         setLoading(true);
         try {
             const [sData, cData] = await Promise.all([getStudents(), getClasses()]);
-            setStudents(sData);
-            setClasses(cData);
-        } catch (e) {
+            // Ensure sData is an array before setting
+            if (Array.isArray(sData)) {
+                setStudents(sData);
+            } else {
+                console.error("Invalid student data received:", sData);
+                // alert("Failed to load students: Invalid data format."); // Optional, maybe too noisy
+            }
+            if (Array.isArray(cData)) {
+                setClasses(cData);
+            }
+        } catch (e: any) {
             console.error(e);
+            alert(`Failed to load data: ${e.message || 'Unknown Error'}`);
         } finally {
             setLoading(false);
         }
