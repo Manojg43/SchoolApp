@@ -22,8 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-t=cmf(bv7x!%xc+&l_d-#pnlj*l@=3tgg$feqn7zn92zd(b%&t'
 
+# SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-for-demo-only-change-in-prod')
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
@@ -96,7 +98,10 @@ load_dotenv()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': 'file:' + str(BASE_DIR / 'db.sqlite3') + '?mode=ro',
+        'OPTIONS': {
+            'uri': True,
+        },
     }
 }
 
