@@ -7,9 +7,10 @@ interface KPICardProps {
     trend?: { value: number; isPositive: boolean };
     icon?: React.ReactNode;
     color?: 'primary' | 'success' | 'warning' | 'error';
+    className?: string;
 }
 
-export default function KPICard({ label, value, trend, icon, color = 'primary' }: KPICardProps) {
+export default function KPICard({ label, value, trend, icon, color = 'primary', className = '' }: KPICardProps) {
     const borderColors = {
         primary: 'border-l-primary',
         success: 'border-l-success',
@@ -18,7 +19,7 @@ export default function KPICard({ label, value, trend, icon, color = 'primary' }
     };
 
     return (
-        <div className={`bg-white rounded-lg shadow-sm p-5 border-l-4 ${borderColors[color]} flex items-center justify-between`}>
+        <div className={`bg-white rounded-lg shadow-sm p-5 border-l-4 ${borderColors[color]} flex items-center justify-between ${className}`}>
             <div>
                 <dt className="text-sm font-medium text-gray-500 truncate">{label}</dt>
                 <dd className="mt-1 text-3xl font-semibold text-gray-900">{value}</dd>
