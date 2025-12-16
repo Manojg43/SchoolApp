@@ -1,0 +1,16 @@
+{
+    "title": "विद्यालय प्रबंधन प्रणाली",
+    "dashboard": "डैशबोर्ड",
+    "students": "छात्र",
+    "schools": "विद्यालय",
+    "language": "भाषा",
+    "welcome": "स्वागत है",
+    "switch_to_hindi": "हिंदी",
+    "switch_to_marathi": "मराठी",
+    "switch_to_english": "अंग्रेज़ी",
+    "student": "छात्र",
+    "attendance": "उपस्थिति",
+    "present": "उपस्थित",
+    "absent": "अनुपस्थित",
+    "fee_invoice": "शुल्क चालान"
+}

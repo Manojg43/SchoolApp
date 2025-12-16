@@ -1,0 +1,37 @@
+# System
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+.next/
+dist/
+out/
+build/
+.npm/
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Vercel
+.vercel/
+
+# Mobile (Flutter/Android)
+*.apk
+*.aab
+.gradle/
+android/app/build/
+ios/Flutter/App.framework
+flutter_export.json
+
+# IDE
+.vscode/
+.idea/
+
+# Exceptions for Demo (We need the pre-filled DB on Vercel)
+!backend/db.sqlite3

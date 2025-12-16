@@ -1,0 +1,101 @@
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from schools.models import School, AcademicYear, Class, Section
+from core.utils import generate_business_id
+
+class Student(models.Model):
+    id = models.AutoField(primary_key=True)
+    student_id = models.CharField(max_length=50, unique=True, editable=False)
+    
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='students')
+    
+    # Academic Details (Current)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.SET_NULL, null=True, related_name='students')
+    current_class = models.ForeignKey(Class, on_delete=models.SET_NULL, null=True, related_name='students')
+    section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, related_name='students')
+    enrollment_number = models.CharField(_("Enrollment Number"), max_length=50)
+    
+    # Personal Details
+    first_name = models.CharField(_("First Name"), max_length=100)
+    last_name = models.CharField(_("Last Name"), max_length=100)
+    date_of_birth = models.DateField(_("Date of Birth"))
+    gender = models.CharField(_("Gender"), max_length=1, choices=[('M', 'Male'), ('F', 'Female'), ('O', 'Other')])
+    
+    # Parent / Contact Details
+    father_name = models.CharField(_("Father's Name"), max_length=100, blank=True)
+    mother_name = models.CharField(_("Mother's Name"), max_length=100, blank=True)
+    emergency_mobile = models.CharField(_("Emergency Mobile"), max_length=15, blank=True)
+    address = models.TextField(_("Address"), blank=True)
+    
+    language = models.CharField(_("Preferred Language"), max_length=10, default='en')
+    is_active = models.BooleanField(_("Is Active"), default=True)
+    is_alumni = models.BooleanField(_("Is Alumni"), default=False)
+    alumni_year = models.DateField(_("Alumni Year"), null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('school', 'enrollment_number')
+        verbose_name = _("Student")
+        verbose_name_plural = _("Students")
+
+    def save(self, *args, **kwargs):
+        if not self.student_id:
+            self.student_id = generate_business_id('STU')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.student_id})"
+
+class StudentHistory(models.Model):
+    # History doesn't typically need a business ID unless requested, but strict "Every table" might imply it.
+    # The prompt explicitly lists: Student, Teacher, Staff, Academic Year, Attendance, Fee Invoice, Receipt, Certificate, Vehicle, Driver, Salary Record.
+    # It does NOT list StudentHistory explicitly as needing a business ID, but strict isolation requires school_id.
+    
+    school = models.ForeignKey(School, on_delete=models.CASCADE) # Direct isolation
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='history')
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+    class_enrolled = models.ForeignKey(Class, on_delete=models.CASCADE)
+    section_enrolled = models.ForeignKey(Section, on_delete=models.CASCADE, null=True)
+    result = models.CharField(max_length=50, blank=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+class Attendance(models.Model):
+    id = models.AutoField(primary_key=True)
+    attendance_id = models.CharField(max_length=50, unique=True, editable=False)
+    
+    school = models.ForeignKey(School, on_delete=models.CASCADE) # Direct isolation
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance')
+    date = models.DateField(_("Date"))
+    status = models.CharField(_("Status"), max_length=1, choices=[('P', 'Present'), ('A', 'Absent'), ('L', 'Late')])
+    remarks = models.CharField(_("Remarks"), max_length=255, blank=True)
+
+    class Meta:
+        unique_together = ('student', 'date')
+
+    def save(self, *args, **kwargs):
+        if not self.attendance_id:
+            self.attendance_id = generate_business_id('ATT')
+        super().save(*args, **kwargs)
+
+class Fee(models.Model):
+    id = models.AutoField(primary_key=True)
+    invoice_id = models.CharField(max_length=50, unique=True, editable=False)
+    
+    school = models.ForeignKey(School, on_delete=models.CASCADE) # Direct isolation
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='fees')
+    title = models.CharField(_("Title"), max_length=200)
+    amount = models.DecimalField(_("Amount"), max_digits=10, decimal_places=2)
+    due_date = models.DateField(_("Due Date"))
+    status = models.CharField(_("Status"), max_length=10, choices=[('PAID', 'Paid'), ('PENDING', 'Pending'), ('OVERDUE', 'Overdue')], default='PENDING')
+    paid_date = models.DateField(_("Paid Date"), blank=True, null=True)
+
+    class Meta:
+        verbose_name = _("Fee Invoice")
+        verbose_name_plural = _("Fee Invoices")
+    
+    def save(self, *args, **kwargs):
+        if not self.invoice_id:
+            self.invoice_id = generate_business_id('INV')
+        super().save(*args, **kwargs)

@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  /* School Blue Palette */
+  --color-primary: #0f52ba;   /* Sapphire */
+  --color-secondary: #3b82f6; /* Bright Blue */
+  --color-accent: #eff6ff;    /* Ice Blue */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-surface: #ffffff;
+  --color-background: #f3f4f6; /* Light Gray */
+  --color-text-main: #1f2937;
+  --color-text-muted: #6b7280;
+}
+
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-surface: var(--color-surface);
+  --color-background: var(--color-background);
+  
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+}
+

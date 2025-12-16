@@ -1,0 +1,150 @@
+const API_BASE_URL = '/api';
+
+// For demo purposes, we default to a specific school if not determined dynamically
+const DEFAULT_SCHOOL_ID = 'SCHOOL-A';
+
+export async function fetchWithSchool(endpoint: string, schoolId: string | undefined = undefined) {
+    // Priority: Argument -> LocalStorage -> Default (fallback)
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, { headers });
+
+    // Handle Auth Errors (401/403)
+    if (res.status === 401 || res.status === 403) {
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+            window.location.href = '/login'; // Force login
+        }
+    }
+
+    if (!res.ok) {
+        throw new Error(`API call failed: ${res.statusText}`);
+    }
+
+    return res.json();
+}
+
+export interface Achievement {
+    id: number;
+    title: string;
+    description: string;
+    image_url: string; // Changed from image to image_url per Master v5
+    date: string;
+}
+
+export async function getAchievements(schoolId?: string): Promise<Achievement[]> {
+    return fetchWithSchool('/achievements/', schoolId);
+}
+
+// Helper to get stats
+export async function getDashboardStats(schoolId?: string) {
+    const [students, schools] = await Promise.all([
+        fetchWithSchool('/students/', schoolId),
+        fetchWithSchool('/schools/', schoolId)
+    ]);
+
+    return {
+        students: students.length,
+        schools: schools.length,
+    };
+}
+
+// Students
+export interface Student {
+    id: number;
+    enrollment_number: string;
+    first_name: string;
+    last_name: string;
+    gender: string;
+    date_of_birth: string;
+
+    // Academic (Joined)
+    class_name?: string;
+    section_name?: string;
+    year_name?: string;
+
+    // Parents
+    father_name: string;
+    mother_name: string;
+    emergency_mobile: string;
+    address: string;
+
+    language: string;
+    is_active: boolean;
+}
+
+export async function getStudents(schoolId?: string): Promise<Student[]> {
+    return fetchWithSchool('/students/', schoolId);
+}
+
+// Attendance
+export interface Attendance {
+    id: number;
+    student: number;
+    student_name: string;
+    date: string;
+    status: 'P' | 'A' | 'L';
+    remarks: string;
+}
+
+export async function getAttendance(schoolId?: string): Promise<Attendance[]> {
+    return fetchWithSchool('/attendance/', schoolId);
+}
+
+// Fees
+export interface Fee {
+    id: number;
+    student: number;
+    student_name: string;
+    title: string;
+    amount: string;
+    due_date: string;
+    status: 'PAID' | 'PENDING' | 'OVERDUE';
+    paid_date: string | null;
+}
+
+export async function getFees(schoolId?: string): Promise<Fee[]> {
+    return fetchWithSchool('/fees/', schoolId);
+}
+
+// Staff
+export interface Staff {
+    id: number;
+    user_id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    mobile: string;
+    role: string;
+    designation?: string;
+    department?: string;
+    joining_date?: string;
+}
+
+export async function getStaff(schoolId?: string): Promise<Staff[]> {
+    // In a real app we might have a specific endpoint, or filter users by role
+    // For now assuming /staff/ endpoint exists or reusing /users/ with filter
+    // Let's assume /staff-dashboard/ gives current user info, but for list we need /staff/
+    // If backend doesn't have /staff/ list endpoint, we might fail.
+    // Checking backend... `staff` app has views but no ModelViewSet for listing all staff exposed plainly?
+    // Wait, backend/staff/views.py only has Dashboard and Scans.
+    // I should check `backend/core/views.py` or `setup_roles.py`.
+    // Actually, let's assume I need to add a Staff List API to backend first?
+    // No, let's just use a placeholder or assume /users/?role=STAFF works if implemented.
+    // User asked for "CRUD at UI level", implying backend exists.
+    // Let's assume /staff/ endpoint is NOT there based on my `staff/views.py` read.
+    // I will add `StaffViewSet` to `backend/staff/views.py` quickly.
+    return fetchWithSchool('/staff/list/', schoolId);
+}

@@ -1,0 +1,16 @@
+{
+  "title": "School Management System",
+  "dashboard": "Dashboard",
+  "students": "Students",
+  "schools": "Schools",
+  "language": "Language",
+  "welcome": "Welcome",
+  "switch_to_hindi": "Hindi",
+  "switch_to_marathi": "Marathi",
+  "switch_to_english": "English",
+  "student": "Student",
+  "attendance": "Attendance",
+  "present": "Present",
+  "absent": "Absent",
+  "fee_invoice": "Fee Invoice"
+}
