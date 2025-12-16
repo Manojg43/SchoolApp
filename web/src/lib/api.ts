@@ -273,3 +273,61 @@ export async function deleteStudent(id: number, schoolId?: string): Promise<void
 
     if (!res.ok) throw new Error(`Failed to delete student: ${res.statusText}`);
 }
+if (!res.ok) throw new Error(`Failed to delete student: ${res.statusText}`);
+}
+
+// Transport
+export interface Vehicle {
+    id: number;
+    registration_number: string;
+    model: string;
+    capacity: number;
+    driver_name?: string;
+    driver?: number | null;
+}
+
+export interface Route {
+    id: number;
+    name: string;
+    stops: { id: number; name: string; fee_amount: string }[];
+}
+
+export async function getVehicles(schoolId?: string): Promise<Vehicle[]> {
+    return fetchWithSchool('/transport/vehicles/', schoolId);
+}
+
+export async function createVehicle(data: any, schoolId?: string): Promise<Vehicle> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/transport/vehicles/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`Failed to create vehicle: ${res.statusText}`);
+    return res.json();
+}
+
+export async function deleteVehicle(id: number, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/transport/vehicles/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to delete vehicle: ${res.statusText}`);
+}
+
+export async function getRoutes(schoolId?: string): Promise<Route[]> {
+    return fetchWithSchool('/transport/routes/', schoolId);
+}
