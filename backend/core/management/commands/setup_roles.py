@@ -4,8 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from core.models import CoreUser
 from students.models import Student, Attendance, Fee
 from staff.models import StaffProfile
-from transport.models import Vehicle, Route
-from finance.models import Invoice, FeeCategory
+from schools.models import Class, Section
 
 class Command(BaseCommand):
     help = 'Setup default Groups and Permissions for the Application'
@@ -14,23 +13,23 @@ class Command(BaseCommand):
         # Define Roles and their Model Access
         roles_config = {
             CoreUser.ROLE_SCHOOL_ADMIN: {
-                'models': [Student, Attendance, Fee, StaffProfile, Vehicle, Route, Invoice, FeeCategory, CoreUser],
+                'models': [Student, Attendance, Fee, StaffProfile, Vehicle, Route, Invoice, FeeCategory, CoreUser, Class, Section],
                 'actions': ['add', 'change', 'delete', 'view']
             },
             CoreUser.ROLE_PRINCIPAL: {
-                'models': [Student, Attendance, Fee, StaffProfile, Vehicle, Route, Invoice, FeeCategory],
-                'actions': ['add', 'change', 'view'] # No delete for Principal by default? Or yes? User said "Admin only". Let's give all, restrict later.
+                'models': [Student, Attendance, Fee, StaffProfile, Vehicle, Route, Invoice, FeeCategory, Class, Section],
+                'actions': ['add', 'change', 'view'] 
             },
             CoreUser.ROLE_TEACHER: {
-                'models': [Student, Attendance],
+                'models': [Student, Attendance, Class, Section],
                 'actions': ['add', 'change', 'view'] 
             },
             CoreUser.ROLE_ACCOUNTANT: {
-                'models': [Fee, Invoice, FeeCategory],
+                'models': [Fee, Invoice, FeeCategory, Class, Section], # Need class for fee mapping? Maybe.
                 'actions': ['add', 'change', 'view'] 
             },
             CoreUser.ROLE_OFFICE_STAFF: {
-                'models': [Student],
+                'models': [Student, Class, Section],
                 'actions': ['add', 'change', 'view']
             }
         }
