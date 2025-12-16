@@ -157,6 +157,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://web-kappa-bice-45.vercel.app",
     "https://schoolapp-web.vercel.app",
+    "https://school-ohhgarwt9-manojg43s-projects.vercel.app",
+    "https://*.vercel.app",
     "https://schoolapp-6vwg.onrender.com",
 ]
 
