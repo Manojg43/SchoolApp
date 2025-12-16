@@ -95,10 +95,11 @@ class StaffDashboardView(APIView):
         })
 
 from rest_framework import viewsets
+from core.permissions import StandardPermission
 from .serializers import StaffSerializer
 
 class StaffViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [StandardPermission]
     serializer_class = StaffSerializer
 
     def get_queryset(self):

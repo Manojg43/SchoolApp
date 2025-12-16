@@ -139,15 +139,15 @@ export default function StudentList() {
                             options: classes.map(c => ({ label: c.name, value: String(c.id) }))
                         }
                     ]}
-                    onAdd={hasPermission(['manage_students', 'is_superuser']) ? handleAdd : undefined}
+                    onAdd={hasPermission('students.add_student') ? handleAdd : undefined}
                 />
 
                 <DataTable
                     columns={columns}
                     data={filtered}
                     isLoading={loading}
-                    onEdit={hasPermission(['manage_students', 'is_superuser']) ? handleEdit : undefined}
-                    onDelete={hasPermission(['manage_students', 'is_superuser']) ? handleDelete : undefined}
+                    onEdit={hasPermission('students.change_student') ? handleEdit : undefined}
+                    onDelete={hasPermission('students.delete_student') ? handleDelete : undefined}
                     onView={(row) => window.open(`https://schoolapp-6vwg.onrender.com/api/certificates/generate/${row.id}/bonafide/`, '_blank')}
                 />
             </div>

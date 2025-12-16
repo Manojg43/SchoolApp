@@ -28,7 +28,7 @@ export default function TransportPage() {
     }
 
     useEffect(() => {
-        if (hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL'])) {
+        if (hasPermission(['is_superuser', 'transport.view_vehicle'])) {
             load();
         } else {
             setLoading(false);
@@ -102,7 +102,7 @@ export default function TransportPage() {
                         <h2 className="text-lg font-medium text-blue-900 flex items-center gap-2">
                             <Bus className="w-5 h-5" /> Vehicles
                         </h2>
-                        {hasPermission(['is_superuser', 'SCHOOL_ADMIN']) && (
+                        {hasPermission('transport.add_vehicle') && (
                             <button onClick={handleAddVehicle} className="p-1 hover:bg-white rounded-full transition-colors">
                                 <Plus className="w-5 h-5 text-blue-700" />
                             </button>
@@ -112,7 +112,7 @@ export default function TransportPage() {
                         columns={vehicleColumns}
                         data={vehicles}
                         isLoading={loading}
-                        onDelete={hasPermission(['is_superuser', 'SCHOOL_ADMIN']) ? handleDeleteVehicle : undefined}
+                        onDelete={hasPermission('transport.delete_vehicle') ? handleDeleteVehicle : undefined}
                     />
                 </div>
 
@@ -122,7 +122,7 @@ export default function TransportPage() {
                         <h2 className="text-lg font-medium text-green-900 flex items-center gap-2">
                             <MapPin className="w-5 h-5" /> Routes
                         </h2>
-                        {hasPermission(['is_superuser', 'SCHOOL_ADMIN']) && (
+                        {hasPermission('transport.add_route') && (
                             <button onClick={handleAddRoute} className="p-1 hover:bg-white rounded-full transition-colors">
                                 <Plus className="w-5 h-5 text-green-700" />
                             </button>
@@ -132,7 +132,7 @@ export default function TransportPage() {
                         columns={routeColumns}
                         data={routes}
                         isLoading={loading}
-                        onEdit={() => alert("Edit Route (Pending)")}
+                        onEdit={hasPermission('transport.change_route') ? () => alert("Edit Route (Pending)") : undefined}
                     />
                 </div>
             </div>

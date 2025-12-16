@@ -17,20 +17,16 @@ class LoginApiView(APIView):
             # Supabase is Writable: Create token if missing
             token, created = Token.objects.get_or_create(user=user)
             
-            # Gather standard permissions
+            # Gather standard permissions (Flattened from User + Groups)
             all_permissions = user.get_all_permissions() # returns {'app.perm', ...}
             
-            # Gather custom module flags
-            custom_perms = []
-            if getattr(user, 'can_use_mobile_app', False): custom_perms.append('can_use_mobile_app')
-            if getattr(user, 'can_access_finance', False): custom_perms.append('can_access_finance')
-            if getattr(user, 'can_access_transport', False): custom_perms.append('can_access_transport')
-            if getattr(user, 'can_access_certificates', False): custom_perms.append('can_access_certificates')
-            if getattr(user, 'can_access_student_records', False): custom_perms.append('can_access_student_records')
-            if getattr(user, 'can_access_attendance', False): custom_perms.append('can_access_attendance')
-            if user.is_superuser: custom_perms.append('is_superuser')
+            # Combine everything into a single list
+            # We want specific strings like 'students.add_student', 'finance.view_invoice'
+            permission_list = list(all_permissions)
 
-            combined_permissions = list(all_permissions) + custom_perms
+            # Keep legacy custom flags for backwards compatibility if needed, 
+            # but primary source is now permission_list
+            if user.is_superuser: permission_list.append('is_superuser')
 
             return Response({
                 'token': token.key,
@@ -39,7 +35,7 @@ class LoginApiView(APIView):
                 'school_id': user.school.school_id if user.school else None,
                 'name': user.get_full_name(),
                 'email': user.email,
-                'permissions': combined_permissions
+                'permissions': permission_list
             })
         else:
             return Response({'error': 'Invalid Credentials'}, status=400)

@@ -40,7 +40,7 @@ export default function StaffPage() {
             }));
         }
 
-        if (hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL'])) {
+        if (hasPermission(['is_superuser', 'core.view_coreuser'])) {
             load();
         } else {
             setLoading(false);
@@ -89,7 +89,7 @@ export default function StaffPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Staff & Payroll</h1>
                     <p className="text-gray-500">Manage teachers, staff, and salaries</p>
                 </div>
-                {hasPermission(['is_superuser', 'SCHOOL_ADMIN']) && (
+                {hasPermission('core.add_coreuser') && (
                     <button className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-700" onClick={handleAdd}>
                         + Add Staff
                     </button>
@@ -121,13 +121,13 @@ export default function StaffPage() {
                     <div className="px-6 py-4 border-b border-gray-200">
                         <h2 className="text-lg font-medium text-gray-900">Staff Directory</h2>
                     </div>
-                    {hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL']) ? (
+                    {hasPermission('core.view_coreuser') ? (
                         <DataTable
                             columns={columns}
                             data={staffList}
                             isLoading={loading}
-                            onEdit={hasPermission(['is_superuser', 'SCHOOL_ADMIN']) ? handleEdit : undefined}
-                            onDelete={hasPermission(['is_superuser', 'SCHOOL_ADMIN']) ? handleDelete : undefined}
+                            onEdit={hasPermission('core.change_coreuser') ? handleEdit : undefined}
+                            onDelete={hasPermission('core.delete_coreuser') ? handleDelete : undefined}
                         />
                     ) : (
                         <div className="p-8 text-center text-gray-500">

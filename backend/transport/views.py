@@ -2,16 +2,11 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import Vehicle, Route, Stop, TransportSubscription
 from .serializers import VehicleSerializer, RouteSerializer, StopSerializer, TransportSubscriptionSerializer
-from core.permissions import IsSchoolAdmin
+from core.permissions import StandardPermission
 
 class VehicleViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [StandardPermission]
     serializer_class = VehicleSerializer
-
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsSchoolAdmin()]
-        return [IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
@@ -36,7 +31,7 @@ class RouteViewSet(viewsets.ModelViewSet):
         serializer.save(school=self.request.user.school)
 
 class TransportSubscriptionViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [StandardPermission]
     serializer_class = TransportSubscriptionSerializer
 
     def get_queryset(self):

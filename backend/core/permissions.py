@@ -1,44 +1,71 @@
 from rest_framework import permissions
 from .models import CoreUser
 
-class IsSuperAdmin(permissions.BasePermission):
+class StandardPermission(permissions.BasePermission):
     """
-    Allocates permissions only to Super Admins (Developers).
-    """
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and (
-            request.user.is_superuser or 
-            request.user.role == CoreUser.ROLE_SUPER_ADMIN
-        )
-
-class IsSchoolAdmin(permissions.BasePermission):
-    """
-    Allows access to School Admins.
-    Strictly checks that the user belongs to the school context if applicable.
+    Unified Permission Class.
+    1. Superuser -> Allow All.
+    2. Authenticated -> Check Django Model Permissions (add_model, change_model, etc.)
+    3. Object Level -> Check School Isolation.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and (
-            request.user.role == CoreUser.ROLE_SCHOOL_ADMIN
-        )
-
-class IsTeacher(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and (
-            request.user.role == CoreUser.ROLE_TEACHER
-        )
-
-class IsSameSchool(permissions.BasePermission):
-    """
-    Ensures the user accessing the object belongs to the same school as the object.
-    Usage: permission_classes = [IsAuthenticated, IsSameSchool]
-    """
-    def has_object_permission(self, request, view, obj):
-        # Superusers can access everything
+        # 1. Superuser Bypass
         if request.user.is_superuser:
             return True
-            
-        # Object must have a 'school' attribute
-        if not hasattr(obj, 'school'):
+
+        # 2. Authentication Check
+        if not request.user or not request.user.is_authenticated:
             return False
-            
-        return obj.school == request.user.school
+
+        # 3. Method-to-Action Mapping
+        # GET -> view
+        # POST -> add
+        # PUT/PATCH -> change
+        # DELETE -> delete
+        METHOD_ACTIONS = {
+            'GET': 'view',
+            'POST': 'add',
+            'PUT': 'change',
+            'PATCH': 'change',
+            'DELETE': 'delete',
+            'HEAD': 'view',
+            'OPTIONS': 'view',
+        }
+        
+        action = METHOD_ACTIONS.get(request.method, 'view')
+        
+        # We need to know the model this view is handling.
+        # ViewSets usually have .queryset.model or .serializer_class.Meta.model
+        model_cls = None
+        if hasattr(view, 'queryset') and view.queryset is not None:
+             model_cls = view.queryset.model
+        elif hasattr(view, 'get_queryset'):
+             # Try to get queryset result
+             try:
+                 qs = view.get_queryset()
+                 if qs is not None: model_cls = qs.model
+             except:
+                 pass
+        
+        if not model_cls:
+            # Fallback if we can't determine model (e.g. custom APIView)
+            # We assume view handles its own specific checks or allows authenticated
+            return True 
+
+        app_label = model_cls._meta.app_label
+        model_name = model_cls._meta.model_name
+        perm_codename = f"{app_label}.{action}_{model_name}"
+
+        return request.user.has_perm(perm_codename)
+
+    def has_object_permission(self, request, view, obj):
+        # 1. Superuser Bypass
+        if request.user.is_superuser:
+            return True
+
+        # 2. School Isolation
+        if hasattr(obj, 'school'):
+            if obj.school != request.user.school:
+                return False
+        
+        return True

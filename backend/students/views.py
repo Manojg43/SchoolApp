@@ -6,13 +6,13 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Student, StudentHistory, Attendance, Fee
-from .serializers import StudentSerializer, FeeSerializer
+from .serializers import StudentSerializer, FeeSerializer, AttendanceSerializer
 from schools.models import Class, AcademicYear, Section
 
-from core.permissions import IsSchoolAdmin, IsTeacher
+from core.permissions import StandardPermission
 
 class StudentViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated] # Teachers can manage students
+    permission_classes = [StandardPermission] # Teachers can manage students
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     
@@ -25,24 +25,17 @@ class StudentViewSet(viewsets.ModelViewSet):
         return Student.objects.filter(school=self.request.user.school, is_active=True)
 
 class AttendanceViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [StandardPermission]
     queryset = Attendance.objects.all()
+    serializer_class = AttendanceSerializer
     
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return Attendance.objects.all()
         return Attendance.objects.filter(school=self.request.user.school)
 
 class FeeViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated] # Logic in get_permissions
+    permission_classes = [StandardPermission] # Logic in get_permissions
     queryset = Fee.objects.all()
     serializer_class = FeeSerializer
-    
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-             # Only School Admin or Accountant should manage fees
-             return [IsSchoolAdmin()] # Todo: Add IsAccountant
-        return [IsAuthenticated()]
     
     def get_queryset(self):
         if self.request.user.is_superuser:
