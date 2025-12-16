@@ -23,6 +23,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         { name: 'Settings', href: '/settings', icon: Settings },
     ];
 
+    // FIX: Full Screen for Login Page
+    if (pathname === '/login') {
+        return <div className="min-h-screen bg-gray-50">{children}</div>;
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 flex">
             {/* Sidebar - Desktop */}
@@ -42,8 +47,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors ${isActive
-                                        ? 'bg-blue-50 text-primary border-r-4 border-primary'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                    ? 'bg-blue-50 text-primary border-r-4 border-primary'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                     }`}
                             >
                                 <item.icon className={`mr-3 h-5 w-5 ${isActive ? 'text-primary' : 'text-gray-400'}`} />
