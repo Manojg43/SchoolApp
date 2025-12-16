@@ -75,7 +75,6 @@ export default function CertificatesPage() {
                     columns={columns}
                     data={students}
                     isLoading={loading}
-                    searchPlaceholder="Search students..."
                 />
             </div>
         </div>
