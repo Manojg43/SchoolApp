@@ -27,7 +27,7 @@ interface StaffFormModalProps {
 
 export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit }: StaffFormModalProps) {
     const [loading, setLoading] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<StaffFormValues>({
         resolver: zodResolver(staffSchema),
@@ -43,10 +43,6 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
             setValue('last_name', staffToEdit.last_name);
             setValue('email', staffToEdit.email);
             setValue('mobile', staffToEdit.mobile);
-            // Ensure role matches enum (backend might return 'Teacher', frontend expects 'TEACHER' if enum is strict? 
-            // Backend serializer uses `get_role_display` for read, but `role` (UPPERCASE) for write usually.
-            // Let's assume we need to map Display Name back to ID or just fix the serializer to return ID for editing.
-            // For now, mapping crude checks:
             setValue('role', (staffToEdit.role.toUpperCase().replace(' ', '_') as any));
             setValue('designation', staffToEdit.designation || "");
             setValue('department', staffToEdit.department || "");
@@ -56,11 +52,17 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
         }
     }, [staffToEdit, isOpen, reset, setValue]);
 
+    const onInvalid = (errors: any) => {
+        console.error("Validation Errors:", errors);
+        const firstError = Object.values(errors)[0] as any;
+        setError(firstError?.message || "Please check the form for errors.");
+    };
+
     const onSubmit = async (data: StaffFormValues) => {
         setLoading(true);
-        // Fields are now mandatory, so no raw null check needed for these, 
-        // but keeping payload consistent is good.
+        setError(null);
         const payload = { ...data };
+        console.log("Submitting Payload:", payload);
 
         try {
             if (staffToEdit) {
@@ -73,10 +75,10 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                 setShowSuccess(false);
                 onSuccess();
                 onClose();
-            }, 2000); // Auto close after 2 seconds
-        } catch (error) {
-            console.error("Failed to save staff", error);
-            alert("Failed to save staff. Check console.");
+            }, 2000);
+        } catch (err: any) {
+            console.error("Failed to save staff", err);
+            setError(err.message || "Failed to save staff. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -115,82 +117,89 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+                <div className="p-6 space-y-4">
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md flex items-center gap-2">
+                            <span className="font-bold">Error:</span> {error}
+                        </div>
+                    )}
+                    <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">First Name</label>
-                            <input {...register('first_name')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                            {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name.message}</p>}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">First Name</label>
+                                <input {...register('first_name')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name.message}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                                <input {...register('last_name')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name.message}</p>}
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                            <input {...register('last_name')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                            {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name.message}</p>}
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Email (Username)</label>
-                            <input type="email" {...register('email')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Email (Username)</label>
+                                <input type="email" {...register('email')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Mobile</label>
+                                <input {...register('mobile')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                {errors.mobile && <p className="text-red-500 text-xs mt-1">{errors.mobile.message}</p>}
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Mobile</label>
-                            <input {...register('mobile')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                            {errors.mobile && <p className="text-red-500 text-xs mt-1">{errors.mobile.message}</p>}
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Role</label>
-                            <select {...register('role')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <option value="TEACHER">Teacher</option>
-                                <option value="SCHOOL_ADMIN">School Admin</option>
-                                <option value="PRINCIPAL">Principal</option>
-                                <option value="OFFICE_STAFF">Office Staff</option>
-                                <option value="ACCOUNTANT">Accountant</option>
-                                <option value="DRIVER">Driver</option>
-                                <option value="CLEANING_STAFF">Cleaning Staff</option>
-                            </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Role</label>
+                                <select {...register('role')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <option value="TEACHER">Teacher</option>
+                                    <option value="SCHOOL_ADMIN">School Admin</option>
+                                    <option value="PRINCIPAL">Principal</option>
+                                    <option value="OFFICE_STAFF">Office Staff</option>
+                                    <option value="ACCOUNTANT">Accountant</option>
+                                    <option value="DRIVER">Driver</option>
+                                    <option value="CLEANING_STAFF">Cleaning Staff</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Designation</label>
+                                <input {...register('designation')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Senior Teacher" />
+                                {errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation.message}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Department</label>
+                                <input {...register('department')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Science" />
+                                {errors.department && <p className="text-red-500 text-xs mt-1">{errors.department.message}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Joining Date</label>
+                                <input type="date" {...register('joining_date')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date.message}</p>}
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Designation</label>
-                            <input {...register('designation')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Senior Teacher" />
-                            {errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation.message}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Department</label>
-                            <input {...register('department')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Science" />
-                            {errors.department && <p className="text-red-500 text-xs mt-1">{errors.department.message}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Joining Date</label>
-                            <input type="date" {...register('joining_date')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                            {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date.message}</p>}
-                        </div>
-                    </div>
 
-                    <div className="flex justify-end pt-4 space-x-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm font-medium"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
-                        >
-                            {loading ? 'Saving...' : 'Save Staff'}
-                        </button>
-                    </div>
+                        <div className="flex justify-end pt-4 space-x-3">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
+                            >
+                                {loading ? 'Saving...' : 'Save Staff'}
+                            </button>
+                        </div>
 
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     );
