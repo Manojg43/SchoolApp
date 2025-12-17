@@ -57,11 +57,16 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
 
     const onSubmit = async (data: StaffFormValues) => {
         setLoading(true);
+        const payload = {
+            ...data,
+            joining_date: data.joining_date === "" ? null : data.joining_date
+        };
+
         try {
             if (staffToEdit) {
-                await updateStaff(staffToEdit.id, data);
+                await updateStaff(staffToEdit.id, payload);
             } else {
-                await createStaff(data);
+                await createStaff(payload);
             }
             onSuccess();
             onClose();

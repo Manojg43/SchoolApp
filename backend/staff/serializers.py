@@ -29,6 +29,11 @@ class StaffSerializer(serializers.ModelSerializer):
         # Create User
         # Remove 'staff_profile' from validated_data to avoid error in create_user
         password = validated_data.pop('password', 'Staff@123') # Default password
+        
+        # Auto-generate username from email if not provided
+        if 'username' not in validated_data and 'email' in validated_data:
+            validated_data['username'] = validated_data['email']
+            
         user = CoreUser.objects.create_user(**validated_data, password=password)
         
         # Create Profile
