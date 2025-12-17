@@ -13,6 +13,7 @@ import StudentFormModal from "@/components/students/StudentFormModal"; // Import
 export default function StudentList() {
     const { t } = useLanguage();
     const { hasPermission } = useAuth();
+    console.log("Rendering StudentList Page [Force Update]");
     const [students, setStudents] = useState<Student[]>([]);
     const [classes, setClasses] = useState<ClassItem[]>([]); // State for Classes
     const [loading, setLoading] = useState(true);
