@@ -151,6 +151,8 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://web-c8w3hh5xu-manojg43s-projects.vercel.app",
+    "https://schoolapp-web.vercel.app",
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
@@ -159,6 +161,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://schoolapp-web.vercel.app",
     "https://school-ohhgarwt9-manojg43s-projects.vercel.app",
     "https://school-aswe436hi-manojg43s-projects.vercel.app",
+    "https://web-c8w3hh5xu-manojg43s-projects.vercel.app", 
     "https://*.vercel.app",
     "https://schoolapp-6vwg.onrender.com",
 ]
