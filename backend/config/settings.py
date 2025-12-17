@@ -153,6 +153,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://web-c8w3hh5xu-manojg43s-projects.vercel.app",
     "https://schoolapp-web.vercel.app",
+    "https://web-kappa-bice-45.vercel.app",
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
