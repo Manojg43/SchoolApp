@@ -27,6 +27,7 @@ interface StaffFormModalProps {
 
 export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit }: StaffFormModalProps) {
     const [loading, setLoading] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<StaffFormValues>({
