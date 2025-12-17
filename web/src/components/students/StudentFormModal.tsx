@@ -31,6 +31,7 @@ interface StudentFormModalProps {
 export default function StudentFormModal({ isOpen, onClose, onSuccess, studentToEdit }: StudentFormModalProps) {
     const [classes, setClasses] = useState<ClassItem[]>([]);
     const [sections, setSections] = useState<SectionItem[]>([]);
+    const [filteredSections, setFilteredSections] = useState<SectionItem[]>([]);
     const [loading, setLoading] = useState(false);
 
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<StudentFormValues>({
@@ -78,6 +79,19 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             reset();
         }
     }, [studentToEdit, isOpen, reset, setValue]);
+
+    // Filter Sections based on Class Selection
+    const selectedClassId = watch('current_class');
+
+    useEffect(() => {
+        if (selectedClassId) {
+            const classIdNum = Number(selectedClassId);
+            const filtered = sections.filter(s => s.parent_class === classIdNum);
+            setFilteredSections(filtered);
+        } else {
+            setFilteredSections([]);
+        }
+    }, [selectedClassId, sections]);
 
     const onSubmit = async (data: StudentFormValues) => {
         setLoading(true);
@@ -172,9 +186,13 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Section</label>
-                            <select {...register('section')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <select
+                                {...register('section')}
+                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled={!selectedClassId}
+                            >
                                 <option value="">Select Section</option>
-                                {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                {filteredSections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
                         </div>
                     </div>

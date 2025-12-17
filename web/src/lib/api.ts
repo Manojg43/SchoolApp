@@ -244,7 +244,7 @@ export interface ClassItem {
 export interface SectionItem {
     id: number;
     name: string;
-    class_id: number;
+    parent_class: number;
 }
 
 export async function getClasses(schoolId?: string): Promise<ClassItem[]> {
