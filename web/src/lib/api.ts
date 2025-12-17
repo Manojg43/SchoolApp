@@ -85,6 +85,11 @@ export interface Student {
 
     language: string;
     is_active: boolean;
+
+    // IDs (needed for updates)
+    current_class?: number;
+    section?: number;
+    academic_year?: number;
 }
 
 export async function getStudents(schoolId?: string): Promise<Student[]> {

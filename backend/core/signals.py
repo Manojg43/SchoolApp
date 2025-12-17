@@ -1,6 +1,9 @@
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
+from django.db.utils import OperationalError, ProgrammingError
+from django.dispatch import receiver
+from django.forms.models import model_to_dict
 from .models import AuditLog
 from .middleware import get_current_user
 import json
@@ -37,14 +40,18 @@ def log_save(sender, instance, created, **kwargs):
             if key in instance._old_state and instance._old_state[key] != value:
                 changes[key] = {'old': str(instance._old_state[key]), 'new': str(value)}
     
-    AuditLog.objects.create(
-        user=user,
-        action=action,
-        model_name=sender.__name__,
-        object_id=str(instance.pk),
-        object_repr=str(instance),
-        changes=changes if changes else None
-    )
+    try:
+        AuditLog.objects.create(
+            user=user,
+            action=action,
+            model_name=sender.__name__,
+            object_id=str(instance.pk),
+            object_repr=str(instance),
+            changes=changes if changes else None
+        )
+    except (OperationalError, ProgrammingError):
+        # Table might not exist yet during migrations
+        pass
 
 @receiver(post_delete)
 def log_delete(sender, instance, **kwargs):
@@ -52,11 +59,14 @@ def log_delete(sender, instance, **kwargs):
         return
         
     user = get_current_user()
-    AuditLog.objects.create(
-        user=user,
-        action=AuditLog.ACTION_DELETE,
-        model_name=sender.__name__,
-        object_id=str(instance.pk),
-        object_repr=str(instance),
-        changes={'info': 'Object Deleted'}
-    )
+    try:
+        AuditLog.objects.create(
+            user=user,
+            action=AuditLog.ACTION_DELETE,
+            model_name=sender.__name__,
+            object_id=str(instance.pk),
+            object_repr=str(instance),
+            changes={'info': 'Object Deleted'}
+        )
+    except (OperationalError, ProgrammingError):
+        pass
