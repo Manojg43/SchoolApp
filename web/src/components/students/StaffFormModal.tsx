@@ -11,9 +11,9 @@ const staffSchema = z.object({
     email: z.string().email("Invalid email address"),
     mobile: z.string().min(10, "Mobile number is required"),
     role: z.enum(['TEACHER', 'SCHOOL_ADMIN', 'PRINCIPAL', 'OFFICE_STAFF', 'ACCOUNTANT', 'DRIVER', 'CLEANING_STAFF']),
-    designation: z.string().optional(),
-    department: z.string().optional(),
-    joining_date: z.string().optional(),
+    designation: z.string().min(1, "Designation is required"),
+    department: z.string().min(1, "Department is required"),
+    joining_date: z.string().min(1, "Joining Date is required"),
 });
 
 type StaffFormValues = z.infer<typeof staffSchema>;
@@ -27,6 +27,7 @@ interface StaffFormModalProps {
 
 export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit }: StaffFormModalProps) {
     const [loading, setLoading] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<StaffFormValues>({
         resolver: zodResolver(staffSchema),
@@ -47,9 +48,9 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
             // Let's assume we need to map Display Name back to ID or just fix the serializer to return ID for editing.
             // For now, mapping crude checks:
             setValue('role', (staffToEdit.role.toUpperCase().replace(' ', '_') as any));
-            setValue('designation', staffToEdit.designation);
-            setValue('department', staffToEdit.department);
-            setValue('joining_date', staffToEdit.joining_date);
+            setValue('designation', staffToEdit.designation || "");
+            setValue('department', staffToEdit.department || "");
+            setValue('joining_date', staffToEdit.joining_date || "");
         } else {
             reset();
         }
@@ -57,10 +58,9 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
 
     const onSubmit = async (data: StaffFormValues) => {
         setLoading(true);
-        const payload = {
-            ...data,
-            joining_date: data.joining_date === "" ? null : data.joining_date
-        };
+        // Fields are now mandatory, so no raw null check needed for these, 
+        // but keeping payload consistent is good.
+        const payload = { ...data };
 
         try {
             if (staffToEdit) {
@@ -68,8 +68,12 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
             } else {
                 await createStaff(payload);
             }
-            onSuccess();
-            onClose();
+            setShowSuccess(true);
+            setTimeout(() => {
+                setShowSuccess(false);
+                onSuccess();
+                onClose();
+            }, 2000); // Auto close after 2 seconds
         } catch (error) {
             console.error("Failed to save staff", error);
             alert("Failed to save staff. Check console.");
@@ -78,8 +82,27 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
         }
     };
 
+    // Early return if closed
     if (!isOpen) return null;
 
+    // Show Success Popup
+    if (showSuccess) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+                <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Success!</h3>
+                    <p className="text-gray-500 text-center">Staff member has been added successfully.</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Main Form Render
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -136,10 +159,17 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Designation</label>
                             <input {...register('designation')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Senior Teacher" />
+                            {errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation.message}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Department</label>
+                            <input {...register('department')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Science" />
+                            {errors.department && <p className="text-red-500 text-xs mt-1">{errors.department.message}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Joining Date</label>
                             <input type="date" {...register('joining_date')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                            {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date.message}</p>}
                         </div>
                     </div>
 
