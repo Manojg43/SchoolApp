@@ -167,6 +167,12 @@ CSRF_TRUSTED_ORIGINS = [
     "https://schoolapp-6vwg.onrender.com",
 ]
 
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-school-id',
+]
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
