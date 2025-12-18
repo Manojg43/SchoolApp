@@ -8,12 +8,15 @@ import DataTable, { Column } from "@/components/ui/DataTable";
 import KPICard from "@/components/ui/KPICard";
 import { getFees, createFee, deleteFee, getStudents, type Fee, type Student } from "@/lib/api";
 
+import CreateInvoiceModal from "@/components/finance/CreateInvoiceModal";
+
 export default function FinancePage() {
     const { t } = useLanguage();
     const { user, hasPermission } = useAuth();
     const [fees, setFees] = useState<Fee[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     async function load() {
         setLoading(true);
@@ -36,38 +39,8 @@ export default function FinancePage() {
         }
     }, [user, hasPermission]);
 
-    const handleAddFee = async () => {
-        // Simple Prompt-based flow for MVP. Real app would use Modal.
-        const studentEnrollment = prompt("Enter Student Enrollment Number:");
-        if (!studentEnrollment) return;
-
-        const student = students.find(s => s.enrollment_number === studentEnrollment);
-        if (!student) {
-            alert("Student not found!");
-            return;
-        }
-
-        const title = prompt("Fee Title (e.g. Tuition Term 1):");
-        if (!title) return;
-
-        const amount = prompt("Amount:");
-        if (!amount) return;
-
-        const dueDate = prompt("Due Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
-        if (!dueDate) return;
-
-        try {
-            await createFee({
-                student: student.id,
-                title,
-                amount: parseFloat(amount),
-                due_date: dueDate,
-                status: 'PENDING'
-            });
-            load();
-        } catch (e) {
-            alert("Failed to create fee invoice.");
-        }
+    const handleSuccess = () => {
+        load();
     };
 
     const handleDeleteFee = async (fee: Fee) => {
@@ -110,7 +83,10 @@ export default function FinancePage() {
                     <p className="text-gray-500">Track Fee Collection and Invoices</p>
                 </div>
                 {hasPermission('students.add_fee') && (
-                    <button className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-700 flex items-center gap-2" onClick={handleAddFee}>
+                    <button
+                        className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-700 flex items-center gap-2"
+                        onClick={() => setIsCreateOpen(true)}
+                    >
                         <Plus className="w-4 h-4" /> Create Invoice
                     </button>
                 )}
@@ -136,6 +112,12 @@ export default function FinancePage() {
                     <div className="p-8 text-center text-gray-500">Access Denied</div>
                 )}
             </div>
+
+            <CreateInvoiceModal
+                isOpen={isCreateOpen}
+                onClose={() => setIsCreateOpen(false)}
+                onSuccess={handleSuccess}
+            />
         </div>
     );
 }
