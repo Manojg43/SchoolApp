@@ -7,6 +7,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ScanScreen from '../screens/ScanScreen';
 import LeaveScreen from '../screens/LeaveScreen';
 import SalaryScreen from '../screens/SalaryScreen';
+import DailyAttendanceScreen from '../screens/DailyAttendanceScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ export default function AppNavigator() {
                 <Stack.Screen name="Scan" component={ScanScreen} />
                 <Stack.Screen name="Leave" component={LeaveScreen} />
                 <Stack.Screen name="Salary" component={SalaryScreen} />
+                <Stack.Screen name="DailyAttendance" component={DailyAttendanceScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

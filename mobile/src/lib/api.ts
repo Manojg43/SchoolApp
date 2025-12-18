@@ -71,4 +71,8 @@ export const mobileApi = {
     // Day-wise Attendance with Salary
     getMyAttendanceReport: (month: number, year: number) =>
         apiRequest(`/staff/attendance/report/?month=${month}&year=${year}`, 'GET'), // No staff_id = self
+
+    // Admin View: All Staff Daily Attendance
+    getDailyAttendance: (date: string) =>
+        apiRequest(`/staff/attendance/daily/?date=${date}`, 'GET'),
 };
