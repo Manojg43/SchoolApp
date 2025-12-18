@@ -12,7 +12,8 @@ import {
     FileBarChart,
     Settings,
     Briefcase,
-    GraduationCap
+    GraduationCap,
+    Clock
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext'; // Import Auth
@@ -23,7 +24,8 @@ const MENU_ITEMS = [
     { href: '/students', label: 'Students', icon: GraduationCap, permission: 'can_access_student_records' },
     { href: '/attendance', label: 'Attendance', icon: CalendarCheck, permission: 'can_access_attendance' },
     { href: '/fees', label: 'Fees & Invoices', icon: Receipt, permission: 'can_access_finance' },
-    { href: '/staff', label: 'Staff & Payroll', icon: Briefcase, permission: 'is_superuser' }, // Placeholder perm
+    { href: '/staff', label: 'Staff & Payroll', icon: Briefcase, permission: 'is_superuser' },
+    { href: '/staff/attendance', label: 'Staff Attendance', icon: Clock, permission: 'is_superuser' },
     { href: '/transport', label: 'Transport', icon: Bus, permission: 'can_access_transport' },
     { href: '/reports', label: 'Reports', icon: FileBarChart, permission: 'is_superuser' },
     { href: '/settings', label: 'Settings', icon: Settings }, // Settings usually for all, can filter sub-pages
