@@ -14,9 +14,11 @@ class AcademicYearSerializer(serializers.ModelSerializer):
         read_only_fields = ['academic_year_id']
 
 class ClassSerializer(serializers.ModelSerializer):
+    sections = SectionSerializer(many=True, read_only=True)
+    
     class Meta:
         model = Class
-        fields = '__all__'
+        fields = ['id', 'school', 'name', 'order', 'sections']
 
 class SectionSerializer(serializers.ModelSerializer):
     class Meta:

@@ -15,11 +15,8 @@ const studentSchema = z.object({
     date_of_birth: z.string().min(10, "DOB is required"),
     address: z.string().optional(),
     emergency_mobile: z.string().min(10, "Mobile number is required"),
-    current_class: z.preprocess((val) => Number(val), z.number().min(1, "Class is required")),
-    section: z.preprocess((val) => {
-        if (val === "" || val === null || val === undefined) return null;
-        return Number(val);
-    }, z.number().nullable()),
+    current_class: z.coerce.number().min(1, "Class is required"),
+    section: z.coerce.number().nullable().optional().transform(val => val === 0 ? null : val),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
@@ -37,18 +34,18 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
     const [filteredSections, setFilteredSections] = useState<SectionItem[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<StudentFormValues>({
         resolver: zodResolver(studentSchema),
         defaultValues: {
             gender: 'M',
-            current_class: undefined,
+            current_class: 1, // Defaulting to some value if necessary, or keep undefined if Schema allows
             section: null,
             first_name: '',
             last_name: '',
             father_name: '',
             enrollment_number: '',
             emergency_mobile: '',
-            date_of_birth: undefined
+            date_of_birth: ''
         }
     });
 
@@ -120,9 +117,10 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             }
             onSuccess();
             onClose();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Failed to save student", error);
-            alert("Failed to save student. Check console.");
+            const msg = error instanceof Error ? error.message : 'Unknown Error';
+            alert(`Failed to save student: ${msg}`);
         } finally {
             setLoading(false);
         }

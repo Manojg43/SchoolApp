@@ -1,6 +1,5 @@
-// BYPASS PROXY: Connect directly to Render to avoid Vercel Timeouts
-// const API_BASE_URL = '/api';
-export const API_BASE_URL = 'https://schoolapp-6vwg.onrender.com/api';
+// CENTRAL API CONFIGURATION
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://schoolapp-6vwg.onrender.com/api';
 
 // For demo purposes, we default to a specific school if not determined dynamically
 const DEFAULT_SCHOOL_ID = ''; // Changed from 'SCHOOL-A' to allow superuser access (no header = all schools)
@@ -288,6 +287,7 @@ export async function deleteStaff(id: number, schoolId?: string): Promise<void> 
 export interface ClassItem {
     id: number;
     name: string;
+    sections?: SectionItem[];
 }
 
 export interface SectionItem {
@@ -300,8 +300,9 @@ export async function getClasses(schoolId?: string): Promise<ClassItem[]> {
     return fetchWithSchool('/classes/', schoolId);
 }
 
-export async function getSections(schoolId?: string): Promise<SectionItem[]> {
-    return fetchWithSchool('/sections/', schoolId);
+export async function getSections(schoolId?: string, classId?: number): Promise<SectionItem[]> {
+    const query = classId ? `?parent_class=${classId}` : '';
+    return fetchWithSchool(`/sections/${query}`, schoolId);
 }
 
 // Student CRUD

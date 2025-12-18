@@ -55,4 +55,10 @@ class SectionViewSet(viewsets.ModelViewSet):
         school_id = get_current_school_id()
         if school_id:
             queryset = queryset.filter(school__school_id=school_id)
+        
+        # Filter by class if provided
+        class_id = self.request.query_params.get('parent_class')
+        if class_id:
+            queryset = queryset.filter(parent_class_id=class_id)
+            
         return queryset

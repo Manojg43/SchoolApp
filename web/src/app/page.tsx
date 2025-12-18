@@ -1,127 +1,153 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useAuth, PermissionGuard } from '@/context/AuthContext';
-import KPICard from '@/components/ui/KPICard';
-import { getDashboardStats, getStudents, getStaff, getFees, type Student, type Fee } from '@/lib/api';
-import { BarChart3, Users, GraduationCap, IndianRupee, AlertCircle } from 'lucide-react';
-import DataTable, { Column } from '@/components/ui/DataTable';
-import { motion } from "framer-motion";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { motion } from 'framer-motion';
+import { School, Lock, User, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { API_BASE_URL } from '@/lib/api';
 
-export default function Dashboard() {
-  const { user, hasPermission } = useAuth();
-  const [stats, setStats] = useState({ students: 0, schools: 0, staff: 0, collected: 0, pending: 0 });
-  const [recentStudents, setRecentStudents] = useState<Student[]>([]);
-  const [recentFees, setRecentFees] = useState<Fee[]>([]);
-  const [loading, setLoading] = useState(true);
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 
+type LoginSchema = z.infer<typeof loginSchema>;
+
+export default function LoginPage() {
+  const [serverError, setServerError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, user } = useAuth();
+  const router = useRouter();
+
+  // Redirect if already logged in
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        // Parallel fetching
-        const [sList, stList, fList] = await Promise.all([
-          hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL']) ? getStudents() : Promise.resolve([]),
-          hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL']) ? getStaff() : Promise.resolve([]),
-          hasPermission(['is_superuser', 'SCHOOL_ADMIN', 'ACCOUNTANT']) ? getFees() : Promise.resolve([])
-        ]);
-
-        const totalStudents = sList.length;
-        const totalStaff = stList.length;
-        const collected = fList.filter(f => f.status === 'PAID').reduce((acc, curr) => acc + Number(curr.amount), 0);
-        const pending = fList.filter(f => f.status === 'PENDING').reduce((acc, curr) => acc + Number(curr.amount), 0);
-
-        setStats({
-          students: totalStudents,
-          schools: 1, // Static for single tenant
-          staff: totalStaff,
-          collected,
-          pending
-        });
-
-        setRecentStudents(sList.slice(0, 5));
-        setRecentFees(fList.slice(0, 5));
-
-      } catch (e) {
-        console.error("Dashboard Load Error", e);
-      } finally {
-        setLoading(false);
-      }
+    if (user) {
+      router.push('/dashboard');
     }
+  }, [user, router]);
 
-    if (user) load();
-  }, [user, hasPermission]);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<LoginSchema>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const studentColumns: Column<Student>[] = [
-    { header: "Name", accessorKey: (row) => `${row.first_name} ${row.last_name}` },
-    { header: "Review", accessorKey: (row) => row.is_active ? "Active" : "Inactive" },
-  ];
+  const onSubmit = async (formData: LoginSchema) => {
+    setIsLoading(true);
+    setServerError('');
 
-  const feeColumns: Column<Fee>[] = [
-    { header: "Title", accessorKey: "title" },
-    { header: "Amount", accessorKey: (row) => `₹${row.amount}` },
-    { header: "Status", accessorKey: "status" },
-  ];
+    try {
+      const res = await fetch(`${API_BASE_URL}/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        login(data);
+        router.push('/dashboard');
+      } else {
+        setServerError(data.error || 'Invalid credentials');
+      }
+    } catch (err: unknown) {
+      console.error("Login Error:", err);
+      const message = err instanceof Error ? err.message : 'Network error. Please try again.';
+      setServerError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (user) return null; // Prevent flicker while redirecting
 
   return (
-    <div className="space-y-6 p-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500">Welcome back, {user?.name || 'User'}</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-sans">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100"
+      >
+        <div className="flex flex-col items-center mb-8">
+          <div className="bg-blue-600 p-4 rounded-2xl text-white mb-4 shadow-lg shadow-blue-200">
+            <School className="w-10 h-10" />
+          </div>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Welcome Back</h1>
+          <p className="text-gray-500 mt-2 font-medium">Sign in to your dashboard</p>
         </div>
-      </div>
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard
-          label="Total Students"
-          value={stats.students}
-          icon={<GraduationCap className="h-6 w-6" />}
-          className="bg-blue-50 text-blue-700"
-        />
-        <KPICard
-          label="Total Staff"
-          value={stats.staff}
-          icon={<Users className="h-6 w-6" />}
-          className="bg-purple-50 text-purple-700"
-        />
-        <KPICard
-          label="Fees Collected"
-          value={`₹${stats.collected}`}
-          icon={<IndianRupee className="h-6 w-6" />}
-          color="success"
-        />
-        <KPICard
-          label="Fees Pending"
-          value={`₹${stats.pending}`}
-          icon={<AlertCircle className="h-6 w-6" />}
-          color="error"
-        />
-      </div>
+        {serverError && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-100 flex items-center gap-2"
+          >
+            <AlertCircle className="w-4 h-4" />
+            {serverError}
+          </motion.div>
+        )}
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Students */}
-        <PermissionGuard perm={['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL']}>
-          <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden h-full">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-md font-semibold text-gray-900">Recent Admissions</h3>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                {...register('username')}
+                type="text"
+                className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 outline-none transition-all ${errors.username
+                  ? 'border-red-300 focus:ring-red-200 focus:border-red-400 bg-red-50/10'
+                  : 'border-gray-200 focus:ring-blue-100 focus:border-blue-500 bg-gray-50/30'
+                  }`}
+                placeholder="Enter your username"
+              />
             </div>
-            <DataTable columns={studentColumns} data={recentStudents} isLoading={loading} />
+            {errors.username && (
+              <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.username.message}</p>
+            )}
           </div>
-        </PermissionGuard>
 
-        {/* Recent Fees */}
-        <PermissionGuard perm={['is_superuser', 'SCHOOL_ADMIN', 'ACCOUNTANT']}>
-          <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden h-full">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-md font-semibold text-gray-900">Recent Invoices</h3>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                {...register('password')}
+                type="password"
+                className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 outline-none transition-all ${errors.password
+                  ? 'border-red-300 focus:ring-red-200 focus:border-red-400 bg-red-50/10'
+                  : 'border-gray-200 focus:ring-blue-100 focus:border-blue-500 bg-gray-50/30'
+                  }`}
+                placeholder="••••••••"
+              />
             </div>
-            <DataTable columns={feeColumns} data={recentFees} isLoading={loading} />
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.password.message}</p>
+            )}
           </div>
-        </PermissionGuard>
-      </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 disabled:opacity-70 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+          >
+            {isLoading ? 'Authenticating...' : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-400 font-medium bg-gray-50 py-2 rounded-lg">
+            Secured by Multi-Tenant Architecture
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }

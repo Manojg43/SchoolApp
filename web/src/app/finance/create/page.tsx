@@ -109,6 +109,11 @@ export default function CreateInvoicePage() {
         }
     }, [selectedCategory, selectedClass]);
 
+    // Reset section when class changes
+    useEffect(() => {
+        setSelectedSection('');
+    }, [selectedClass]);
+
     const fetchStructureAmount = async (clsId: number, catId: number) => {
         const amt = await getFeeStructureAmount(clsId, catId);
         if (amt && amt !== "0") {
@@ -292,9 +297,14 @@ export default function CreateInvoicePage() {
                                                 className="w-full rounded-lg border-gray-300"
                                                 value={selectedSection}
                                                 onChange={(e) => setSelectedSection(Number(e.target.value) || '')}
+                                                disabled={!selectedClass}
                                             >
                                                 <option value="">All Sections</option>
-                                                {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                {classes.find(c => c.id === Number(selectedClass))?.sections?.map(s => (
+                                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                                )) || sections.filter(s => !selectedClass || s.parent_class === Number(selectedClass)).map(s => (
+                                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                                ))}
                                             </select>
                                         </div>
                                     </div>

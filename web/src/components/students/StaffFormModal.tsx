@@ -53,7 +53,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
         }
     }, [staffToEdit, isOpen, reset, setValue]);
 
-    const onInvalid = (errors: object) => {
+    const onInvalid = (errors: Record<string, unknown>) => {
         console.error("Validation Errors:", errors);
         const firstError = Object.values(errors)[0] as { message?: string };
         setError(firstError?.message || "Please check the form for errors.");
@@ -77,7 +77,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                 onSuccess();
                 onClose();
             }, 2000);
-        } catch (err) {
+        } catch (err: unknown) {
             // Error type is unknown, but commonly Error object or API response
             console.error("Failed to save staff", err);
             const message = err instanceof Error ? err.message : "Failed to save staff. Please try again.";

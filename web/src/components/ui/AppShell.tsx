@@ -23,8 +23,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         { name: 'Settings', href: '/settings', icon: Settings },
     ];
 
-    // FIX: Full Screen for Login Page
-    if (pathname === '/login') {
+    // FIX: Full Screen for Login Page (Root or /login)
+    if (pathname === '/login' || pathname === '/') {
         return <div className="min-h-screen bg-gray-50">{children}</div>;
     }
 
