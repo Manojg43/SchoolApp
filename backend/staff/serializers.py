@@ -8,12 +8,30 @@ class StaffProfileSerializer(serializers.ModelSerializer):
         fields = ['designation', 'department', 'joining_date']
 
 class StaffSerializer(serializers.ModelSerializer):
-    # Flatten nested profile data for easier frontend consumption
-    designation = serializers.CharField(source='staff_profile.designation', required=False, allow_blank=True)
-    department = serializers.CharField(source='staff_profile.department', required=False, allow_blank=True)
-    joining_date = serializers.DateField(source='staff_profile.joining_date', required=False, allow_null=True)
-    
+    # Safe access using helpers
+    designation = serializers.SerializerMethodField()
+    department = serializers.SerializerMethodField()
+    joining_date = serializers.SerializerMethodField()
+
     password = serializers.CharField(write_only=True, required=False) 
+
+    def get_designation(self, obj):
+        if hasattr(obj, 'staff_profile'):
+            return obj.staff_profile.designation
+        return ""
+
+    def get_department(self, obj):
+        if hasattr(obj, 'staff_profile'):
+            return obj.staff_profile.department
+        return ""
+
+    def get_joining_date(self, obj):
+        # Try staff profile first, then teacher profile
+        if hasattr(obj, 'staff_profile') and obj.staff_profile.joining_date:
+            return obj.staff_profile.joining_date
+        if hasattr(obj, 'teacher_profile') and obj.teacher_profile.joining_date:
+            return obj.teacher_profile.joining_date
+        return None 
 
     class Meta:
         model = CoreUser
