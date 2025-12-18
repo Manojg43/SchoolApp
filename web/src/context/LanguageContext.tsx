@@ -13,13 +13,16 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('app-language') as Language;
+      return saved || 'en';
+    }
+    return 'en';
+  });
   const [translations, setTranslations] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const saved = localStorage.getItem('app-language') as Language;
-    if (saved) setLanguage(saved);
-  }, []);
+  // Removed useEffect for restoring language as it is done in useState initializer
 
   useEffect(() => {
     localStorage.setItem('app-language', language);

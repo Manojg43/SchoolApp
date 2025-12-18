@@ -24,17 +24,17 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(() => {
+        if (typeof window !== 'undefined') {
+            const storedUser = localStorage.getItem('school_user');
+            return storedUser ? JSON.parse(storedUser) : null;
+        }
+        return null;
+    });
+    const [loading, setLoading] = useState(false); // No need to load if we read from LS synchronously
     const router = useRouter();
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem('school_user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-        setLoading(false);
-    }, []);
+    // Removed useEffect for restoring user as it is done in useState initializer
 
     const login = (userData: User) => {
         setUser(userData);

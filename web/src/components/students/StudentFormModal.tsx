@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X } from 'lucide-react';
-import { getClasses, getSections, createStudent, updateStudent, type Student, type ClassItem, type SectionItem } from '@/lib/api';
+import { getClasses, getSections, createStudent, updateStudent, type Student, type ClassItem, type SectionItem, type StudentPayload } from '@/lib/api';
 
 const studentSchema = z.object({
     first_name: z.string().min(2, "First Name is required"),
@@ -35,11 +35,11 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
     const [loading, setLoading] = useState(false);
 
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<StudentFormValues>({
-        resolver: zodResolver(studentSchema) as any,
+        resolver: zodResolver(studentSchema),
         defaultValues: {
             gender: 'M',
             current_class: undefined
-        } as any
+        }
     });
 
     // Fetch Metadata
@@ -68,13 +68,10 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             setValue('enrollment_number', studentToEdit.enrollment_number);
             setValue('emergency_mobile', studentToEdit.emergency_mobile);
             setValue('date_of_birth', studentToEdit.date_of_birth);
-            setValue('gender', studentToEdit.gender as any);
-            // Need to handle class/section IDs matching backend structure
-            // Assuming studentToEdit has current_class_id if exposed, or we rely on 'class_name' which is read only?
-            // Fix: Backend should serializer IDs. Added PrimaryKeyRelatedField, expecting IDs in response?
-            // Response has `current_class` as ID based on serializer change!
-            setValue('current_class', (studentToEdit as any).current_class);
-            setValue('section', (studentToEdit as any).section);
+            setValue('gender', studentToEdit.gender as 'M' | 'F' | 'O');
+            // Safely cast if necessary due to backend/frontend type mismatch in 'current_class'
+            setValue('current_class', (studentToEdit as unknown as { current_class: number }).current_class);
+            setValue('section', (studentToEdit as unknown as { section: number }).section);
         } else {
             reset();
         }

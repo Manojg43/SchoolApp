@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X } from 'lucide-react';
-import { createStaff, updateStaff, type Staff } from '@/lib/api';
+import { createStaff, updateStaff, type Staff, type StaffPayload } from '@/lib/api';
 
 const staffSchema = z.object({
     first_name: z.string().min(2, "First Name is required"),
@@ -44,7 +44,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
             setValue('last_name', staffToEdit.last_name);
             setValue('email', staffToEdit.email);
             setValue('mobile', staffToEdit.mobile);
-            setValue('role', (staffToEdit.role.toUpperCase().replace(' ', '_') as any));
+            setValue('role', (staffToEdit.role.toUpperCase().replace(' ', '_') as "TEACHER" | "SCHOOL_ADMIN" | "PRINCIPAL" | "OFFICE_STAFF" | "ACCOUNTANT" | "DRIVER" | "CLEANING_STAFF"));
             setValue('designation', staffToEdit.designation || "");
             setValue('department', staffToEdit.department || "");
             setValue('joining_date', staffToEdit.joining_date || "");
@@ -53,9 +53,9 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
         }
     }, [staffToEdit, isOpen, reset, setValue]);
 
-    const onInvalid = (errors: any) => {
+    const onInvalid = (errors: object) => {
         console.error("Validation Errors:", errors);
-        const firstError = Object.values(errors)[0] as any;
+        const firstError = Object.values(errors)[0] as { message?: string };
         setError(firstError?.message || "Please check the form for errors.");
     };
 
@@ -78,6 +78,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                 onClose();
             }, 2000);
         } catch (err: any) {
+            // Error type is unknown, but commonly Error object or API response
             console.error("Failed to save staff", err);
             setError(err.message || "Failed to save staff. Please try again.");
         } finally {

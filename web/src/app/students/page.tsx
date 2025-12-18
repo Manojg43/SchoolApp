@@ -89,7 +89,8 @@ export default function StudentList() {
         // Safe check: match ID or Name if filter is name.
         // Actually, API returns `current_class` (ID) and `class_name` (Str). 
         // FilterBar returns `val` which is ID from options.
-        const matchesClass = classFilter ? String((s as any).current_class) === classFilter : true;
+        // Type safe access to current_class (might be number or missing in old data, use unknown cast safety)
+        const matchesClass = classFilter ? String((s as unknown as { current_class: number }).current_class) === classFilter : true;
 
         return matchesSearch && matchesClass;
     });
