@@ -106,12 +106,12 @@ class StaffViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_superuser:
             qs = CoreUser.objects.filter(
-                role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_Accountant, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
+                role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_ACCOUNTANT, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
             ).exclude(is_superuser=True)
         else:
             qs = CoreUser.objects.filter(
                 school=user.school,
-                role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_Accountant, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
+                role__in=[CoreUser.ROLE_TEACHER, CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL, CoreUser.ROLE_OFFICE_STAFF, CoreUser.ROLE_ACCOUNTANT, CoreUser.ROLE_DRIVER, CoreUser.ROLE_CLEANING_STAFF]
             )
         return qs.select_related('staff_profile')
 
