@@ -76,7 +76,7 @@ export default function HomeScreen() {
 
                 {/* Salary Card */}
                 <Text style={styles.sectionTitle}>Salary Status</Text>
-                <View style={styles.salaryCard}>
+                <TouchableOpacity style={styles.salaryCard} onPress={() => navigation.navigate('Salary')}>
                     <View style={styles.salaryHeader}>
                         <IndianRupee color="#0f52ba" size={24} />
                         <Text style={styles.salaryTitle}>Last Month: {salary.month || '-'}</Text>
@@ -90,7 +90,7 @@ export default function HomeScreen() {
                         </View>
                     </View>
                     <Text style={styles.salaryFooter}>Based on {salary.present_days || 0} Present Days</Text>
-                </View>
+                </TouchableOpacity>
 
                 {/* Primary Action */}
                 <TouchableOpacity
@@ -106,15 +106,15 @@ export default function HomeScreen() {
 
                 {/* Other Actions */}
                 <View style={styles.grid}>
-                    <TouchableOpacity style={styles.gridItem}>
+                    <TouchableOpacity style={styles.gridItem} onPress={() => Alert.alert("Coming Soon", "Profile edit coming soon.")}>
                         <User color="#0f52ba" size={24} />
                         <Text style={styles.gridLabel}>My Profile</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.gridItem}>
+                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Leave')}>
                         <Menu color="#0f52ba" size={24} />
                         <Text style={styles.gridLabel}>Apply Leave</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.gridItem}>
+                    <TouchableOpacity style={styles.gridItem} onPress={() => Alert.alert("Coming Soon", "Timetable coming soon.")}>
                         <Calendar color="#0f52ba" size={24} />
                         <Text style={styles.gridLabel}>Timetable</Text>
                     </TouchableOpacity>
