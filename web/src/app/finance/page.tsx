@@ -1,9 +1,9 @@
 'use client';
 
 import { useLanguage } from "@/context/LanguageContext";
-import { useAuth, PermissionGuard } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { Check, X, Plus, AlertCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import KPICard from "@/components/ui/KPICard";
 import { getFees, createFee, deleteFee, getStudents, type Fee, type Student } from "@/lib/api";

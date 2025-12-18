@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, PermissionGuard } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import {
     getClasses, getSections, getStudents, getFeeCategories, getFeeStructureAmount, createFee,
     type ClassItem, type SectionItem, type Student, type FeeCategory
