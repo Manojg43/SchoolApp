@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #333;
+            padding-bottom: 1rem;
+        }
+
+        .school-name {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #2563eb;
+            text-transform: uppercase;
+        }
+
+        .address {
+            font-size: 10pt;
+            color: #666;
+        }
+
+        .invoice-title {
+            text-align: center;
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            text-decoration: underline;
+        }
+
+        .meta-table {
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .meta-table td {
+            vertical-align: top;
+            padding: 4px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #555;
+            width: 120px;
+        }
+
+        .content-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .content-table th,
+        .content-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .content-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .total-row td {
+            font-weight: bold;
+            font-size: 14pt;
+            background-color: #f0fdf4;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 10pt;
+            color: #888;
+            border-top: 1px solid #ddd;
+            padding-top: 1rem;
+        }
+
+        .auth-sign {
+            margin-top: 4rem;
+            text-align: right;
+            padding-right: 2rem;
+        }
+
+        .sign-line {
+            display: inline-block;
+            width: 200px;
+            border-top: 1px solid #333;
+            text-align: center;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="school-name">{{ school_name }}</div>
+        <div class="address">School Management System Generated Invoice</div>
+    </div>
+
+    <div class="invoice-title">INVOICE / RECEIPT</div>
+
+    <table class="meta-table">
+        <tr>
+            <td width="60%">
+                <strong>Bill To:</strong><br>
+                <span style="font-size: 14pt;">{{ student_name }}</span><br>
+                Enrollment: {{ enrollment_number }}<br>
+                Class: {{ class_name }}
+            </td>
+            <td width="40%" style="text-align: right;">
+                <table>
+                    <tr>
+                        <td class="label">Invoice No:</td>
+                        <td>#{{ invoice_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Date:</td>
+                        <td>{{ date }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Due Date:</td>
+                        <td>{{ due_date }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Status:</td>
+                        <td style="text-transform: uppercase;">{{ status }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table class="content-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th style="text-align: right; width: 150px;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ title }}</td>
+                <td style="text-align: right;">₹{{ amount }}</td>
+            </tr>
+            <!-- Future: Add breakdown if needed -->
+            <tr class="total-row">
+                <td style="text-align: right;">Total Payable</td>
+                <td style="text-align: right;">₹{{ amount }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="auth-sign">
+        <div class="sign-line">Authorized Signatory</div>
+    </div>
+
+    <div class="footer">
+        <p>This is a computer-generated document. No signature is required.</p>
+        <p>Generated on {{ date }}</p>
+    </div>
+</body>
+
+</html>

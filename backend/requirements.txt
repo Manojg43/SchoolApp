@@ -7,3 +7,4 @@ whitenoise
 gunicorn
 reportlab
 psycopg2-binary
+xhtml2pdf
