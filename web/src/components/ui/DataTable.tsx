@@ -91,38 +91,42 @@ export default function DataTable<T extends { id: number | string }>({
                             ))}
 
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                                <div className="relative inline-block text-left group-action">
-                                    <button className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 focus:outline-none peer">
+                                <div className="relative inline-block text-left">
+                                    <button
+                                        onClick={(e) => toggleMenu(e, row.id)}
+                                        className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    >
                                         <MoreVertical className="h-4 w-4" />
                                     </button>
 
-                                    {/* CSS-only Dropdown on Focus/Hover (Simple and Reliant) */}
-                                    <div className="hidden peer-focus:block peer-hover:block hover:block absolute right-0 z-20 mt-1 w-32 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                        {onView && (
-                                            <button
-                                                onClick={() => onView(row)}
-                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                            >
-                                                <Eye className="mr-2 h-4 w-4 text-gray-500" /> View
-                                            </button>
-                                        )}
-                                        {onEdit && (
-                                            <button
-                                                onClick={() => onEdit(row)}
-                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                            >
-                                                <Edit2 className="mr-2 h-4 w-4 text-secondary" /> Edit
-                                            </button>
-                                        )}
-                                        {onDelete && (
-                                            <button
-                                                onClick={() => onDelete(row)}
-                                                className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                            </button>
-                                        )}
-                                    </div>
+                                    {openMenuId === row.id && (
+                                        <div className="absolute right-0 z-20 mt-1 w-32 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in duration-75">
+                                            {onView && (
+                                                <button
+                                                    onClick={() => onView(row)}
+                                                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                >
+                                                    <Eye className="mr-2 h-4 w-4 text-gray-500" /> View
+                                                </button>
+                                            )}
+                                            {onEdit && (
+                                                <button
+                                                    onClick={() => onEdit(row)}
+                                                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                >
+                                                    <Edit2 className="mr-2 h-4 w-4 text-secondary" /> Edit
+                                                </button>
+                                            )}
+                                            {onDelete && (
+                                                <button
+                                                    onClick={() => onDelete(row)}
+                                                    className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </td>
                         </tr>
