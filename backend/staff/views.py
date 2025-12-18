@@ -152,6 +152,20 @@ class ScanAttendanceView(APIView):
 
     def post(self, request):
         token = request.data.get('qr_token')
+        
+        print(f"DEBUG: Received QR Token: {token!r}")
+
+        # Handle JSON formatted QR codes (Strict Mode)
+        if token and isinstance(token, str) and token.strip().startswith('{'):
+            try:
+                import json
+                data = json.loads(token)
+                token = data.get('token', token)
+                print(f"DEBUG: Parsed JSON Token: {token}")
+            except Exception as e:
+                print(f"DEBUG: JSON Parse Error: {e}")
+                return Response({'error': 'Invalid QR Format (Bad JSON)'}, status=400)
+
         # Support both 'latitude' (std) and 'gps_lat' (legacy/mobile)
         lat = request.data.get('latitude') or request.data.get('gps_lat')
         lng = request.data.get('longitude') or request.data.get('gps_long')
@@ -161,6 +175,10 @@ class ScanAttendanceView(APIView):
             
         # 1. Verify Signature
         try:
+            if '|' not in token:
+                 print(f"DEBUG: Malformed Token (No Pipe): {token}")
+                 return Response({'error': 'Malformed Token (No Pipe)'}, status=400)
+
             raw_data, signature = token.rsplit('|', 1)
             expected_sig = hmac.new(
                 settings.SECRET_KEY.encode(),
@@ -169,7 +187,10 @@ class ScanAttendanceView(APIView):
             ).hexdigest()
             
             if not hmac.compare_digest(signature, expected_sig):
-                return Response({'error': 'Invalid QR Signature'}, status=403)
+                print(f"DEBUG: Signature Mismatch!")
+                print(f"DEBUG: Received: {signature}")
+                print(f"DEBUG: Expected: {expected_sig}")
+                return Response({'error': f'Invalid QR Signature'}, status=403)
                 
             school_id, timestamp, nonce = raw_data.split('|')
             
@@ -181,7 +202,8 @@ class ScanAttendanceView(APIView):
             if time.time() - int(timestamp) > 300:
                  return Response({'error': 'QR Expired'}, status=400)
                  
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG: Verification Exception: {e}")
             return Response({'error': 'Malformed Token'}, status=400)
 
         # 4. Verify Geo-Fence
