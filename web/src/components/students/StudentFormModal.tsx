@@ -31,6 +31,7 @@ type StudentFormValues = {
     gender: 'M' | 'F' | 'O';
     date_of_birth: string;
     address?: string;
+    emergency_mobile: string;
     // Allow any input for form handling to satisfy Zod resolver inference of 'unknown' on coerce
     current_class: any;
     section: any;
