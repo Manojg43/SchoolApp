@@ -52,18 +52,23 @@ export default function CreateInvoicePage() {
     const fetchInitialData = async () => {
         setLoadingInit(true);
         try {
+            console.log("Fetching Initial Data for Invoice...");
             const [cData, secData, sData, catData] = await Promise.all([
                 getClasses(),
                 getSections(),
                 getStudents(),
                 getFeeCategories()
             ]);
-            setClasses(cData);
-            setSections(secData);
-            setAllStudents(sData);
-            setCategories(catData);
+
+            console.log("Data Received:", { c: cData?.length, s: sData?.length, sec: secData?.length });
+
+            if (Array.isArray(cData)) setClasses(cData);
+            if (Array.isArray(secData)) setSections(secData);
+            if (Array.isArray(sData)) setAllStudents(sData);
+            if (Array.isArray(catData)) setCategories(catData);
         } catch (e) {
             console.error("Failed to load initial data", e);
+            alert("Failed to load data. Please refresh.");
         } finally {
             setLoadingInit(false);
         }
@@ -114,7 +119,8 @@ export default function CreateInvoicePage() {
     // Quick Mode Logic: Resolve Student from Enrollment
     const handleQuickEnrollmentBlur = () => {
         if (!quickEnrollment) return;
-        const student = allStudents.find(s => s.enrollment_number === quickEnrollment);
+        const q = quickEnrollment.trim().toLowerCase();
+        const student = allStudents.find(s => s.enrollment_number.toLowerCase() === q);
         if (student) {
             setSelectedStudentId(student.id);
             // Also try to infer structure amount if we can map student class
