@@ -48,11 +48,21 @@ class AttendanceSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['attendance_id', 'school']
 
+from finance.models import Invoice
+
 class FeeSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.first_name', read_only=True)
     class_name = serializers.CharField(source='student.current_class.name', read_only=True)
     
+    # Map frontend 'amount' to model 'total_amount'
+    amount = serializers.DecimalField(source='total_amount', max_digits=10, decimal_places=2)
+
     class Meta:
-        model = Fee
-        fields = '__all__'
-        read_only_fields = ['invoice_id', 'school']
+        model = Invoice
+        fields = ['id', 'invoice_id', 'student', 'student_name', 'class_name', 'title', 'amount', 'due_date', 'status', 'created_at']
+        read_only_fields = ['invoice_id', 'created_at']
+
+    def create(self, validated_data):
+        # Allow default status if not provided, or map it if needed
+        # Invoice usage: total_amount is already set via source='total_amount'
+        return super().create(validated_data)

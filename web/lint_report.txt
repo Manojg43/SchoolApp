@@ -1,0 +1,90 @@
+
+> web@0.1.0 lint
+> eslint
+
+
+C:\Flutter apk\SchoolApp\web\src\app\attendance\page.tsx
+  9:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Flutter apk\SchoolApp\web\src\app\fees\page.tsx
+  8:19  warning  'DollarSign' is defined but never used   @typescript-eslint/no-unused-vars
+  8:41  warning  'AlertCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Flutter apk\SchoolApp\web\src\app\finance\create\page.tsx
+   21:12  warning  'loadingInit' is assigned a value but never used                                                               @typescript-eslint/no-unused-vars
+  105:8   warning  React Hook useEffect has a missing dependency: 'categories'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Flutter apk\SchoolApp\web\src\app\finance\page.tsx
+   9:19  warning  'createFee' is defined but never used               @typescript-eslint/no-unused-vars
+  14:13  warning  't' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  18:12  warning  'students' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  42:11  warning  'handleSuccess' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  51:18  warning  'e' is defined but never used                       @typescript-eslint/no-unused-vars
+
+C:\Flutter apk\SchoolApp\web\src\app\login\page.tsx
+  56:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Flutter apk\SchoolApp\web\src\app\page.tsx
+  6:10  warning  'getDashboardStats' is defined but never used  @typescript-eslint/no-unused-vars
+  7:10  warning  'BarChart3' is defined but never used          @typescript-eslint/no-unused-vars
+  9:10  warning  'motion' is defined but never used             @typescript-eslint/no-unused-vars
+
+C:\Flutter apk\SchoolApp\web\src\app\reports\page.tsx
+  7:13  warning  't' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Flutter apk\SchoolApp\web\src\app\settings\page.tsx
+   8:13   warning  't' is assigned a value but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  12:18   warning  'setLogo' is assigned a value but never used                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  13:23   warning  'setSignature' is assigned a value but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  14:23   warning  'setWatermark' is assigned a value but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  20:67   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  35:45   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  46:102  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  49:50   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  63:50   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Flutter apk\SchoolApp\web\src\app\staff\page.tsx
+   6:10  warning  'Briefcase' is defined but never used   @typescript-eslint/no-unused-vars
+  13:13  warning  't' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Flutter apk\SchoolApp\web\src\app\students\page.tsx
+   5:10  warning  'Download' is defined but never used      @typescript-eslint/no-unused-vars
+   5:20  warning  'Plus' is defined but never used          @typescript-eslint/no-unused-vars
+   5:26  warning  'Edit' is defined but never used          @typescript-eslint/no-unused-vars
+   5:32  warning  'Trash2' is defined but never used        @typescript-eslint/no-unused-vars
+  14:13  warning  't' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  41:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Flutter apk\SchoolApp\web\src\app\transport\page.tsx
+   4:19  warning  'PermissionGuard' is defined but never used  @typescript-eslint/no-unused-vars
+   6:23  warning  'Trash2' is defined but never used           @typescript-eslint/no-unused-vars
+   8:77  warning  'deleteRoute' is defined but never used      @typescript-eslint/no-unused-vars
+  11:13  warning  't' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  49:18  warning  'e' is defined but never used                @typescript-eslint/no-unused-vars
+  62:18  warning  'e' is defined but never used                @typescript-eslint/no-unused-vars
+  72:18  warning  'e' is defined but never used                @typescript-eslint/no-unused-vars
+
+C:\Flutter apk\SchoolApp\web\src\components\students\StaffFormModal.tsx
+   6:53  warning  'StaffPayload' is defined but never used  @typescript-eslint/no-unused-vars
+  80:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Flutter apk\SchoolApp\web\src\components\students\StudentFormModal.tsx
+   6:118  warning  'StudentPayload' is defined but never used  @typescript-eslint/no-unused-vars
+  54:27   error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Flutter apk\SchoolApp\web\src\components\ui\AppShell.tsx
+  6:27  warning  'LogOut' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Flutter apk\SchoolApp\web\src\components\ui\Carousel.tsx
+   6:10  warning  'cn' is defined but never used                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  51:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Flutter apk\SchoolApp\web\src\components\ui\Sidebar.tsx
+   8:5   warning  'Users' is defined but never used       @typescript-eslint/no-unused-vars
+  34:13  warning  't' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Flutter apk\SchoolApp\web\src\context\AuthContext.tsx
+  34:21  warning  'setLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 49 problems (7 errors, 42 warnings)
+

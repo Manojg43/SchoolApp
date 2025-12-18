@@ -8,3 +8,12 @@ urlpatterns = [
     path('receipt/<str:receipt_no>/', GenerateReceiptPDF.as_view(), name='receipt-pdf'),
     path('invoice/<int:invoice_id>/pdf/', DownloadInvoiceView.as_view(), name='invoice-pdf'),
 ]
+
+from rest_framework.routers import DefaultRouter
+from .views import FeeCategoryViewSet, FeeStructureViewSet
+
+router = DefaultRouter()
+router.register(r'categories', FeeCategoryViewSet)
+router.register(r'structure', FeeStructureViewSet)
+
+urlpatterns += router.urls

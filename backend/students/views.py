@@ -32,15 +32,17 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Attendance.objects.filter(school=self.request.user.school)
 
+from finance.models import Invoice
+
 class FeeViewSet(viewsets.ModelViewSet):
-    permission_classes = [StandardPermission] # Logic in get_permissions
-    queryset = Fee.objects.all()
+    permission_classes = [StandardPermission] 
+    queryset = Invoice.objects.all()
     serializer_class = FeeSerializer
     
     def get_queryset(self):
         if self.request.user.is_superuser:
-            return Fee.objects.all()
-        return Fee.objects.filter(school=self.request.user.school)
+            return Invoice.objects.all()
+        return Invoice.objects.filter(school=self.request.user.school)
 
     def perform_create(self, serializer):
         serializer.save(school=self.request.user.school)

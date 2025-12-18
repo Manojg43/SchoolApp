@@ -59,10 +59,54 @@ class DownloadInvoiceView(APIView):
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="invoice_{invoice.invoice_id}.pdf"'
 
-        pisa_status = pisa.CreatePDF(html_string, dest=response)
-        
         if pisa_status.err:
             return Response({'error': 'PDF generation failed'}, status=500)
             
         return response
+
+from rest_framework import viewsets
+from .models import FeeCategory, FeeStructure
+from .serializers import FeeCategorySerializer, FeeStructureSerializer
+from core.permissions import StandardPermission
+from core.middleware import get_current_school_id
+
+class FeeCategoryViewSet(viewsets.ModelViewSet):
+    queryset = FeeCategory.objects.all()
+    serializer_class = FeeCategorySerializer
+    permission_classes = [StandardPermission]
+
+    def get_queryset(self):
+        queryset = FeeCategory.objects.all()
+        school_id = get_current_school_id()
+        if school_id:
+            queryset = queryset.filter(school__school_id=school_id)
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(school=self.request.user.school)
+
+class FeeStructureViewSet(viewsets.ModelViewSet):
+    queryset = FeeStructure.objects.all()
+    serializer_class = FeeStructureSerializer
+    permission_classes = [StandardPermission]
+
+    def get_queryset(self):
+        queryset = FeeStructure.objects.all()
+        school_id = get_current_school_id()
+        class_id = self.request.query_params.get('class_assigned')
+        category_id = self.request.query_params.get('category')
+        
+        if school_id:
+            queryset = queryset.filter(school__school_id=school_id)
+        
+        if class_id:
+            queryset = queryset.filter(class_assigned_id=class_id)
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+            
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(school=self.request.user.school)
+
 
