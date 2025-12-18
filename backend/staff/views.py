@@ -190,7 +190,11 @@ class ScanAttendanceView(APIView):
                 print(f"DEBUG: Signature Mismatch!")
                 print(f"DEBUG: Received: {signature}")
                 print(f"DEBUG: Expected: {expected_sig}")
-                return Response({'error': f'Invalid QR Signature'}, status=403)
+                
+                # Temporary Debugging: Return details to client to see on mobile
+                key_prefix = settings.SECRET_KEY[:5]
+                debug_msg = f"Sig Mismatch. Key:{key_prefix}..., Raw:{raw_data!r}, Rec:{signature[:5]}..."
+                return Response({'error': debug_msg}, status=403)
                 
             school_id, timestamp, nonce = raw_data.split('|')
             
