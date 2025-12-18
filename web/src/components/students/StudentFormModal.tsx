@@ -51,8 +51,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                 // console.log("Fetched Data:", c, s);
                 setClasses(c);
                 setSections(s);
-                setClasses(c);
-                setSections(s);
+
             } catch (err) {
                 console.error("Failed to load metadata:", err);
                 const msg = err instanceof Error ? err.message : 'Unknown Error';
