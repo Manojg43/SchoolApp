@@ -25,6 +25,10 @@ class School(models.Model):
     signature_url = models.TextField(_("Principal Signature Data"), blank=True, null=True)
     watermark_url = models.TextField(_("Report Watermark Data"), blank=True, null=True)
 
+    # Attendance Configuration
+    min_hours_half_day = models.FloatField(_("Min Hours for Half Day"), default=4.0)
+    min_hours_full_day = models.FloatField(_("Min Hours for Full Day"), default=6.0)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

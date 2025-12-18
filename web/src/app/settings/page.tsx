@@ -217,6 +217,37 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
+                    {/* Attendance Rules Section */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
+                        <div className="flex items-center gap-2 mb-4 border-b pb-2">
+                            <h2 className="text-lg font-semibold text-gray-800">Attendance Rules</h2>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">Define minimum working hours for auto-calculation.</p>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Min Hours (Half Day)</label>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    value={settings.min_hours_half_day || 4.0}
+                                    onChange={e => setSettings({ ...settings, min_hours_half_day: parseFloat(e.target.value) })}
+                                    className="w-full p-2 border rounded-md"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Min Hours (Full Day)</label>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    value={settings.min_hours_full_day || 6.0}
+                                    onChange={e => setSettings({ ...settings, min_hours_full_day: parseFloat(e.target.value) })}
+                                    className="w-full p-2 border rounded-md"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Staff QR Code Section */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
                         <div className="flex justify-between items-center mb-4 border-b pb-2">
@@ -256,6 +287,6 @@ export default function SettingsPage() {
                 </div>
 
             </div>
-        </div>
-    );
+
+            );
 }

@@ -254,11 +254,79 @@ class ScanAttendanceView(APIView):
             
         elif not attendance.check_out:
             attendance.check_out = current_time
+            
+            # Logic: Calculate Duration
+            # Assuming check_in and check_out are on the same day for standard attendance
+            # If cross-day, logic needs datetime, but for simple school app assuming same day.
+            
+            # Convert to datetime for diff
+            dummy_date = datetime.date.today() # Only for time diff calculation
+            in_dt = datetime.datetime.combine(dummy_date, attendance.check_in)
+            out_dt = datetime.datetime.combine(dummy_date, attendance.check_out)
+            
+            duration_hours = (out_dt - in_dt).total_seconds() / 3600.0
+            
+            school_config = request.user.school
+            min_full = school_config.min_hours_full_day
+            min_half = school_config.min_hours_half_day
+            
+            if duration_hours >= min_full:
+                attendance.status = 'PRESENT'
+            elif duration_hours >= min_half:
+                attendance.status = 'HALF_DAY'
+            else:
+                # Less than half day minimum -> Still Absent or specific short leave?
+                # Usually marked 'ABSENT' or 'LEAVE' if very short. 
+                # Let's keep it ABSENT or HALF_DAY? 
+                # User prompted: "how we can consider half day".
+                # If < min_half, let's mark ABSENT (Short duration)
+                attendance.status = 'ABSENT' 
+                
             attendance.save()
-            return Response({'message': 'Check-Out Successful', 'time': str(current_time)})
+            
+            # Check-out message with status (Optional to show hours)
+            msg = f'Check-Out: {attendance.status} ({duration_hours:.1f} hrs)'
+            return Response({'message': msg, 'time': str(current_time)})
             
         else:
             return Response({'message': 'Already Checked Out'}, status=400)
+
+
+class UpdateAttendanceView(APIView):
+    # Only Admin/Principal
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        user = request.user
+        # Strict permission check: must be admin/principal
+        if not user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'is_superuser']:
+             return Response({'error': 'Unauthorized'}, status=403)
+             
+        try:
+            attendance = StaffAttendance.objects.get(id=pk, school=user.school)
+        except StaffAttendance.DoesNotExist:
+            return Response({'error': 'Attendance record not found'}, status=404)
+            
+        data = request.data
+        
+        # Update Fields
+        if 'status' in data:
+            attendance.status = data['status']
+            
+        if 'check_in' in data:
+            # Expected HH:MM:SS or HH:MM
+            attendance.check_in = data['check_in']
+            
+        if 'check_out' in data:
+             attendance.check_out = data['check_out']
+             
+        if 'correction_reason' in data:
+             attendance.correction_reason = data['correction_reason']
+             
+        attendance.source = 'WEB_MANUAL' # Mark as manual edit
+        attendance.save()
+        
+        return Response({'message': 'Attendance updated successfully'})
 
 
 class StaffAttendanceReportView(APIView):
@@ -295,8 +363,8 @@ class StaffAttendanceReportView(APIView):
             date__lte=end_date
         )
         
-        # Build Map: Date -> Status
-        att_map = {att.date: att.status for att in attendances}
+        # Build Map: Date -> Object
+        att_map = {att.date: att for att in attendances}
         
         # Generate Full Month Report
         report = []
@@ -307,7 +375,17 @@ class StaffAttendanceReportView(APIView):
         
         for day in range(1, num_days + 1):
             current_date = datetime.date(year, month, day)
-            status = att_map.get(current_date, 'ABSENT') # Default to Absent if no record
+            status = 'ABSENT'
+            record_id = None
+            check_in = None
+            check_out = None
+            
+            if current_date in att_map:
+                att = att_map[current_date]
+                status = att.status
+                record_id = att.id
+                check_in = str(att.check_in) if att.check_in else None
+                check_out = str(att.check_out) if att.check_out else None
             
             # Don't mark future dates as absent
             if current_date > datetime.date.today():
@@ -322,7 +400,10 @@ class StaffAttendanceReportView(APIView):
             report.append({
                 'date': current_date.strftime("%Y-%m-%d"),
                 'day': day,
-                'status': status
+                'status': status,
+                'id': record_id,
+                'check_in': check_in,
+                'check_out': check_out
             })
             
         return Response({

@@ -520,11 +520,31 @@ export interface StaffAttendanceReport {
         date: string;
         day: number;
         status: string;
+        id?: number;
+        check_in?: string;
+        check_out?: string;
     }[];
 }
 
 export async function getStaffAttendanceReport(staffId: number, month: number, year: number, schoolId?: string): Promise<StaffAttendanceReport> {
     return fetchWithSchool(`/staff/attendance/report/?staff_id=${staffId}&month=${month}&year=${year}`, schoolId);
+}
+
+export async function updateAttendance(id: number, data: { status?: string, check_in?: string, check_out?: string, correction_reason?: string }, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/staff/attendance/${id}/update/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error(`Failed to update attendance: ${res.statusText}`);
 }
 
 // School Settings & Branding
@@ -538,6 +558,8 @@ export interface SchoolSettings {
     logo_url: string; // Base64 or URL
     signature_url: string; // Base64 or URL
     watermark_url: string; // Base64 or URL
+    min_hours_half_day?: number;
+    min_hours_full_day?: number;
 }
 
 export async function getSchoolSettings(schoolId?: string): Promise<SchoolSettings> {
