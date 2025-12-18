@@ -7,7 +7,7 @@ from students.views import StudentViewSet, AttendanceViewSet, FeeViewSet
 from django.http import JsonResponse
 
 router = DefaultRouter()
-router.register(r'schools', SchoolViewSet)
+router.register(r'schools', SchoolViewSet, basename='school')
 router.register(r'years', AcademicYearViewSet)
 router.register(r'classes', ClassViewSet)
 router.register(r'sections', SectionViewSet)

@@ -473,3 +473,92 @@ export async function deleteRoute(id: number, schoolId?: string): Promise<void> 
 
     if (!res.ok) throw new Error(`Failed to delete route: ${res.statusText}`);
 }
+
+// Analytics & Reports
+export interface AttendanceAnalytics {
+    date: string;
+    students: {
+        total: number;
+        present: number;
+        absent: number;
+        percentage: number;
+    };
+    staff: {
+        total_marked: number;
+        present: number;
+    };
+    class_distribution: { current_class__name: string; count: number }[];
+}
+
+export interface FinanceAnalytics {
+    overview: {
+        total_invoiced: number;
+        total_collected: number;
+        pending: number;
+        collection_rate: number;
+    };
+}
+
+export async function getAttendanceAnalytics(schoolId?: string): Promise<AttendanceAnalytics> {
+    return fetchWithSchool('/reports/attendance/', schoolId);
+}
+
+export async function getFinanceAnalytics(schoolId?: string): Promise<FinanceAnalytics> {
+    return fetchWithSchool('/reports/finance/', schoolId);
+}
+
+// School Settings & Branding
+export interface SchoolSettings {
+    name: string;
+    address: string;
+    domain: string;
+    language: string;
+    gps_lat: string | number;
+    gps_long: string | number;
+    logo_url: string; // Base64 or URL
+    signature_url: string; // Base64 or URL
+    watermark_url: string; // Base64 or URL
+}
+
+export async function getSchoolSettings(schoolId?: string): Promise<SchoolSettings> {
+    return fetchWithSchool('/schools/current/', schoolId);
+}
+
+export async function updateSchoolSettings(data: Partial<SchoolSettings>, schoolId?: string): Promise<SchoolSettings> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/schools/current/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error(`Failed to update school settings: ${res.statusText}`);
+    return res.json();
+}
+
+export async function regenerateQR(schoolId?: string): Promise<{ qr_token: string, expires_in: number, school_name: string }> {
+    return fetchWithSchool('/staff/qr/generate/', schoolId);
+}
+
+// Certificates
+export async function generateCertificate(studentId: number, type: string, schoolId?: string): Promise<Blob> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/certificates/generate/${studentId}/${type}/`, {
+        method: 'GET',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to generate certificate: ${res.statusText}`);
+    return res.blob();
+}

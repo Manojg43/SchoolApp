@@ -19,10 +19,11 @@ class School(models.Model):
     gps_lat = models.DecimalField(_("Geo Latitude"), max_digits=9, decimal_places=6, null=True, blank=True)
     gps_long = models.DecimalField(_("Geo Longitude"), max_digits=9, decimal_places=6, null=True, blank=True)
     
-    # Supabase Storage (URLs only)
-    logo_url = models.URLField(_("Logo URL"), blank=True, null=True)
-    signature_url = models.URLField(_("Principal Signature URL"), blank=True, null=True)
-    watermark_url = models.URLField(_("Report Watermark URL"), blank=True, null=True)
+    # Supabase Storage / Base64 DB Storage
+    # Changed to TextField to allow storing Base64 strings directly in DB as per user request
+    logo_url = models.TextField(_("Logo Data"), blank=True, null=True) 
+    signature_url = models.TextField(_("Principal Signature Data"), blank=True, null=True)
+    watermark_url = models.TextField(_("Report Watermark Data"), blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

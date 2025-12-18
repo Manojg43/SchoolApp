@@ -143,7 +143,7 @@ class GenerateSchoolQR(APIView):
         
         return Response({
             'qr_token': token,
-            'expires_in': 30, # Rotate every 30s
+            'expires_in': 300, # Rotate every 5 mins
             'school_name': user.school.name
         })
 
@@ -177,8 +177,8 @@ class ScanAttendanceView(APIView):
             if request.user.school.school_id != school_id:
                 return Response({'error': 'Wrong School QR'}, status=403)
                 
-            # 3. Verify Timestamp (Strict 60s window)
-            if time.time() - int(timestamp) > 60:
+            # 3. Verify Timestamp (Relaxed to 5 mins for mobile clock drift)
+            if time.time() - int(timestamp) > 300:
                  return Response({'error': 'QR Expired'}, status=400)
                  
         except Exception:

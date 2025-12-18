@@ -8,8 +8,10 @@ interface User {
     role: string;
     school_id: string;
     user_id: string;
-    name: string;
+    first_name: string;
+    last_name: string;
     email: string;
+    mobile?: string;
     permissions: string[];
 }
 

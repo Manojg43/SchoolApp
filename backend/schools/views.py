@@ -4,10 +4,30 @@ from .serializers import SchoolSerializer, AchievementSerializer, AcademicYearSe
 from core.permissions import StandardPermission
 from core.middleware import get_current_school_id
 
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
 class SchoolViewSet(viewsets.ModelViewSet):
-    queryset = School.objects.all()
     serializer_class = SchoolSerializer
     permission_classes = [StandardPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return School.objects.all()
+        return School.objects.filter(id=user.school.id)
+
+    @action(detail=False, methods=['get', 'put', 'patch'])
+    def current(self, request):
+        school = request.user.school
+        if request.method == 'GET':
+            serializer = self.get_serializer(school)
+            return Response(serializer.data)
+        
+        serializer = self.get_serializer(school, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 class AchievementViewSet(viewsets.ModelViewSet):
     queryset = Achievement.objects.all()
