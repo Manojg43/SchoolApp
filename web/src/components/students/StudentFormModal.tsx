@@ -21,21 +21,8 @@ const studentSchema = z.object({
     section: z.coerce.number().nullable().optional().transform(val => (val === 0 || !val) ? null : val),
 });
 
-// Explicitly define Form Values to avoid inference issues with transforms
-type StudentFormValues = {
-    first_name: string;
-    last_name: string;
-    father_name: string;
-    mother_name?: string;
-    enrollment_number: string;
-    gender: 'M' | 'F' | 'O';
-    date_of_birth: string;
-    address?: string;
-    emergency_mobile: string;
-    // Allow any input for form handling to satisfy Zod resolver inference of 'unknown' on coerce
-    current_class: any;
-    section: any;
-};
+// Infer directly to ensure consistency
+type StudentFormValues = z.infer<typeof studentSchema>;
 
 interface StudentFormModalProps {
     isOpen: boolean;
@@ -51,7 +38,8 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
     const [loading, setLoading] = useState(false);
 
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<StudentFormValues>({
-        resolver: zodResolver(studentSchema),
+        // Cast resolver to any to bypass strict type mismatch between Zod input/output and RHF
+        resolver: zodResolver(studentSchema) as any,
         defaultValues: {
             gender: 'M',
             current_class: 0,
@@ -137,8 +125,8 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
         try {
             const payload: StudentPayload = {
                 ...data,
-                // Explicit conversion to help with type checking if needed
-                section: (data.section === '' || data.section === null) ? null : Number(data.section)
+                // Zod has already coerced and transformed this to number | null
+                section: data.section
             };
             // Actually, data matches parts of StudentPayload. Let's trust the API call or cast.
             // The issue is 'section' undefined in data vs null in Payload.
@@ -240,7 +228,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                                 <option value="">Select Class</option>
                                 {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
-                            {errors.current_class && <p className="text-red-500 text-xs mt-1">{errors.current_class.message}</p>}
+                            {errors.current_class && <p className="text-red-500 text-xs mt-1">{String(errors.current_class.message)}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Section</label>
