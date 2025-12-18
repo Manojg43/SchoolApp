@@ -60,59 +60,60 @@ export default function DataTable<T extends { id: number | string }>({
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    <tr
-                        key={row.id}
-                        onClick={() => onRowClick?.(row)}
-                        className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
-                    >
-                        <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" />
-                        </td>
-
-                        {columns.map((col, idx) => (
-                            <td key={idx} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                {typeof col.accessorKey === 'function'
-                                    ? col.accessorKey(row)
-                                    : (row[col.accessorKey] as React.ReactNode)}
+                    {data.map((row) => (
+                        <tr
+                            key={row.id}
+                            onClick={() => onRowClick?.(row)}
+                            className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
+                        >
+                            <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" />
                             </td>
-                        ))}
 
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                            <div className="relative inline-block text-left group-action">
-                                <button className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 focus:outline-none peer">
-                                    <MoreVertical className="h-4 w-4" />
-                                </button>
+                            {columns.map((col, idx) => (
+                                <td key={idx} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    {typeof col.accessorKey === 'function'
+                                        ? col.accessorKey(row)
+                                        : (row[col.accessorKey] as React.ReactNode)}
+                                </td>
+                            ))}
 
-                                {/* CSS-only Dropdown on Focus/Hover (Simple and Reliant) */}
-                                <div className="hidden peer-focus:block peer-hover:block hover:block absolute right-0 z-20 mt-1 w-32 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                    {onView && (
-                                        <button
-                                            onClick={() => onView(row)}
-                                            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            <Eye className="mr-2 h-4 w-4 text-gray-500" /> View
-                                        </button>
-                                    )}
-                                    {onEdit && (
-                                        <button
-                                            onClick={() => onEdit(row)}
-                                            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            <Edit2 className="mr-2 h-4 w-4 text-secondary" /> Edit
-                                        </button>
-                                    )}
-                                    {onDelete && (
-                                        <button
-                                            onClick={() => onDelete(row)}
-                                            className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                        >
-                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                        </button>
-                                    )}
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                                <div className="relative inline-block text-left group-action">
+                                    <button className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 focus:outline-none peer">
+                                        <MoreVertical className="h-4 w-4" />
+                                    </button>
+
+                                    {/* CSS-only Dropdown on Focus/Hover (Simple and Reliant) */}
+                                    <div className="hidden peer-focus:block peer-hover:block hover:block absolute right-0 z-20 mt-1 w-32 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                        {onView && (
+                                            <button
+                                                onClick={() => onView(row)}
+                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                <Eye className="mr-2 h-4 w-4 text-gray-500" /> View
+                                            </button>
+                                        )}
+                                        {onEdit && (
+                                            <button
+                                                onClick={() => onEdit(row)}
+                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                <Edit2 className="mr-2 h-4 w-4 text-secondary" /> Edit
+                                            </button>
+                                        )}
+                                        {onDelete && (
+                                            <button
+                                                onClick={() => onDelete(row)}
+                                                className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
                     ))}
                 </tbody>
             </table>
