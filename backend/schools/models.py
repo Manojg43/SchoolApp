@@ -106,3 +106,33 @@ class Achievement(models.Model):
 
     def __str__(self):
         return f"{self.title}"
+
+class ClassSchedule(models.Model):
+    DAYS_OF_WEEK = [
+        ('MONDAY', 'Monday'),
+        ('TUESDAY', 'Tuesday'),
+        ('WEDNESDAY', 'Wednesday'),
+        ('THURSDAY', 'Thursday'),
+        ('FRIDAY', 'Friday'),
+        ('SATURDAY', 'Saturday'),
+        ('SUNDAY', 'Sunday'),
+    ]
+
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    class_assigned = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='schedules')
+    section = models.CharField(max_length=10, blank=True) # Optional section
+    
+    day_of_week = models.CharField(max_length=10, choices=DAYS_OF_WEEK)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    
+    subject = models.CharField(max_length=100)
+    teacher = models.ForeignKey('core.CoreUser', on_delete=models.CASCADE, related_name='class_schedules', limit_choices_to={'role__in': ['TEACHER', 'PRINCIPAL']})
+    
+    class Meta:
+        ordering = ['day_of_week', 'start_time']
+        verbose_name = "Class Schedule"
+        verbose_name_plural = "Class Schedules"
+
+    def __str__(self):
+        return f"{self.day_of_week} {self.start_time} - {self.subject} ({self.teacher.first_name})"

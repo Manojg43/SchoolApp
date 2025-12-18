@@ -60,7 +60,7 @@ export const mobileApi = {
             manual_gps: isManual
         }),
 
-    getMyProfile: () => apiRequest('/staff/dashboard/', 'GET'),
+    getMyProfile: () => apiRequest('/staff/profile/', 'GET'),
 
     // Leave Management
     applyLeave: (start_date: string, end_date: string, reason: string) =>
@@ -75,4 +75,8 @@ export const mobileApi = {
     // Admin View: All Staff Daily Attendance
     getDailyAttendance: (date: string) =>
         apiRequest(`/staff/attendance/daily/?date=${date}`, 'GET'),
+
+    // Timetable
+    getTimetable: (day?: string) =>
+        apiRequest(`/staff/timetable/${day ? `?day=${day}` : ''}`, 'GET'),
 };

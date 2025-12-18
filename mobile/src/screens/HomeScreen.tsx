@@ -115,8 +115,12 @@ export default function HomeScreen() {
                         <Text style={styles.gridLabel}>Apply Leave</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('DailyAttendance')}>
-                        <Calendar color="#0f52ba" size={24} />
+                        <CalendarCheck color="#0f52ba" size={24} />
                         <Text style={styles.gridLabel}>Daily Attendance</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Timetable')}>
+                        <Calendar color="#0f52ba" size={24} />
+                        <Text style={styles.gridLabel}>Timetable</Text>
                     </TouchableOpacity>
                 </View>
 
