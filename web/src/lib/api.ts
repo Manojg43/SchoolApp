@@ -305,9 +305,12 @@ export async function getSections(schoolId?: string): Promise<SectionItem[]> {
 }
 
 // Student CRUD
-export type StudentPayload = Omit<Student, 'id' | 'is_active' | 'language'> & {
+export type StudentPayload = Omit<Student, 'id' | 'is_active' | 'language' | 'mother_name' | 'address' | 'section'> & {
     language?: string;
     is_active?: boolean;
+    mother_name?: string;
+    address?: string;
+    section?: number | null;
 };
 
 export async function createStudent(data: StudentPayload, schoolId?: string): Promise<Student> {

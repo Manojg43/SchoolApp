@@ -1,11 +1,11 @@
 'use client';
 
 import { useLanguage } from "@/context/LanguageContext";
-import { useAuth, PermissionGuard } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { Bus, MapPin, Trash2, Plus } from "lucide-react";
+import { Bus, MapPin, Plus } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
-import { getVehicles, createVehicle, deleteVehicle, getRoutes, createRoute, deleteRoute, type Vehicle, type Route } from "@/lib/api";
+import { getVehicles, createVehicle, deleteVehicle, getRoutes, createRoute, type Vehicle, type Route } from "@/lib/api";
 
 export default function TransportPage() {
     const { t } = useLanguage();
