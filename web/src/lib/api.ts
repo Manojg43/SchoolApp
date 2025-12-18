@@ -531,6 +531,19 @@ export async function getStaffAttendanceReport(staffId: number, month: number, y
     return fetchWithSchool(`/staff/attendance/report/?staff_id=${staffId}&month=${month}&year=${year}`, schoolId);
 }
 
+export interface StaffDailyLog {
+    id: number; // Staff ID
+    name: string;
+    status: string;
+    check_in: string;
+    check_out: string;
+    attendance_id?: number | null;
+}
+
+export async function getStaffDailyAttendance(date: string, schoolId?: string): Promise<{ date: string, records: StaffDailyLog[] }> {
+    return fetchWithSchool(`/staff/attendance/daily/?date=${date}`, schoolId);
+}
+
 export async function updateAttendance(id: number, data: { status?: string, check_in?: string, check_out?: string, correction_reason?: string }, schoolId?: string): Promise<void> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;

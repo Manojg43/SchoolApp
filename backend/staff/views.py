@@ -449,3 +449,44 @@ class StaffAttendanceReportView(APIView):
             },
             'daily_logs': report
         })
+
+class StaffDailyAttendanceView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        school = request.user.school
+        if not school:
+            return Response({'error': 'School context required'}, status=400)
+            
+        date_str = request.query_params.get('date')
+        if not date_str:
+            target_date = datetime.date.today()
+        else:
+            try:
+                target_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return Response({'error': 'Invalid date format (YYYY-MM-DD)'}, status=400)
+
+        # Get all active staff
+        all_staff = CoreUser.objects.filter(school=school, role=CoreUser.ROLE_STAFF, is_active=True)
+        
+        # Get attendances for this date
+        attendances = StaffAttendance.objects.filter(school=school, date=target_date)
+        att_map = {att.staff_id: att for att in attendances}
+        
+        data = []
+        for staff in all_staff:
+            att = att_map.get(staff.id)
+            data.append({
+                'id': staff.id,
+                'name': f"{staff.first_name} {staff.last_name}",
+                'status': att.status if att else 'ABSENT',
+                'check_in': str(att.check_in) if (att and att.check_in) else '-',
+                'check_out': str(att.check_out) if (att and att.check_out) else '-',
+                'attendance_id': att.id if att else None
+            })
+            
+        return Response({
+            'date': target_date.strftime("%Y-%m-%d"),
+            'records': data
+        })

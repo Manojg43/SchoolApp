@@ -85,7 +85,7 @@ export default function TransportPage() {
 
     const routeColumns: Column<Route>[] = [
         { header: "Route Name", accessorKey: "name", className: "font-medium" },
-        { header: "Stops", accessorKey: (row) => row.stops.length + " Stops" },
+        { header: "Stops", accessorKey: (row) => (row.stops?.length || 0) + " Stops" },
     ];
 
     return (
