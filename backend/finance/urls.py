@@ -1,3 +1,4 @@
+from django.urls import path
 from .views import CalculateSalaryView, DownloadInvoiceView
 from .pdf_views import GeneratePayslipPDF, GenerateReceiptPDF
 
