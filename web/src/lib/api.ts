@@ -145,6 +145,14 @@ export async function getAttendance(schoolId?: string): Promise<Attendance[]> {
     return fetchWithSchool('/attendance/', schoolId);
 }
 
+export interface FeePayload {
+    student: number;
+    title: string;
+    amount: number;
+    due_date: string;
+    status: string;
+}
+
 // Fees
 export interface Fee {
     id: number;
@@ -161,7 +169,7 @@ export async function getFees(schoolId?: string): Promise<Fee[]> {
     return fetchWithSchool('/fees/', schoolId);
 }
 
-export async function createFee(data: any, schoolId?: string): Promise<Fee> {
+export async function createFee(data: FeePayload, schoolId?: string): Promise<Fee> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
@@ -195,6 +203,7 @@ export async function deleteFee(id: number, schoolId?: string): Promise<void> {
 }
 
 // Staff
+export type StaffPayload = Omit<Staff, 'id'>;
 export interface Staff {
     id: number;
     user_id: string;
@@ -224,7 +233,7 @@ export async function getStaff(schoolId?: string): Promise<Staff[]> {
     return fetchWithSchool('/staff/', schoolId);
 }
 
-export async function createStaff(data: any, schoolId?: string): Promise<Staff> {
+export async function createStaff(data: StaffPayload, schoolId?: string): Promise<Staff> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
@@ -242,7 +251,7 @@ export async function createStaff(data: any, schoolId?: string): Promise<Staff> 
     return res.json();
 }
 
-export async function updateStaff(id: number, data: any, schoolId?: string): Promise<Staff> {
+export async function updateStaff(id: number, data: Partial<StaffPayload>, schoolId?: string): Promise<Staff> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
@@ -296,7 +305,9 @@ export async function getSections(schoolId?: string): Promise<SectionItem[]> {
 }
 
 // Student CRUD
-export async function createStudent(data: any, schoolId?: string): Promise<Student> {
+export type StudentPayload = Omit<Student, 'id'>;
+
+export async function createStudent(data: StudentPayload, schoolId?: string): Promise<Student> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
@@ -314,7 +325,7 @@ export async function createStudent(data: any, schoolId?: string): Promise<Stude
     return res.json();
 }
 
-export async function updateStudent(id: number, data: any, schoolId?: string): Promise<Student> {
+export async function updateStudent(id: number, data: Partial<StudentPayload>, schoolId?: string): Promise<Student> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
