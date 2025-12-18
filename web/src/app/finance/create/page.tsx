@@ -300,11 +300,11 @@ export default function CreateInvoicePage() {
                                                 disabled={!selectedClass}
                                             >
                                                 <option value="">All Sections</option>
-                                                {classes.find(c => c.id === Number(selectedClass))?.sections?.map(s => (
-                                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                                )) || sections.filter(s => !selectedClass || s.parent_class === Number(selectedClass)).map(s => (
-                                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                                ))}
+                                                {sections
+                                                    .filter(s => !selectedClass || s.parent_class === Number(selectedClass))
+                                                    .map(s => (
+                                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                                    ))}
                                             </select>
                                         </div>
                                     </div>

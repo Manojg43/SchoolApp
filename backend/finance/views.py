@@ -59,6 +59,9 @@ class DownloadInvoiceView(APIView):
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="invoice_{invoice.invoice_id}.pdf"'
 
+        pisa_status = pisa.CreatePDF(
+            html_string, dest=response)
+
         if pisa_status.err:
             return Response({'error': 'PDF generation failed'}, status=500)
             
