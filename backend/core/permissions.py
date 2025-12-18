@@ -56,7 +56,15 @@ class StandardPermission(permissions.BasePermission):
         model_name = model_cls._meta.model_name
         perm_codename = f"{app_label}.{action}_{model_name}"
 
-        return request.user.has_perm(perm_codename)
+        if request.user.has_perm(perm_codename):
+            return True
+
+        # Fallback: Allow SCHOOL_ADMIN to manage data if they don't have explicit Django perm
+        # This handles cases where Group permissions weren't set up perfectly in seeding
+        if request.user.role == CoreUser.ROLE_SCHOOL_ADMIN:
+            return True
+
+        return False
 
     def has_object_permission(self, request, view, obj):
         # 1. Superuser Bypass
