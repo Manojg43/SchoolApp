@@ -76,10 +76,10 @@ export default function StaffPage() {
 
     const columns: Column<Staff>[] = [
         { header: "Name", accessorKey: (row) => `${row.first_name} ${row.last_name}`, className: "font-medium" },
-        { header: "Role", accessorKey: "role" },
+        { header: "Designation", accessorKey: "designation" },
+        { header: "Department", accessorKey: "department" },
         { header: "Mobile", accessorKey: "mobile" },
         { header: "Email", accessorKey: "email" },
-        { header: "Designation", accessorKey: "designation" },
     ];
 
     return (
