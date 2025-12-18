@@ -45,6 +45,7 @@ class CoreUser(AbstractUser):
     can_access_certificates = models.BooleanField(default=False, help_text="Can access Certificates Module")
     can_access_student_records = models.BooleanField(default=False, help_text="Can access Student Records")
     can_access_attendance = models.BooleanField(default=False, help_text="Can access Attendance Module")
+    can_mark_manual_attendance = models.BooleanField(default=False, help_text="Can mark attendance via GPS Button (No QR) if fail")
 
     # Required for strict isolation check
     # We override save to generate business ID

@@ -1,4 +1,3 @@
-```
 'use client';
 
 import { useLanguage } from "@/context/LanguageContext";
@@ -233,7 +232,7 @@ export default function AttendanceReportPage() {
                                         {new Date(log.date).toLocaleDateString('en-US', { weekday: 'long' })}
                                     </div>
                                     <div className="flex-1 flex gap-4">
-                                        <span className={`px - 3 py - 1 rounded - full text - xs font - bold border w - 24 text - center ${ getStatusColor(log.status) } `}>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border w-24 text-center ${getStatusColor(log.status)}`}>
                                             {log.status}
                                         </span>
                                         <div className="text-sm text-gray-500 flex gap-4">
@@ -280,7 +279,7 @@ export default function AttendanceReportPage() {
                                 <select
                                     className="w-full p-2 border rounded-lg bg-gray-50"
                                     value={editingLog.status}
-                                    onChange={e => setEditingLog({...editingLog, status: e.target.value})}
+                                    onChange={e => setEditingLog({ ...editingLog, status: e.target.value })}
                                 >
                                     <option value="PRESENT">Present</option>
                                     <option value="ABSENT">Absent</option>
@@ -296,7 +295,7 @@ export default function AttendanceReportPage() {
                                         type="time"
                                         className="w-full p-2 border rounded-lg"
                                         value={editingLog.check_in}
-                                        onChange={e => setEditingLog({...editingLog, check_in: e.target.value})}
+                                        onChange={e => setEditingLog({ ...editingLog, check_in: e.target.value })}
                                     />
                                     <p className="text-xs text-gray-400 mt-1">Manual Entry</p>
                                 </div>
@@ -306,7 +305,7 @@ export default function AttendanceReportPage() {
                                         type="time"
                                         className="w-full p-2 border rounded-lg"
                                         value={editingLog.check_out}
-                                        onChange={e => setEditingLog({...editingLog, check_out: e.target.value})}
+                                        onChange={e => setEditingLog({ ...editingLog, check_out: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -337,4 +336,4 @@ export default function AttendanceReportPage() {
         </div>
     );
 }
-```
+

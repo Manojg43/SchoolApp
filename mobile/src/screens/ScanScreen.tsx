@@ -1,55 +1,115 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { Camera, CameraView } from 'expo-camera'; // Modern usage might differ, checking generic
+import { Camera, CameraView } from 'expo-camera';
 import * as Location from 'expo-location';
 import { mobileApi } from '../lib/api';
 import { useNavigation } from '@react-navigation/native';
+
+// Haversine Algo
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
 
 export default function ScanScreen() {
     const navigation = useNavigation();
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [scanned, setScanned] = useState(false);
 
+    // Manual GPS State
+    const [canManual, setCanManual] = useState(false);
+    const [schoolGPS, setSchoolGPS] = useState<{ lat: number, long: number } | null>(null);
+    const [distance, setDistance] = useState<number | null>(null);
+    const [loadingManual, setLoadingManual] = useState(false);
+
     useEffect(() => {
-        const getPermissions = async () => {
+        const init = async () => {
+            // 1. Permissions
             const cameraStatus = await Camera.requestCameraPermissionsAsync();
             const locationStatus = await Location.requestForegroundPermissionsAsync();
             setHasPermission(cameraStatus.status === 'granted' && locationStatus.status === 'granted');
+
+            // 2. Fetch Profile for Rules
+            try {
+                const profile = await mobileApi.getMyProfile();
+                if (profile?.user?.can_mark_manual_attendance) {
+                    setCanManual(true);
+                    setSchoolGPS(profile.user.school_gps);
+                }
+            } catch (e) {
+                console.log("Failed to load profile settings", e);
+            }
         };
-        getPermissions();
+        init();
     }, []);
+
+    // Monitor Location for Manual Button
+    useEffect(() => {
+        let subscriber: any;
+        if (hasPermission && canManual && schoolGPS) {
+            (async () => {
+                subscriber = await Location.watchPositionAsync(
+                    { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 5 },
+                    (loc) => {
+                        const dist = calculateDistance(
+                            loc.coords.latitude, loc.coords.longitude,
+                            schoolGPS.lat, schoolGPS.long
+                        );
+                        setDistance(dist);
+                    }
+                );
+            })();
+        }
+        return () => {
+            if (subscriber) subscriber.remove();
+        };
+    }, [hasPermission, canManual, schoolGPS]);
 
     const handleBarCodeScanned = async ({ type, data }: any) => {
         if (scanned) return;
         setScanned(true);
-
         try {
-            // Get Location
             const location = await Location.getCurrentPositionAsync({});
-
-            // Send to Backend
-            const result = await mobileApi.scanQR(data, location.coords.latitude, location.coords.longitude);
-
-            Alert.alert("Success", "Attendance Marked Successfully!", [
-                { text: "OK", onPress: () => navigation.goBack() }
-            ]);
+            await mobileApi.scanQR(data, location.coords.latitude, location.coords.longitude);
+            Alert.alert("Success", "Attendance Marked Successfully!", [{ text: "OK", onPress: () => navigation.goBack() }]);
         } catch (error: any) {
-            Alert.alert("Error", error.message || "Attendance Failed", [
-                { text: "Try Again", onPress: () => setScanned(false) }
-            ]);
+            Alert.alert("Error", error.message || "Attendance Failed", [{ text: "Try Again", onPress: () => setScanned(false) }]);
+        }
+    };
+
+    const handleManualCheckIn = async () => {
+        setLoadingManual(true);
+        try {
+            const location = await Location.getCurrentPositionAsync({});
+            // Send NULL as token, true as isManual
+            await mobileApi.scanQR(null, location.coords.latitude, location.coords.longitude, true);
+            Alert.alert("Success", "Manual GPS Attendance Marked!", [{ text: "OK", onPress: () => navigation.goBack() }]);
+        } catch (error: any) {
+            Alert.alert("Error", error.message || "Manual Attendance Failed");
+        } finally {
+            setLoadingManual(false);
         }
     };
 
     if (hasPermission === null) return <Text style={styles.msg}>Requesting permissions...</Text>;
     if (hasPermission === false) return <Text style={styles.msg}>No access to camera or location</Text>;
 
+    const isInRange = distance !== null && distance <= 55; // 50m tolerance + 5m buffer
+
     return (
         <View style={styles.container}>
             <CameraView
                 onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-                barcodeScannerSettings={{
-                    barcodeTypes: ["qr"],
-                }}
+                barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
                 style={StyleSheet.absoluteFillObject}
             />
 
@@ -71,6 +131,8 @@ export default function ScanScreen() {
 
             <View style={styles.controls}>
                 <Text style={styles.overlayText}>Scan School QR Code</Text>
+
+                {/* Standard Buttons */}
                 <View style={styles.buttonRow}>
                     <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
                         <Text style={styles.cancelText}>Back</Text>
@@ -79,100 +141,51 @@ export default function ScanScreen() {
                         <Text style={styles.rescanText}>Scan Again</Text>
                     </TouchableOpacity>
                 </View>
+
+                {/* Manual GPS Button */}
+                {canManual && (
+                    <View style={{ marginTop: 20 }}>
+                        <TouchableOpacity
+                            style={[
+                                styles.manualButton,
+                                (!isInRange || loadingManual) && styles.disabledButton
+                            ]}
+                            onPress={handleManualCheckIn}
+                            disabled={!isInRange || loadingManual}
+                        >
+                            <Text style={styles.manualButtonText}>
+                                {loadingManual ? "Marking..." :
+                                    isInRange ? "📍 Mark Attendance (GPS)" :
+                                        `Too Far (${distance?.toFixed(0)}m > 50m)`}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'black',
-    },
-    msg: {
-        flex: 1,
-        backgroundColor: 'white',
-        textAlign: 'center',
-        paddingTop: 50,
-    },
-    overlayLayer: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
-        zIndex: 1,
-    },
-    maskFlex: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    },
-    maskCenterRow: {
-        flexDirection: 'row',
-        height: 280,
-    },
-    scannerBox: {
-        width: 280,
-        height: 280,
-        backgroundColor: 'transparent',
-        position: 'relative',
-    },
-    corner: {
-        position: 'absolute',
-        width: 40,
-        height: 40,
-        borderColor: '#4ADE80', // Green-400
-        borderWidth: 5,
-        borderRadius: 4,
-    },
+    container: { flex: 1, backgroundColor: 'black' },
+    msg: { flex: 1, backgroundColor: 'white', textAlign: 'center', paddingTop: 50 },
+    overlayLayer: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', zIndex: 1 },
+    maskFlex: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)' },
+    maskCenterRow: { flexDirection: 'row', height: 280 },
+    scannerBox: { width: 280, height: 280, backgroundColor: 'transparent', position: 'relative' },
+    corner: { position: 'absolute', width: 40, height: 40, borderColor: '#4ADE80', borderWidth: 5, borderRadius: 4 },
     topLeft: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
     topRight: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
     bottomLeft: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
     bottomRight: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
-
-    controls: {
-        position: 'absolute',
-        bottom: 50,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        zIndex: 2,
-        gap: 15, // Gap between buttons
-    },
-    overlayText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        textShadowColor: 'rgba(0,0,0,0.75)',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 3,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        gap: 20,
-    },
-    cancelButton: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 30,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-    },
-    rescanButton: {
-        backgroundColor: '#4ADE80', // Green-400
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 30,
-        borderWidth: 1,
-        borderColor: '#22c55e',
-    },
-    cancelText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    rescanText: {
-        color: '#064e3b', // Dark Green
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
+    controls: { position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center', zIndex: 2, gap: 10 },
+    overlayText: { color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textShadowColor: 'rgba(0,0,0,0.75)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
+    buttonRow: { flexDirection: 'row', gap: 20 },
+    cancelButton: { backgroundColor: 'rgba(255,255,255,0.2)', paddingVertical: 12, paddingHorizontal: 25, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+    rescanButton: { backgroundColor: '#4ADE80', paddingVertical: 12, paddingHorizontal: 25, borderRadius: 30, borderWidth: 1, borderColor: '#22c55e' },
+    cancelText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+    rescanText: { color: '#064e3b', fontWeight: 'bold', fontSize: 16 },
+    manualButton: { backgroundColor: '#3b82f6', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 30, elevation: 5 },
+    disabledButton: { backgroundColor: '#6b7280', opacity: 0.8 },
+    manualButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
 });

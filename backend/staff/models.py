@@ -40,6 +40,7 @@ class StaffAttendance(models.Model):
     SOURCE_CHOICES = [
         ('WEB_MANUAL', 'Web Manual'),
         ('QR_GEO', 'QR Geo-Fenced'),
+        ('MOBILE_GPS', 'Mobile Button (GPS)'),
         ('SYSTEM', 'System Auto')
     ]
     source = models.CharField(_("Source"), max_length=20, choices=SOURCE_CHOICES, default='SYSTEM')

@@ -14,6 +14,7 @@ const staffSchema = z.object({
     designation: z.string().min(1, "Designation is required"),
     department: z.string().min(1, "Department is required"),
     joining_date: z.string().min(1, "Joining Date is required"),
+    can_mark_manual_attendance: z.boolean().optional(),
 });
 
 type StaffFormValues = z.infer<typeof staffSchema>;
@@ -33,7 +34,8 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<StaffFormValues>({
         resolver: zodResolver(staffSchema),
         defaultValues: {
-            role: 'TEACHER'
+            role: 'TEACHER',
+            can_mark_manual_attendance: false
         }
     });
 
@@ -48,6 +50,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
             setValue('designation', staffToEdit.designation || "");
             setValue('department', staffToEdit.department || "");
             setValue('joining_date', staffToEdit.joining_date || "");
+            setValue('can_mark_manual_attendance', staffToEdit.can_mark_manual_attendance || false);
         } else {
             reset();
         }
@@ -182,6 +185,19 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                                 <input type="date" {...register('joining_date')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                                 {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date.message}</p>}
                             </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-2">
+                            <input
+                                type="checkbox"
+                                id="can_mark_manual_attendance"
+                                {...register('can_mark_manual_attendance')}
+                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                            />
+                            <label htmlFor="can_mark_manual_attendance" className="text-sm font-medium text-gray-700">
+                                Allow Manual GPS Attendance (Without QR)
+                            </label>
+                            <p className="text-xs text-gray-400">Use for staff with broken cameras or persistent scanning issues.</p>
                         </div>
 
                         <div className="flex justify-end pt-4 space-x-3">

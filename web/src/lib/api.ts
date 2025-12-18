@@ -214,6 +214,7 @@ export interface Staff {
     designation?: string;
     department?: string;
     joining_date?: string;
+    can_mark_manual_attendance?: boolean;
 }
 
 export async function getStaff(schoolId?: string): Promise<Staff[]> {

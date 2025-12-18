@@ -41,7 +41,12 @@ class StaffDashboardView(APIView):
             "last_name": user.last_name,
             "email": user.email,
             "mobile": user.mobile,
-            "school": user.school.name if user.school else "Global/Super Admin"
+            "school": user.school.name if user.school else "Global/Super Admin",
+            "can_mark_manual_attendance": user.can_mark_manual_attendance,
+            "school_gps": {
+                "lat": float(user.school.gps_lat) if user.school and user.school.gps_lat else None,
+                "long": float(user.school.gps_long) if user.school and user.school.gps_long else None,
+            }
         }
         
         # Add designation if exists
@@ -152,10 +157,11 @@ class ScanAttendanceView(APIView):
 
     def post(self, request):
         token = request.data.get('qr_token')
+        is_manual = request.data.get('manual_gps')
         
-        print(f"DEBUG: Received QR Token: {token!r}")
+        print(f"DEBUG: Received QR Token: {token!r}, Manual: {is_manual}")
 
-        # Handle JSON formatted QR codes (Strict Mode)
+        # Handle JSON formatted QR codes (Strict Mode) - Only if token exists
         if token and isinstance(token, str) and token.strip().startswith('{'):
             try:
                 import json
@@ -170,55 +176,53 @@ class ScanAttendanceView(APIView):
         lat = request.data.get('latitude') or request.data.get('gps_lat')
         lng = request.data.get('longitude') or request.data.get('gps_long')
         
-        if not all([token, lat, lng]):
-            return Response({'error': 'Missing data (token, lat, lng)'}, status=400)
+        if not (token or is_manual) or not lat or not lng:
+            return Response({'error': 'Missing data (token or manual_gps, lat, lng)'}, status=400)
             
-        # 1. Verify Signature
+        # 1. Verify Request Validity
         try:
-            if '|' not in token:
-                 print(f"DEBUG: Malformed Token (No Pipe): {token}")
-                 return Response({'error': 'Malformed Token (No Pipe)'}, status=400)
-
-            raw_data, signature = token.rsplit('|', 1)
-            expected_sig = hmac.new(
-                settings.SECRET_KEY.encode(),
-                raw_data.encode(),
-                hashlib.sha256
-            ).hexdigest()
-            
-            if not hmac.compare_digest(signature, expected_sig):
-                print(f"DEBUG: Signature Mismatch!")
-                print(f"DEBUG: Received: {signature}")
-                print(f"DEBUG: Expected: {expected_sig}")
-                
-                # Temporary Debugging
-                key_prefix = settings.SECRET_KEY[:5]
-                debug_msg = f"Sig Mismatch. Key:{key_prefix}..., Raw:{raw_data!r}, Rec:{signature[:5]}..."
-                return Response({'error': debug_msg}, status=403)
-                
-            parts = raw_data.split('|')
-            
-            # 2. Verify Data
-            if parts[0] == 'STATIC':
-                 # Static QR: STATIC|SchoolID
-                 school_id = parts[1]
+            if is_manual:
+                # Manual GPS Check-In
+                if not request.user.can_mark_manual_attendance:
+                     return Response({'error': 'Permission Denied for Manual Attendance'}, status=403)
             else:
-                 # Legacy/Dynamic QR: SchoolID|Timestamp|Nonce
-                 school_id = parts[0]
-                 timestamp = parts[1]
-                 # 3. Verify Timestamp (Only for Dynamic)
-                 if time.time() - int(timestamp) > 300:
-                      return Response({'error': 'QR Expired'}, status=400)
+                # QR Verification
+                if '|' not in token:
+                     print(f"DEBUG: Malformed Token (No Pipe): {token}")
+                     return Response({'error': 'Malformed Token (No Pipe)'}, status=400)
 
-            # 2b. Verify School match
-            if request.user.school.school_id != school_id:
-                return Response({'error': 'Wrong School QR'}, status=403)
+                raw_data, signature = token.rsplit('|', 1)
+                expected_sig = hmac.new(
+                    settings.SECRET_KEY.encode(),
+                    raw_data.encode(),
+                    hashlib.sha256
+                ).hexdigest()
+                
+                if not hmac.compare_digest(signature, expected_sig):
+                    print(f"DEBUG: Signature Mismatch!")
+                    # ... logging ...
+                    return Response({'error': 'Invalid QR Signature'}, status=403)
+                    
+                parts = raw_data.split('|')
+                
+                # Verify School match
+                # Static: STATIC|SchoolID, Dynamic: SchoolID|Timestamp
+                school_id = parts[1] if parts[0] == 'STATIC' else parts[0]
+                
+                if request.user.school.school_id != school_id:
+                    return Response({'error': 'Wrong School QR'}, status=403)
+                
+                # Check Timestamp for Dynamic ONLY
+                if parts[0] != 'STATIC' and len(parts) > 1:
+                     timestamp = parts[1]
+                     if time.time() - int(timestamp) > 300:
+                          return Response({'error': 'QR Expired'}, status=400)
                  
         except Exception as e:
             print(f"DEBUG: Verification Exception: {e}")
             import traceback
             traceback.print_exc()
-            return Response({'error': 'Malformed Token'}, status=400)
+            return Response({'error': 'Validation Error'}, status=400)
 
         # 4. Verify Geo-Fence
         school = request.user.school
@@ -246,7 +250,7 @@ class ScanAttendanceView(APIView):
         if not attendance.check_in:
             attendance.check_in = current_time
             attendance.status = 'PRESENT'
-            attendance.source = 'QR_GEO'
+            attendance.source = 'MOBILE_GPS' if is_manual else 'QR_GEO'
             attendance.gps_lat = lat
             attendance.gps_long = lng
             attendance.save()

@@ -52,11 +52,12 @@ export const mobileApi = {
 
     generateQR: () => apiRequest('/staff/qr/generate/', 'GET'),
 
-    scanQR: (qrToken: string, lat: number, long: number) =>
+    scanQR: (qrToken: string | null, lat: number, long: number, isManual: boolean = false) =>
         apiRequest('/staff/attendance/scan/', 'POST', {
             qr_token: qrToken,
             gps_lat: lat,
-            gps_long: long
+            gps_long: long,
+            manual_gps: isManual
         }),
 
     getMyProfile: () => apiRequest('/staff/profile/', 'GET'),
