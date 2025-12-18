@@ -31,9 +31,9 @@ type StudentFormValues = {
     gender: 'M' | 'F' | 'O';
     date_of_birth: string;
     address?: string;
-    emergency_mobile: string;
-    current_class: number;
-    section: number | null;
+    // Allow any input for form handling to satisfy Zod resolver inference of 'unknown' on coerce
+    current_class: any;
+    section: any;
 };
 
 interface StudentFormModalProps {
@@ -137,7 +137,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             const payload: StudentPayload = {
                 ...data,
                 // Explicit conversion to help with type checking if needed
-                section: data.section ?? null
+                section: (data.section === '' || data.section === null) ? null : Number(data.section)
             };
             // Actually, data matches parts of StudentPayload. Let's trust the API call or cast.
             // The issue is 'section' undefined in data vs null in Payload.
