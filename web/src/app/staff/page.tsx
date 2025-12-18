@@ -7,7 +7,8 @@ import { Briefcase, QrCode } from "lucide-react";
 import QRCodeDisplay from "@/components/ui/QRCodeDisplay";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import { getStaff, deleteStaff, type Staff } from "@/lib/api";
-import StaffFormModal from "@/components/students/StaffFormModal"; // Re-using folder or move to components/staff later
+import StaffFormModal from "@/components/students/StaffFormModal";
+import SalaryStructureModal from "@/components/finance/SalaryStructureModal";
 
 export default function StaffPage() {
     const { t } = useLanguage();
@@ -74,12 +75,37 @@ export default function StaffPage() {
     };
 
 
+    // Salary Modal
+    const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false);
+    const [salaryStaff, setSalaryStaff] = useState<Staff | null>(null);
+
+    const handleSalaryClick = (staff: Staff, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSalaryStaff(staff);
+        setIsSalaryModalOpen(true);
+    };
+
     const columns: Column<Staff>[] = [
         { header: "Name", accessorKey: (row) => `${row.first_name} ${row.last_name}`, className: "font-medium" },
         { header: "Designation", accessorKey: "designation" },
         { header: "Department", accessorKey: "department" },
         { header: "Mobile", accessorKey: "mobile" },
-        { header: "Email", accessorKey: "email" },
+        // Custom Action Column
+        {
+            header: "Actions",
+            accessorKey: (row) => (
+                <div className="flex gap-2">
+                    {hasPermission('core.can_manage_payroll') && (
+                        <button
+                            onClick={(e) => handleSalaryClick(row, e)}
+                            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
+                        >
+                            Manage Salary
+                        </button>
+                    )}
+                </div>
+            )
+        },
     ];
 
     return (
@@ -97,12 +123,15 @@ export default function StaffPage() {
             </header>
 
             <div className="space-y-6">
-                {/* QR Code Section - Removed as per user request (Moved to Settings) */}
-
                 {/* Staff List Area */}
                 <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                         <h2 className="text-lg font-medium text-gray-900">Staff Directory</h2>
+                        {hasPermission('core.can_manage_payroll') && (
+                            <a href="/finance/payroll" className="text-sm text-blue-600 hover:underline">
+                                View Payroll Dashboard →
+                            </a>
+                        )}
                     </div>
                     {hasPermission('core.view_coreuser') ? (
                         <DataTable
@@ -125,6 +154,12 @@ export default function StaffPage() {
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={handleSuccess}
                 staffToEdit={staffToEdit}
+            />
+
+            <SalaryStructureModal
+                isOpen={isSalaryModalOpen}
+                onClose={() => setIsSalaryModalOpen(false)}
+                staff={salaryStaff}
             />
         </div>
     );

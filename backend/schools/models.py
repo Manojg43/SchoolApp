@@ -28,6 +28,9 @@ class School(models.Model):
     # Attendance Configuration
     min_hours_half_day = models.FloatField(_("Min Hours for Half Day"), default=4.0)
     min_hours_full_day = models.FloatField(_("Min Hours for Full Day"), default=6.0)
+    
+    # Payroll Configuration
+    salary_calculation_day = models.PositiveIntegerField(_("Salary Calculation Day"), default=30, help_text="Day of month to generate salary (e.g. 30)")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

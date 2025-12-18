@@ -561,6 +561,7 @@ export interface SchoolSettings {
     watermark_url: string; // Base64 or URL
     min_hours_half_day?: number;
     min_hours_full_day?: number;
+    salary_calculation_day?: number;
 }
 
 export async function getSchoolSettings(schoolId?: string): Promise<SchoolSettings> {
@@ -605,3 +606,125 @@ export async function generateCertificate(studentId: number, type: string, schoo
     if (!res.ok) throw new Error(`Failed to generate certificate: ${res.statusText}`);
     return res.blob();
 }
+
+// Payroll
+export interface PayrollEntry {
+    id: number;
+    staff_name: string;
+    designation: string;
+    present_days: number;
+    base_salary: string;
+    net_salary: string;
+    is_paid: boolean;
+    paid_date: string | null;
+}
+
+export async function getPayrollDashboard(month?: number, year?: number, schoolId?: string): Promise<PayrollEntry[]> {
+    const query = month && year ? `?month=${month}&year=${year}` : '';
+    return fetchWithSchool(`/finance/payroll/dashboard/${query}`, schoolId);
+}
+
+export async function generatePayroll(month: number, year: number, schoolId?: string): Promise<{ message: string }> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/finance/salary/calculate/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({ month, year })
+    });
+
+    if (!res.ok) throw new Error(`Failed to generate payroll: ${res.statusText}`);
+    return res.json();
+}
+
+export async function getSalaryStructure(staffId: number, schoolId?: string): Promise<{ base_salary: number }> {
+    return fetchWithSchool(`/finance/payroll/structure/${staffId}/`, schoolId);
+}
+
+export async function saveSalaryStructure(staffId: number, base_salary: number, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/finance/payroll/structure/${staffId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({ base_salary })
+    });
+
+    if (!res.ok) throw new Error(`Failed to save salary structure: ${res.statusText}`);
+}
+
+export async function markSalaryPaid(salaryId: number, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/finance/payroll/mark-paid/${salaryId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to mark paid: ${res.statusText}`);
+}
+
+// Leave Management
+export interface LeaveApplication {
+    id: number;
+    staff_name?: string; // For Admin
+    start_date: string;
+    end_date: string;
+    reason: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    is_paid?: boolean;
+}
+
+export async function getLeaveApplications(status: string = 'PENDING', schoolId?: string): Promise<LeaveApplication[]> {
+    return fetchWithSchool(`/staff/leaves/manage/?status=${status}`, schoolId);
+}
+
+export async function processLeaveApplication(id: number, action: 'APPROVE' | 'REJECT', isPaid: boolean = false, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/staff/leaves/manage/${id}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({ action, is_paid: isPaid })
+    });
+
+    if (!res.ok) throw new Error(`Failed to process leave: ${res.statusText}`);
+}
+
+export async function applyForLeave(start_date: string, end_date: string, reason: string, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/staff/leaves/apply/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({ start_date, end_date, reason })
+    });
+
+    if (!res.ok) throw new Error(`Failed to apply for leave: ${res.statusText}`);
+}
+

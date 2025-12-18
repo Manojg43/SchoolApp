@@ -107,6 +107,15 @@ class Leave(models.Model):
     STATUS_CHOICES = [('PENDING', 'Pending'), ('APPROVED', 'Approved'), ('REJECTED', 'Rejected')]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
 
+class StaffSalaryStructure(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    staff = models.OneToOneField(CoreUser, on_delete=models.CASCADE, related_name='salary_structure')
+    base_salary = models.DecimalField(_("Monthly Base Salary"), max_digits=10, decimal_places=2, default=0)
+    # Placeholder for future complexity (HRA, DA, etc.)
+    
+    def __str__(self):
+        return f"Structure: {self.staff.get_full_name()} - {self.base_salary}"
+
 class Salary(models.Model):
     id = models.AutoField(primary_key=True)
     salary_id = models.CharField(max_length=50, unique=True, editable=False)

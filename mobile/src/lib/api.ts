@@ -61,4 +61,14 @@ export const mobileApi = {
         }),
 
     getMyProfile: () => apiRequest('/staff/profile/', 'GET'),
+
+    // Leave Management
+    applyLeave: (start_date: string, end_date: string, reason: string) =>
+        apiRequest('/staff/leaves/apply/', 'POST', { start_date, end_date, reason }),
+
+    getMyLeaves: () => apiRequest('/staff/leaves/my/', 'GET'),
+
+    // Day-wise Attendance with Salary
+    getMyAttendanceReport: (month: number, year: number) =>
+        apiRequest(`/staff/attendance/report/?month=${month}&year=${year}`, 'GET'), // No staff_id = self
 };

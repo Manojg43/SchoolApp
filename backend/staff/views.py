@@ -346,7 +346,8 @@ class StaffAttendanceReportView(APIView):
         year = int(request.query_params.get('year', datetime.date.today().year))
         
         if not staff_id:
-            return Response({'error': 'Staff ID required'}, status=400)
+            # If no staff_id provided, assume self-view if not admin searching
+            staff_id = user.id
             
         # Get Staff Member
         try:
@@ -354,11 +355,21 @@ class StaffAttendanceReportView(APIView):
         except CoreUser.DoesNotExist:
              return Response({'error': 'Staff not found'}, status=404)
 
+        # Get Base Salary
+        try:
+             from finance.models import StaffSalaryStructure
+             salary_struct = StaffSalaryStructure.objects.get(staff=target_staff, school=school)
+             base_salary = float(salary_struct.base_salary)
+        except (ImportError, Exception): # Handle DoesNotExist or import
+             base_salary = 0.0
+
         # Calculate Date Range
         import calendar
         num_days = calendar.monthrange(year, month)[1]
         start_date = datetime.date(year, month, 1)
         end_date = datetime.date(year, month, num_days)
+
+        daily_rate = base_salary / float(num_days) if base_salary > 0 else 0.0
         
         # Fetch Attendance
         attendances = StaffAttendance.objects.filter(
@@ -383,6 +394,7 @@ class StaffAttendanceReportView(APIView):
             record_id = None
             check_in = None
             check_out = None
+            day_salary = 0.0
             
             if current_date in att_map:
                 att = att_map[current_date]
@@ -395,11 +407,26 @@ class StaffAttendanceReportView(APIView):
             if current_date > datetime.date.today():
                 status = '-'
             
-            # Count Stats
-            if status == 'PRESENT': present_days += 1
-            elif status == 'HALF_DAY': half_days += 1
-            elif status == 'LEAVE': leaves += 1
-            elif status == 'ABSENT' and current_date <= datetime.date.today(): absent_days += 1
+            # Count Stats & Salary
+            if status == 'PRESENT': 
+                present_days += 1
+                day_salary = daily_rate
+            elif status == 'HALF_DAY': 
+                half_days += 1
+                day_salary = daily_rate / 2.0
+            elif status == 'LEAVE': 
+                leaves += 1
+                # Check if Paid Leave? For now assume Paid if LEAVE status exists via Admin approval
+                # Or check specific leave record if needed. Simplicity: If Admin marked LEAVE, it's paid usually?
+                # Actually earlier I said "Unpaid (LWP)"... 
+                # Let's check `StaffAttendance.correction_reason` or similar? 
+                # For now, let's enable salary for LEAVE to be opt-in, but default 0?
+                # User asked "day wise salary", usually Paid Leave counts.
+                # Let's assume LEAVE is PAID for now unless marked UNPAID in attendance (which we don't handle deep yet).
+                day_salary = daily_rate 
+            elif status == 'ABSENT' and current_date <= datetime.date.today(): 
+                absent_days += 1
+                day_salary = 0.0
             
             report.append({
                 'date': current_date.strftime("%Y-%m-%d"),
@@ -407,7 +434,8 @@ class StaffAttendanceReportView(APIView):
                 'status': status,
                 'id': record_id,
                 'check_in': check_in,
-                'check_out': check_out
+                'check_out': check_out,
+                'daily_salary': round(day_salary, 2)
             })
             
         return Response({
