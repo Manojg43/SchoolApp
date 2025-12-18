@@ -123,16 +123,16 @@ class GenerateSchoolQR(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Admin generates this for the SCHOOL DISPLAY screen
+        # Admin generates this for the SCHOOL DISPLAY screen (Static)
         user = request.user
         school_id = user.school.school_id
-        timestamp = str(int(time.time()))
-        nonce = str(uuid.uuid4())[:8]
         
-        # Raw Data
-        raw_data = f"{school_id}|{timestamp}|{nonce}"
+        # Raw Data (Static Format)
+        # Type|SchoolID|Nonce(Optional, but removed to make it truly static if intended for wall)
+        # User asked for "Stick at wall", implying it should NOT change.
+        raw_data = f"STATIC|{school_id}"
         
-        # HMAC Sign (Prevent Spoofing)
+        # HMAC Sign
         signature = hmac.new(
             settings.SECRET_KEY.encode(),
             raw_data.encode(),
@@ -143,7 +143,7 @@ class GenerateSchoolQR(APIView):
         
         return Response({
             'qr_token': token,
-            'expires_in': 300, # Rotate every 5 mins
+            'expires_in': None, # Never expires
             'school_name': user.school.name
         })
 
@@ -191,23 +191,33 @@ class ScanAttendanceView(APIView):
                 print(f"DEBUG: Received: {signature}")
                 print(f"DEBUG: Expected: {expected_sig}")
                 
-                # Temporary Debugging: Return details to client to see on mobile
+                # Temporary Debugging
                 key_prefix = settings.SECRET_KEY[:5]
                 debug_msg = f"Sig Mismatch. Key:{key_prefix}..., Raw:{raw_data!r}, Rec:{signature[:5]}..."
                 return Response({'error': debug_msg}, status=403)
                 
-            school_id, timestamp, nonce = raw_data.split('|')
+            parts = raw_data.split('|')
             
-            # 2. Verify School
+            # 2. Verify Data
+            if parts[0] == 'STATIC':
+                 # Static QR: STATIC|SchoolID
+                 school_id = parts[1]
+            else:
+                 # Legacy/Dynamic QR: SchoolID|Timestamp|Nonce
+                 school_id = parts[0]
+                 timestamp = parts[1]
+                 # 3. Verify Timestamp (Only for Dynamic)
+                 if time.time() - int(timestamp) > 300:
+                      return Response({'error': 'QR Expired'}, status=400)
+
+            # 2b. Verify School match
             if request.user.school.school_id != school_id:
                 return Response({'error': 'Wrong School QR'}, status=403)
-                
-            # 3. Verify Timestamp (Relaxed to 5 mins for mobile clock drift)
-            if time.time() - int(timestamp) > 300:
-                 return Response({'error': 'QR Expired'}, status=400)
                  
         except Exception as e:
             print(f"DEBUG: Verification Exception: {e}")
+            import traceback
+            traceback.print_exc()
             return Response({'error': 'Malformed Token'}, status=400)
 
         # 4. Verify Geo-Fence
@@ -250,3 +260,79 @@ class ScanAttendanceView(APIView):
         else:
             return Response({'message': 'Already Checked Out'}, status=400)
 
+
+class StaffAttendanceReportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        school = user.school
+        
+        # Filters
+        staff_id = request.query_params.get('staff_id')
+        month = int(request.query_params.get('month', datetime.date.today().month))
+        year = int(request.query_params.get('year', datetime.date.today().year))
+        
+        if not staff_id:
+            return Response({'error': 'Staff ID required'}, status=400)
+            
+        # Get Staff Member
+        try:
+             target_staff = CoreUser.objects.get(id=staff_id, school=school)
+        except CoreUser.DoesNotExist:
+             return Response({'error': 'Staff not found'}, status=404)
+
+        # Calculate Date Range
+        import calendar
+        num_days = calendar.monthrange(year, month)[1]
+        start_date = datetime.date(year, month, 1)
+        end_date = datetime.date(year, month, num_days)
+        
+        # Fetch Attendance
+        attendances = StaffAttendance.objects.filter(
+            staff=target_staff,
+            date__gte=start_date,
+            date__lte=end_date
+        )
+        
+        # Build Map: Date -> Status
+        att_map = {att.date: att.status for att in attendances}
+        
+        # Generate Full Month Report
+        report = []
+        present_days = 0
+        half_days = 0
+        leaves = 0
+        absent_days = 0 
+        
+        for day in range(1, num_days + 1):
+            current_date = datetime.date(year, month, day)
+            status = att_map.get(current_date, 'ABSENT') # Default to Absent if no record
+            
+            # Don't mark future dates as absent
+            if current_date > datetime.date.today():
+                status = '-'
+            
+            # Count Stats
+            if status == 'PRESENT': present_days += 1
+            elif status == 'HALF_DAY': half_days += 1
+            elif status == 'LEAVE': leaves += 1
+            elif status == 'ABSENT' and current_date <= datetime.date.today(): absent_days += 1
+            
+            report.append({
+                'date': current_date.strftime("%Y-%m-%d"),
+                'day': day,
+                'status': status
+            })
+            
+        return Response({
+            'staff_name': f"{target_staff.first_name} {target_staff.last_name}",
+            'month': datetime.date(year, month, 1).strftime("%B %Y"),
+            'stats': {
+                'present': present_days,
+                'half_day': half_days,
+                'leave': leaves,
+                'absent': absent_days
+            },
+            'daily_logs': report
+        })

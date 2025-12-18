@@ -97,24 +97,7 @@ export default function StaffPage() {
             </header>
 
             <div className="space-y-6">
-                {/* QR Code Section - Only for Principal/Admin */}
-                <PermissionGuard perm={['is_superuser', 'PRINCIPAL', 'SCHOOL_ADMIN']}>
-                    <div className="bg-white p-6 rounded-xl shadow border border-gray-100">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                    <QrCode className="w-5 h-5 text-blue-600" />
-                                    Attendance QR Code
-                                </h2>
-                                <p className="text-gray-500 text-sm mt-1">
-                                    Print this QR code for staff to scan for attendance.
-                                    Contains School ID: <span className="font-mono bg-gray-100 px-1 rounded">{user?.school_id}</span>
-                                </p>
-                            </div>
-                            {qrValue && <QRCodeDisplay value={qrValue} size={150} />}
-                        </div>
-                    </div>
-                </PermissionGuard>
+                {/* QR Code Section - Removed as per user request (Moved to Settings) */}
 
                 {/* Staff List Area */}
                 <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">

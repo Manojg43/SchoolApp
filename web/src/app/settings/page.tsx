@@ -220,8 +220,8 @@ export default function SettingsPage() {
                     {/* Staff QR Code Section */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
                         <div className="flex justify-between items-center mb-4 border-b pb-2">
-                            <h2 className="text-lg font-semibold text-gray-800">Staff Attendance QR</h2>
-                            <button onClick={loadQR} className="p-1 hover:bg-gray-100 rounded-full" title="Refresh QR">
+                            <h2 className="text-lg font-semibold text-gray-800">Static Attendance QR (Printable)</h2>
+                            <button onClick={loadQR} className="p-1 hover:bg-gray-100 rounded-full" title="Regenerate QR">
                                 <RefreshCw className={`w-4 h-4 text-gray-500 ${qrLoading ? 'animate-spin' : ''}`} />
                             </button>
                         </div>
@@ -243,7 +243,7 @@ export default function SettingsPage() {
                                     <div className="text-center">
                                         <p className="font-bold text-lg">{qrData.school_name}</p>
                                         <p className="text-xs text-gray-500">Scan via Staff App to Mark Attendance</p>
-                                        <p className="text-xs text-red-400 mt-1">Refreshes every 30s</p>
+                                        <p className="text-xs text-green-600 mt-1 font-bold">Static QR - Valid Indefinitely</p>
                                     </div>
                                 </>
                             ) : (

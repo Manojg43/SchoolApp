@@ -52,11 +52,33 @@ export default function ScanScreen() {
                 }}
                 style={StyleSheet.absoluteFillObject}
             />
-            <View style={styles.overlay}>
+
+            {/* Visual Overlay */}
+            <View style={styles.overlayLayer}>
+                <View style={styles.maskFlex} />
+                <View style={styles.maskCenterRow}>
+                    <View style={styles.maskFlex} />
+                    <View style={styles.scannerBox}>
+                        <View style={[styles.corner, styles.topLeft]} />
+                        <View style={[styles.corner, styles.topRight]} />
+                        <View style={[styles.corner, styles.bottomLeft]} />
+                        <View style={[styles.corner, styles.bottomRight]} />
+                    </View>
+                    <View style={styles.maskFlex} />
+                </View>
+                <View style={styles.maskFlex} />
+            </View>
+
+            <View style={styles.controls}>
                 <Text style={styles.overlayText}>Scan School QR Code</Text>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
-                    <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
+                <View style={styles.buttonRow}>
+                    <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
+                        <Text style={styles.cancelText}>Back</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.rescanButton} onPress={() => setScanned(false)}>
+                        <Text style={styles.rescanText}>Scan Again</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
     );
@@ -73,27 +95,84 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         paddingTop: 50,
     },
-    overlay: {
+    overlayLayer: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        zIndex: 1,
+    },
+    maskFlex: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    maskCenterRow: {
+        flexDirection: 'row',
+        height: 280,
+    },
+    scannerBox: {
+        width: 280,
+        height: 280,
+        backgroundColor: 'transparent',
+        position: 'relative',
+    },
+    corner: {
+        position: 'absolute',
+        width: 40,
+        height: 40,
+        borderColor: '#4ADE80', // Green-400
+        borderWidth: 5,
+        borderRadius: 4,
+    },
+    topLeft: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
+    topRight: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
+    bottomLeft: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
+    bottomRight: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
+
+    controls: {
         position: 'absolute',
         bottom: 50,
         left: 0,
         right: 0,
         alignItems: 'center',
+        zIndex: 2,
+        gap: 15, // Gap between buttons
     },
     overlayText: {
         color: 'white',
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 20,
+        textShadowColor: 'rgba(0,0,0,0.75)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 3,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        gap: 20,
     },
     cancelButton: {
         backgroundColor: 'rgba(255,255,255,0.2)',
-        padding: 15,
+        paddingVertical: 15,
+        paddingHorizontal: 30,
         borderRadius: 30,
-        paddingHorizontal: 40,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
+    },
+    rescanButton: {
+        backgroundColor: '#4ADE80', // Green-400
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: '#22c55e',
     },
     cancelText: {
         color: 'white',
         fontWeight: 'bold',
+        fontSize: 16,
+    },
+    rescanText: {
+        color: '#064e3b', // Dark Green
+        fontWeight: 'bold',
+        fontSize: 16,
     },
 });

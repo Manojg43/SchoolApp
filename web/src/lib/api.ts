@@ -507,6 +507,26 @@ export async function getFinanceAnalytics(schoolId?: string): Promise<FinanceAna
     return fetchWithSchool('/reports/finance/', schoolId);
 }
 
+export interface StaffAttendanceReport {
+    staff_name: string;
+    month: string;
+    stats: {
+        present: number;
+        half_day: number;
+        leave: number;
+        absent: number;
+    };
+    daily_logs: {
+        date: string;
+        day: number;
+        status: string;
+    }[];
+}
+
+export async function getStaffAttendanceReport(staffId: number, month: number, year: number, schoolId?: string): Promise<StaffAttendanceReport> {
+    return fetchWithSchool(`/staff/attendance/report/?staff_id=${staffId}&month=${month}&year=${year}`, schoolId);
+}
+
 // School Settings & Branding
 export interface SchoolSettings {
     name: string;
