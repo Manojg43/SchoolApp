@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
-    getClasses, getSections, getStudents, getFeeCategories, getFeeStructureAmount, createFee,
+    getClasses, getSections, getStudents, getFeeCategories, getFeeStructureAmount, createFee, API_BASE_URL,
     type ClassItem, type SectionItem, type Student, type FeeCategory
 } from '@/lib/api';
 import { Loader2, Search, FileText, ArrowLeft, CheckCircle } from 'lucide-react';
@@ -118,7 +118,7 @@ export default function CreateInvoicePage() {
         if (student) {
             setSelectedStudentId(student.id);
             // Also try to infer structure amount if we can map student class
-            if (selectedCategory) {
+            if (selectedCategory && student.current_class) {
                 fetchStructureAmount(student.current_class, Number(selectedCategory));
             }
         } else {
@@ -202,7 +202,7 @@ export default function CreateInvoicePage() {
 
                     <div className="space-y-3">
                         <a
-                            href={`${process.env.NEXT_PUBLIC_API_URL}/finance/invoice/${createdInvoiceId}/pdf/`}
+                            href={`${API_BASE_URL}/finance/invoice/${createdInvoiceId}/pdf/`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block w-full py-3 bg-secondary text-white rounded-lg hover:opacity-90 font-medium flex items-center justify-center gap-2"
