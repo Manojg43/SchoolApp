@@ -16,7 +16,10 @@ const studentSchema = z.object({
     address: z.string().optional(),
     emergency_mobile: z.string().min(10, "Mobile number is required"),
     current_class: z.preprocess((val) => Number(val), z.number().min(1, "Class is required")),
-    section: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().nullable().optional()),
+    section: z.preprocess((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        return Number(val);
+    }, z.number().nullable()),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
@@ -34,11 +37,18 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
     const [filteredSections, setFilteredSections] = useState<SectionItem[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<StudentFormValues>({
+    const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         resolver: zodResolver(studentSchema),
         defaultValues: {
             gender: 'M',
-            current_class: undefined
+            current_class: undefined,
+            section: null,
+            first_name: '',
+            last_name: '',
+            father_name: '',
+            enrollment_number: '',
+            emergency_mobile: '',
+            date_of_birth: undefined
         }
     });
 
