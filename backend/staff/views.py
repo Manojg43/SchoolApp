@@ -468,8 +468,10 @@ class StaffDailyAttendanceView(APIView):
             except ValueError:
                 return Response({'error': 'Invalid date format (YYYY-MM-DD)'}, status=400)
 
-        # Get all active staff
-        all_staff = CoreUser.objects.filter(school=school, role=CoreUser.ROLE_STAFF, is_active=True)
+        # Get all active staff (Everyone except Students, Parents, SuperAdmin)
+        all_staff = CoreUser.objects.filter(school=school, is_active=True).exclude(
+            role__in=[CoreUser.ROLE_STUDENT, CoreUser.ROLE_PARENT, CoreUser.ROLE_SUPER_ADMIN]
+        )
         
         # Get attendances for this date
         attendances = StaffAttendance.objects.filter(school=school, date=target_date)
