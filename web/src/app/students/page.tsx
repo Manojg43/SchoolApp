@@ -38,9 +38,10 @@ export default function StudentList() {
             if (Array.isArray(cData)) {
                 setClasses(cData);
             }
-        } catch (e: any) {
+        } catch (e) {
             console.error(e);
-            alert(`Failed to load data: ${e.message || 'Unknown Error'}`);
+            const msg = e instanceof Error ? e.message : 'Unknown Error';
+            alert(`Failed to load data: ${msg}`);
         } finally {
             setLoading(false);
         }

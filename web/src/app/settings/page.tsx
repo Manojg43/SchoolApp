@@ -17,7 +17,7 @@ export default function SettingsPage() {
         <div className="min-h-screen bg-gray-50 p-8 font-[family-name:var(--font-geist-sans)]">
             <header className="mb-8 border-b pb-4">
                 <h1 className="text-3xl font-bold text-gray-900">Settings & Branding</h1>
-                <p className="text-gray-500">Customize your school's identity for reports and interface.</p>
+                <p className="text-gray-500">Customize your school&apos;s identity for reports and interface.</p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
@@ -43,7 +43,7 @@ export default function SettingsPage() {
 
                         {/* Signature */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Principal's Signature</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Principal&apos;s Signature</label>
                             <div className="flex items-center gap-4">
                                 <div className="w-32 h-16 bg-gray-100 rounded-lg flex items-center justify-center border border-dashed border-gray-300">
                                     {signature ? <img src={signature} alt="Sign" /> : <span className="text-xs text-gray-400">No Signature</span>}

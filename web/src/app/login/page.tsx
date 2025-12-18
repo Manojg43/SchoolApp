@@ -53,9 +53,10 @@ export default function LoginPage() {
             } else {
                 setServerError(data.error || 'Invalid credentials');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Login Error:", err);
-            setServerError(err.message || 'Network error. Please try again.');
+            const message = err instanceof Error ? err.message : 'Network error. Please try again.';
+            setServerError(message);
         } finally {
             setIsLoading(false);
         }

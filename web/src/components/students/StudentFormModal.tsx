@@ -99,7 +99,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                 ...data,
                 // Explicit conversion to help with type checking if needed
                 section: data.section ?? null
-            } as any; // Cast to any temporarily if types act up, OR better: use StudentPayload properly.
+            };
             // Actually, data matches parts of StudentPayload. Let's trust the API call or cast.
             // The issue is 'section' undefined in data vs null in Payload.
 
