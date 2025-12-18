@@ -13,17 +13,17 @@ class AcademicYearSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['academic_year_id']
 
+class SectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Section
+        fields = '__all__'
+
 class ClassSerializer(serializers.ModelSerializer):
     sections = SectionSerializer(many=True, read_only=True)
     
     class Meta:
         model = Class
         fields = ['id', 'school', 'name', 'order', 'sections']
-
-class SectionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Section
-        fields = '__all__'
 
 class AchievementSerializer(serializers.ModelSerializer):
     class Meta:

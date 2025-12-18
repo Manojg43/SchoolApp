@@ -9,17 +9,32 @@ const studentSchema = z.object({
     first_name: z.string().min(2, "First Name is required"),
     last_name: z.string().min(2, "Last Name is required"),
     father_name: z.string().min(2, "Father Name is required"),
-    mother_name: z.string().optional(),
+    mother_name: z.string().optional().or(z.literal('')),
     enrollment_number: z.string().min(1, "Enrollment ID is required"),
     gender: z.enum(['M', 'F', 'O']),
     date_of_birth: z.string().min(10, "DOB is required"),
-    address: z.string().optional(),
+    address: z.string().optional().or(z.literal('')),
     emergency_mobile: z.string().min(10, "Mobile number is required"),
+    // Coerce to number, allowing string input from forms. Default to 0 or undefined if empty.
     current_class: z.coerce.number().min(1, "Class is required"),
-    section: z.coerce.number().nullable().optional().transform(val => val === 0 ? null : val),
+    // Section is nullable. Transform 0/empty to null.
+    section: z.coerce.number().nullable().optional().transform(val => (val === 0 || !val) ? null : val),
 });
 
-type StudentFormValues = z.infer<typeof studentSchema>;
+// Explicitly define Form Values to avoid inference issues with transforms
+type StudentFormValues = {
+    first_name: string;
+    last_name: string;
+    father_name: string;
+    mother_name?: string;
+    enrollment_number: string;
+    gender: 'M' | 'F' | 'O';
+    date_of_birth: string;
+    address?: string;
+    emergency_mobile: string;
+    current_class: number;
+    section: number | null;
+};
 
 interface StudentFormModalProps {
     isOpen: boolean;
@@ -38,14 +53,16 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
         resolver: zodResolver(studentSchema),
         defaultValues: {
             gender: 'M',
-            current_class: 1, // Defaulting to some value if necessary, or keep undefined if Schema allows
+            current_class: 0,
             section: null,
             first_name: '',
             last_name: '',
             father_name: '',
+            mother_name: '',
             enrollment_number: '',
             emergency_mobile: '',
-            date_of_birth: ''
+            date_of_birth: '',
+            address: ''
         }
     });
 
@@ -78,9 +95,16 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             setValue('emergency_mobile', studentToEdit.emergency_mobile);
             setValue('date_of_birth', studentToEdit.date_of_birth);
             setValue('gender', studentToEdit.gender as 'M' | 'F' | 'O');
-            // Safely cast if necessary due to backend/frontend type mismatch in 'current_class'
-            setValue('current_class', (studentToEdit as unknown as { current_class: number }).current_class);
-            setValue('section', (studentToEdit as unknown as { section: number }).section);
+            setValue('mother_name', studentToEdit.mother_name || '');
+            setValue('address', studentToEdit.address || '');
+
+            // Safely set IDs
+            if (studentToEdit.current_class) {
+                setValue('current_class', studentToEdit.current_class);
+            }
+            if (studentToEdit.section) {
+                setValue('section', studentToEdit.section);
+            }
         } else {
             reset();
         }
@@ -94,10 +118,18 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             const classIdNum = Number(selectedClassId);
             const filtered = sections.filter(s => s.parent_class === classIdNum);
             setFilteredSections(filtered);
+
+            // If the current section is not in the filtered list, reset it
+            // unless we are in the initial load of an edit
+            const currentSection = watch('section');
+            if (currentSection && !filtered.find(s => s.id === currentSection)) {
+                setValue('section', null);
+            }
         } else {
             setFilteredSections([]);
+            setValue('section', null);
         }
-    }, [selectedClassId, sections]);
+    }, [selectedClassId, sections, setValue, watch]);
 
     const onSubmit = async (data: StudentFormValues) => {
         setLoading(true);
@@ -111,7 +143,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             // The issue is 'section' undefined in data vs null in Payload.
 
             if (studentToEdit) {
-                await updateStudent(studentToEdit.id, data);
+                await updateStudent(studentToEdit.id, data as unknown as Partial<StudentPayload>);
             } else {
                 await createStudent(data as unknown as StudentPayload);
             }
@@ -141,8 +173,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-
-                    {/* Basic Info */}
+                    {/* Name Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">First Name</label>
@@ -156,6 +187,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                         </div>
                     </div>
 
+                    {/* Parents Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Father Name</label>
@@ -163,26 +195,32 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                             {errors.father_name && <p className="text-red-500 text-xs mt-1">{errors.father_name.message}</p>}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Enrollment No.</label>
-                            <input {...register('enrollment_number')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                            {errors.enrollment_number && <p className="text-red-500 text-xs mt-1">{errors.enrollment_number.message}</p>}
+                            <label className="block text-sm font-medium text-gray-700">Mother Name</label>
+                            <input {...register('mother_name')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                         </div>
                     </div>
 
+                    {/* Contact & ID */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Enrollment ID</label>
+                            <input {...register('enrollment_number')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                            {errors.enrollment_number && <p className="text-red-500 text-xs mt-1">{errors.enrollment_number.message}</p>}
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
                             <input {...register('emergency_mobile')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                             {errors.emergency_mobile && <p className="text-red-500 text-xs mt-1">{errors.emergency_mobile.message}</p>}
                         </div>
+                    </div>
+
+                    {/* Personal Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
                             <input type="date" {...register('date_of_birth')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                             {errors.date_of_birth && <p className="text-red-500 text-xs mt-1">{errors.date_of_birth.message}</p>}
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Gender</label>
                             <select {...register('gender')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
@@ -191,6 +229,10 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                                 <option value="O">Other</option>
                             </select>
                         </div>
+                    </div>
+
+                    {/* Academic Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Class</label>
                             <select {...register('current_class')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
@@ -212,6 +254,16 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                         </div>
                     </div>
 
+                    {/* Address */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Address</label>
+                        <textarea
+                            {...register('address')}
+                            rows={2}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                    </div>
+
                     <div className="flex justify-end pt-4 space-x-3">
                         <button
                             type="button"
@@ -228,8 +280,8 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                             {loading ? 'Saving...' : 'Save Student'}
                         </button>
                     </div>
-
                 </form>
+
             </div>
         </div>
     );
