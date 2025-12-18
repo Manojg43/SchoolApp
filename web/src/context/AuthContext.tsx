@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface User {
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         return null;
     });
-    const [loading, setLoading] = useState(false); // No need to load if we read from LS synchronously
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     // Removed useEffect for restoring user as it is done in useState initializer

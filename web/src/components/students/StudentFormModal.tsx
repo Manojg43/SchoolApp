@@ -16,7 +16,7 @@ const studentSchema = z.object({
     address: z.string().optional(),
     emergency_mobile: z.string().min(10, "Mobile number is required"),
     current_class: z.preprocess((val) => Number(val), z.number().min(1, "Class is required")),
-    section: z.preprocess((val) => (val ? Number(val) : null), z.number().nullable().optional()),
+    section: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().nullable().optional()),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;

@@ -203,7 +203,7 @@ export async function deleteFee(id: number, schoolId?: string): Promise<void> {
 }
 
 // Staff
-export type StaffPayload = Omit<Staff, 'id'>;
+export type StaffPayload = Omit<Staff, 'id' | 'user_id'>;
 export interface Staff {
     id: number;
     user_id: string;
@@ -305,7 +305,10 @@ export async function getSections(schoolId?: string): Promise<SectionItem[]> {
 }
 
 // Student CRUD
-export type StudentPayload = Omit<Student, 'id'>;
+export type StudentPayload = Omit<Student, 'id' | 'is_active' | 'language'> & {
+    language?: string;
+    is_active?: boolean;
+};
 
 export async function createStudent(data: StudentPayload, schoolId?: string): Promise<Student> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
@@ -379,7 +382,10 @@ export async function getVehicles(schoolId?: string): Promise<Vehicle[]> {
     return fetchWithSchool('/transport/vehicles/', schoolId);
 }
 
-export async function createVehicle(data: any, schoolId?: string): Promise<Vehicle> {
+// Transport Payloads
+export type VehiclePayload = Omit<Vehicle, 'id'>;
+
+export async function createVehicle(data: VehiclePayload, schoolId?: string): Promise<Vehicle> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
@@ -415,7 +421,9 @@ export async function getRoutes(schoolId?: string): Promise<Route[]> {
     return fetchWithSchool('/transport/routes/', schoolId);
 }
 
-export async function createRoute(data: any, schoolId?: string): Promise<Route> {
+export type RoutePayload = Omit<Route, 'id'>;
+
+export async function createRoute(data: RoutePayload, schoolId?: string): Promise<Route> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
