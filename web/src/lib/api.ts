@@ -1,6 +1,6 @@
 // BYPASS PROXY: Connect directly to Render to avoid Vercel Timeouts
 // const API_BASE_URL = '/api';
-const API_BASE_URL = 'https://schoolapp-6vwg.onrender.com/api';
+export const API_BASE_URL = 'https://schoolapp-6vwg.onrender.com/api';
 
 // For demo purposes, we default to a specific school if not determined dynamically
 const DEFAULT_SCHOOL_ID = ''; // Changed from 'SCHOOL-A' to allow superuser access (no header = all schools)

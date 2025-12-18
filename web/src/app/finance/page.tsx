@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import KPICard from "@/components/ui/KPICard";
-import { getFees, createFee, deleteFee, getStudents, type Fee, type Student } from "@/lib/api";
+import { getFees, createFee, deleteFee, getStudents, API_BASE_URL, type Fee, type Student } from "@/lib/api";
 
 import { useRouter } from 'next/navigation';
 
@@ -73,7 +73,7 @@ export default function FinancePage() {
             header: "Actions",
             accessorKey: (row) => (
                 <a
-                    href={`${process.env.NEXT_PUBLIC_API_URL}/finance/invoice/${row.id}/pdf/`}
+                    href={`${API_BASE_URL}/finance/invoice/${row.id}/pdf/`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline text-sm"
