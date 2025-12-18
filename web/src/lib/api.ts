@@ -106,6 +106,41 @@ export interface Attendance {
     remarks: string;
 }
 
+// Fee Interfaces
+export interface FeeCategory {
+    id: number;
+    name: string;
+    description?: string;
+}
+
+export interface FeeStructure {
+    id: number;
+    academic_year: number;
+    class_assigned: number;
+    category: number;
+    amount: string;
+}
+
+// Helper to fetch categories
+export async function getFeeCategories(schoolId?: string): Promise<FeeCategory[]> {
+    return fetchWithSchool('/finance/categories/', schoolId);
+}
+
+// Helper to fetch structure amount
+export async function getFeeStructureAmount(classId: number, categoryId: number, schoolId?: string): Promise<string> {
+    try {
+        // Assuming backend filter by class and category
+        const res = await fetchWithSchool(`/finance/structure/?class_assigned=${classId}&category=${categoryId}`, schoolId);
+        if (Array.isArray(res) && res.length > 0) {
+            return res[0].amount;
+        }
+        return "0";
+    } catch (e) {
+        console.error("Error fetching fee structure", e);
+        return "0";
+    }
+}
+
 export async function getAttendance(schoolId?: string): Promise<Attendance[]> {
     return fetchWithSchool('/attendance/', schoolId);
 }
