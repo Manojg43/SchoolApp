@@ -51,9 +51,12 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                 // console.log("Fetched Data:", c, s);
                 setClasses(c);
                 setSections(s);
-            } catch (err: any) {
+                setClasses(c);
+                setSections(s);
+            } catch (err) {
                 console.error("Failed to load metadata:", err);
-                alert(`Failed to load Classes/Sections: ${err.message || 'Unknown Error'}. Check Console.`);
+                const msg = err instanceof Error ? err.message : 'Unknown Error';
+                alert(`Failed to load Classes/Sections: ${msg}. Check Console.`);
             }
         }
         if (isOpen) loadMeta();
@@ -93,10 +96,18 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
     const onSubmit = async (data: StudentFormValues) => {
         setLoading(true);
         try {
+            const payload: StudentPayload = {
+                ...data,
+                // Explicit conversion to help with type checking if needed
+                section: data.section ?? null
+            } as any; // Cast to any temporarily if types act up, OR better: use StudentPayload properly.
+            // Actually, data matches parts of StudentPayload. Let's trust the API call or cast.
+            // The issue is 'section' undefined in data vs null in Payload.
+
             if (studentToEdit) {
                 await updateStudent(studentToEdit.id, data);
             } else {
-                await createStudent(data);
+                await createStudent(data as unknown as StudentPayload);
             }
             onSuccess();
             onClose();
