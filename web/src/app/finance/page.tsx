@@ -8,15 +8,15 @@ import DataTable, { Column } from "@/components/ui/DataTable";
 import KPICard from "@/components/ui/KPICard";
 import { getFees, createFee, deleteFee, getStudents, type Fee, type Student } from "@/lib/api";
 
-import CreateInvoiceModal from "@/components/finance/CreateInvoiceModal";
+import { useRouter } from 'next/navigation';
 
 export default function FinancePage() {
     const { t } = useLanguage();
+    const router = useRouter();
     const { user, hasPermission } = useAuth();
     const [fees, setFees] = useState<Fee[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     async function load() {
         setLoading(true);
@@ -69,6 +69,19 @@ export default function FinancePage() {
                 </span>
             )
         },
+        {
+            header: "Actions",
+            accessorKey: (row) => (
+                <a
+                    href={`${process.env.NEXT_PUBLIC_API_URL}/finance/invoice/${row.id}/pdf/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline text-sm"
+                >
+                    View PDF
+                </a>
+            )
+        }
     ];
 
     // KPIs
@@ -85,7 +98,7 @@ export default function FinancePage() {
                 {hasPermission('students.add_fee') && (
                     <button
                         className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-700 flex items-center gap-2"
-                        onClick={() => setIsCreateOpen(true)}
+                        onClick={() => router.push('/finance/create')}
                     >
                         <Plus className="w-4 h-4" /> Create Invoice
                     </button>
@@ -112,12 +125,6 @@ export default function FinancePage() {
                     <div className="p-8 text-center text-gray-500">Access Denied</div>
                 )}
             </div>
-
-            <CreateInvoiceModal
-                isOpen={isCreateOpen}
-                onClose={() => setIsCreateOpen(false)}
-                onSuccess={handleSuccess}
-            />
         </div>
     );
 }
