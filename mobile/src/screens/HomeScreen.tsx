@@ -106,7 +106,7 @@ export default function HomeScreen() {
 
                 {/* Other Actions */}
                 <View style={styles.grid}>
-                    <TouchableOpacity style={styles.gridItem} onPress={() => Alert.alert("Coming Soon", "Profile edit coming soon.")}>
+                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Profile')}>
                         <User color="#0f52ba" size={24} />
                         <Text style={styles.gridLabel}>My Profile</Text>
                     </TouchableOpacity>

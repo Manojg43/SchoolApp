@@ -100,6 +100,25 @@ class StaffDashboardView(APIView):
             "salary": salary_info
         })
 
+    def patch(self, request):
+        user = request.user
+        data = request.data
+        
+        # 1. Update CoreUser fields
+        if 'first_name' in data: user.first_name = data['first_name']
+        if 'last_name' in data: user.last_name = data['last_name']
+        if 'email' in data: user.email = data['email']
+        if 'mobile' in data: user.mobile = data['mobile']
+        user.save()
+        
+        # 2. Update StaffProfile fields
+        profile, created = StaffProfile.objects.get_or_create(user=user)
+        if 'address' in data: profile.address = data['address']
+        if 'bio' in data: profile.bio = data['bio']
+        profile.save()
+        
+        return Response({'message': 'Profile updated successfully'})
+
 from rest_framework import viewsets
 from core.permissions import StandardPermission
 from .serializers import StaffSerializer

@@ -60,7 +60,8 @@ export const mobileApi = {
             manual_gps: isManual
         }),
 
-    getMyProfile: () => apiRequest('/staff/profile/', 'GET'),
+    getMyProfile: () => apiRequest('/staff/dashboard/', 'GET'),
+    updateProfile: (data: any) => apiRequest('/staff/dashboard/', 'PATCH', data),
 
     // Leave Management
     applyLeave: (start_date: string, end_date: string, reason: string) =>

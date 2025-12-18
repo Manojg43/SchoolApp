@@ -9,6 +9,7 @@ import LeaveScreen from '../screens/LeaveScreen';
 import SalaryScreen from '../screens/SalaryScreen';
 import DailyAttendanceScreen from '../screens/DailyAttendanceScreen';
 import TimetableScreen from '../screens/TimetableScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,7 @@ export default function AppNavigator() {
                 <Stack.Screen name="Salary" component={SalaryScreen} />
                 <Stack.Screen name="DailyAttendance" component={DailyAttendanceScreen} />
                 <Stack.Screen name="Timetable" component={TimetableScreen} />
+                <Stack.Screen name="Profile" component={ProfileScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
