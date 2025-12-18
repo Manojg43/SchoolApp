@@ -82,3 +82,34 @@ class SectionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(parent_class_id=class_id)
             
         return queryset
+
+from .models import Notice, Homework
+from .serializers import NoticeSerializer, HomeworkSerializer
+
+class NoticeViewSet(viewsets.ModelViewSet):
+    # Admin Interface for Notices
+    permission_classes = [StandardPermission] 
+    serializer_class = NoticeSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return Notice.objects.all().order_by('-date')
+        return Notice.objects.filter(school=user.school).order_by('-date')
+
+    def perform_create(self, serializer):
+        # Allow superuser to manually set school if needed, otherwise default to user.school
+        # Ideally SuperAdmin shouldn't create school-specific notices without context, 
+        # but for now we default to user.school or error if None.
+        serializer.save(school=self.request.user.school)
+
+class HomeworkViewSet(viewsets.ReadOnlyModelViewSet):
+    # Admin Monitoring for Homework (ReadOnly for Admin, Teachers use App)
+    permission_classes = [StandardPermission]
+    serializer_class = HomeworkSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+             return Homework.objects.all().order_by('-created_at')
+        return Homework.objects.filter(school=user.school).order_by('-created_at')

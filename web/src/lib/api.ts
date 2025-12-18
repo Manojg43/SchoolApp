@@ -741,3 +741,36 @@ export async function applyForLeave(start_date: string, end_date: string, reason
     if (!res.ok) throw new Error(`Failed to apply for leave: ${res.statusText}`);
 }
 
+// Generic API wrapper for new components
+export const api = {
+    get: (endpoint: string) => fetchWithSchool(endpoint),
+    post: async (endpoint: string, data: any) => {
+        const schoolId = typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined;
+        const headers: any = { 'Content-Type': 'application/json' };
+        if (schoolId) headers['X-School-ID'] = schoolId;
+        const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+        if (token) headers['Authorization'] = `Token ${token}`;
+
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        return { data: await res.json() };
+    },
+    delete: async (endpoint: string) => {
+        const schoolId = typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined;
+        const headers: any = {};
+        if (schoolId) headers['X-School-ID'] = schoolId;
+        const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+        if (token) headers['Authorization'] = `Token ${token}`;
+
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'DELETE',
+            headers
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        return { data: null };
+    }
+};

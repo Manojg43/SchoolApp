@@ -2,7 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import StaffDashboardView, GenerateSchoolQR, ScanAttendanceView, StaffViewSet, StaffAttendanceReportView, UpdateAttendanceView, StaffDailyAttendanceView
 from .views_leave import ApplyLeaveView, MyLeavesView, LeaveManagementView
-from .views_academic import TeacherTimetableView
+from .views_academic import TeacherTimetableView, HomeworkView
+from .views_communication import NoticeBoardView
 
 router = DefaultRouter()
 router.register(r'', StaffViewSet, basename='staff')
@@ -23,6 +24,8 @@ urlpatterns = [
 
     # Academic / Timetable
     path('timetable/', TeacherTimetableView.as_view(), name='teacher-timetable'),
+    path('homework/', HomeworkView.as_view(), name='teacher-homework'),
+    path('notices/', NoticeBoardView.as_view(), name='staff-notices'),
     
     path('', include(router.urls)),
 ]

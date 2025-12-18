@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from schools.views import SchoolViewSet, AchievementViewSet, AcademicYearViewSet, ClassViewSet, SectionViewSet
+from schools.views import SchoolViewSet, AchievementViewSet, AcademicYearViewSet, ClassViewSet, SectionViewSet, NoticeViewSet, HomeworkViewSet
 from students.views import StudentViewSet, AttendanceViewSet, FeeViewSet
 from django.http import JsonResponse
 
@@ -15,6 +15,8 @@ router.register(r'students', StudentViewSet)
 router.register(r'attendance', AttendanceViewSet)
 router.register(r'fees', FeeViewSet)
 router.register(r'achievements', AchievementViewSet)
+router.register(r'notices', NoticeViewSet)
+router.register(r'homework', HomeworkViewSet)
 
 from django.conf import settings
 from django.conf.urls.static import static

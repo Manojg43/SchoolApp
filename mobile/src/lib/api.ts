@@ -63,6 +63,16 @@ export const mobileApi = {
     getMyProfile: () => apiRequest('/staff/dashboard/', 'GET'),
     updateProfile: (data: any) => apiRequest('/staff/dashboard/', 'PATCH', data),
 
+    getNotices: () => apiRequest('/staff/notices/', 'GET'),
+
+    // Homework
+    getHomework: () => apiRequest('/staff/homework/', 'GET'),
+    addHomework: (data: any) => apiRequest('/staff/homework/', 'POST', data),
+
+    // Payslip
+    getPayslipLink: (id: number) => apiRequest(`/finance/salary/${id}/link/`, 'GET'),
+    // downloadPayslip: (id: number) => `${BASE_URL}/finance/salary/${id}/download/`, // Deprecated
+
     // Leave Management
     applyLeave: (start_date: string, end_date: string, reason: string) =>
         apiRequest('/staff/leaves/apply/', 'POST', { start_date, end_date, reason }),

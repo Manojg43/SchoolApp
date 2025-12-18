@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
     Users, BookOpen, Calculator, Bus, Award,
     Menu, Bell, Settings, LogOut, LayoutDashboard,
-    Plus, UserPlus
+    Plus, UserPlus, Megaphone
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -18,7 +18,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Students', href: '/students', icon: Users },
-        { name: 'Staff', href: '/staff', icon: Users },
+        { name: 'Staff', href: '/staff', icon: Users }, // Staff Management
+        { name: 'Academic', href: '/academic/homework', icon: BookOpen }, // Homework, Timetable
+        { name: 'Communication', href: '/communication/notices', icon: Megaphone }, // Notices
         { name: 'Finance', href: '/finance', icon: Calculator },
         { name: 'Transport', href: '/transport', icon: Bus },
         { name: 'Certificates', href: '/certificates', icon: Award },

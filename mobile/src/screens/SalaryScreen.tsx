@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Linking } from 'react-native';
 import { mobileApi } from '../lib/api';
 import { useNavigation } from '@react-navigation/native';
 
@@ -40,11 +40,34 @@ export default function SalaryScreen() {
 
     const totalSalary = report?.daily_logs?.reduce((sum: number, item: any) => sum + (item.daily_salary || 0), 0) || 0;
 
+    const handleDownload = async (id: number) => {
+        try {
+            const res = await mobileApi.getPayslipLink(id);
+            if (res.url) {
+                Linking.openURL(res.url).catch(err => Alert.alert("Error", "Could not open browser"));
+            } else {
+                Alert.alert("Error", "Failed to generate link");
+            }
+        } catch (e: any) {
+            Alert.alert("Error", e.message || "Failed to download");
+        }
+    };
+
     const renderItem = ({ item }: { item: any }) => (
         <View style={styles.row}>
             <View style={styles.dateCol}>
                 <Text style={styles.dateText}>{item.date}</Text>
                 <Text style={styles.dayText}>Day {item.day}</Text>
+                {/* Download Button for Day? No, payslip is monthly. 
+                    Wait, SalaryScreen shows DAILY LOGS.
+                    Where is the MONTHLY salary card? 
+                    Ah, row 92 is Summary Card. 
+                    I should put Download Button inside Summary Card usually.
+                    OR does the user want Daily Payslip? No, Monthly.
+                    The list is DAILY ATTENDANCE.
+                    The Summary Card shows Total Earnings.
+                    I should add Download Button to Summary Card.
+                */}
             </View>
             <View style={styles.timeCol}>
                 {item.status === 'PRESENT' || item.status === 'HALF_DAY' ? (
@@ -98,6 +121,12 @@ export default function SalaryScreen() {
                     <Text style={styles.summaryLabel}>Total Earnings</Text>
                     <Text style={[styles.summaryValue, styles.textGreen]}>₹{Math.round(totalSalary).toLocaleString()}</Text>
                 </View>
+
+                {report?.salary_generated && (
+                    <TouchableOpacity onPress={() => handleDownload(report.salary_id)} style={styles.downloadBtn}>
+                        <Text style={styles.downloadText}>Download Payslip</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Header Row */}
@@ -157,5 +186,8 @@ const styles = StyleSheet.create({
     textGreen: { color: '#10B981' },
     textGray: { color: '#9CA3AF' },
 
-    emptyText: { textAlign: 'center', marginTop: 50, color: '#9CA3AF' }
+    emptyText: { textAlign: 'center', marginTop: 50, color: '#9CA3AF' },
+
+    downloadBtn: { position: 'absolute', bottom: -15, alignSelf: 'center', backgroundColor: '#3B82F6', paddingHorizontal: 15, paddingVertical: 5, borderRadius: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, elevation: 2 },
+    downloadText: { color: 'white', fontWeight: 'bold', fontSize: 12 }
 });

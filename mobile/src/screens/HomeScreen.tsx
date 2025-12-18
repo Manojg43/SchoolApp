@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { mobileApi } from '../lib/api';
-import { QrCode, LogOut, User, Menu, Calendar, IndianRupee, CalendarCheck } from 'lucide-react-native';
+import { QrCode, LogOut, User, Menu, Calendar, IndianRupee, CalendarCheck, Bell, BookOpen } from 'lucide-react-native';
 
 export default function HomeScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -121,6 +121,14 @@ export default function HomeScreen() {
                     <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Timetable')}>
                         <Calendar color="#0f52ba" size={24} />
                         <Text style={styles.gridLabel}>Timetable</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Notices')}>
+                        <Bell color="#0f52ba" size={24} />
+                        <Text style={styles.gridLabel}>Notices</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Homework')}>
+                        <BookOpen color="#0f52ba" size={24} />
+                        <Text style={styles.gridLabel}>Homework</Text>
                     </TouchableOpacity>
                 </View>
 

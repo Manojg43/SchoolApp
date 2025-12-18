@@ -136,3 +136,40 @@ class ClassSchedule(models.Model):
 
     def __str__(self):
         return f"{self.day_of_week} {self.start_time} - {self.subject} ({self.teacher.first_name})"
+
+class Notice(models.Model):
+    ROLE_CHOICES = [
+        ('ALL', 'All Staff'),
+        ('TEACHER', 'Teachers Only'),
+        ('DRIVER', 'Drivers Only'),
+    ]
+    
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    date = models.DateField(auto_now_add=True)
+    target_role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='ALL')
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return self.title
+
+class Homework(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    class_assigned = models.ForeignKey(Class, on_delete=models.CASCADE)
+    section = models.CharField(max_length=10, blank=True)
+    subject = models.CharField(max_length=100)
+    teacher = models.ForeignKey('core.CoreUser', on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    due_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.subject} - {self.class_assigned.name}"

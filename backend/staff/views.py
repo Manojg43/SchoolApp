@@ -458,6 +458,17 @@ class StaffAttendanceReportView(APIView):
                 'daily_salary': round(day_salary, 2)
             })
             
+        # Check if Salary Generated
+        salary_id = None
+        is_paid = False
+        try:
+             from finance.models import Salary
+             sal_obj = Salary.objects.get(staff=target_staff, month=datetime.date(year, month, 1))
+             salary_id = sal_obj.id
+             is_paid = sal_obj.is_paid
+        except (ImportError, Exception):
+             pass
+
         return Response({
             'staff_name': f"{target_staff.first_name} {target_staff.last_name}",
             'month': datetime.date(year, month, 1).strftime("%B %Y"),
@@ -467,7 +478,10 @@ class StaffAttendanceReportView(APIView):
                 'leave': leaves,
                 'absent': absent_days
             },
-            'daily_logs': report
+            'daily_logs': report,
+            'salary_generated': bool(salary_id),
+            'salary_id': salary_id,
+            'is_paid': is_paid
         })
 
 class StaffDailyAttendanceView(APIView):
