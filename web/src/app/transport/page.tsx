@@ -7,6 +7,8 @@ import { Bus, MapPin, Plus } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import { getVehicles, createVehicle, deleteVehicle, getRoutes, createRoute, type Vehicle, type Route } from "@/lib/api";
 
+import Link from 'next/link';
+
 export default function TransportPage() {
     const { t } = useLanguage();
     const { user, hasPermission } = useAuth();
@@ -103,9 +105,9 @@ export default function TransportPage() {
                             <Bus className="w-5 h-5" /> Vehicles
                         </h2>
                         {hasPermission('transport.add_vehicle') && (
-                            <button onClick={handleAddVehicle} className="p-1 hover:bg-white rounded-full transition-colors">
+                            <Link href="/transport/create" className="p-1 hover:bg-white rounded-full transition-colors inline-block">
                                 <Plus className="w-5 h-5 text-blue-700" />
-                            </button>
+                            </Link>
                         )}
                     </div>
                     <DataTable

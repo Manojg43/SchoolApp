@@ -373,7 +373,12 @@ export interface Vehicle {
     model: string;
     capacity: number;
     driver_name?: string;
+    driver_age?: number;
+    driver_mobile?: string;
+    fitness_upto?: string;
+    // driver_id (FK) optional
     driver?: number | null;
+    routes?: Route[]; // Nested read
 }
 
 export interface Route {
@@ -387,7 +392,17 @@ export async function getVehicles(schoolId?: string): Promise<Vehicle[]> {
 }
 
 // Transport Payloads
-export type VehiclePayload = Omit<Vehicle, 'id'>;
+export interface VehiclePayload {
+    registration_number: string;
+    model: string;
+    capacity: number;
+    driver_name?: string;
+    driver_age?: number;
+    driver_mobile?: string;
+    fitness_upto?: string;
+    driver?: number | null;
+    routes?: { name: string }[]; // Nested write
+}
 
 export async function createVehicle(data: VehiclePayload, schoolId?: string): Promise<Vehicle> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;

@@ -14,10 +14,14 @@ class Vehicle(models.Model):
     model = models.CharField(_("Model/Type"), max_length=100) # e.g. Tata Starbus
     capacity = models.PositiveIntegerField(_("Capacity"))
     
-    driver = models.ForeignKey(CoreUser, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'DRIVER'}, related_name='vehicles_driven')
-    # If a vehicle has multiple drivers, we might need a ManyToMany or explicit Assignment model.
-    # For now, 1 vehicle = 1 main driver.
+    driver = models.ForeignKey(CoreUser, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'DRIVER'}, related_name='vehicles_driven', blank=True)
     
+    # Direct Driver Details (as requested for simple management)
+    driver_name = models.CharField(_("Driver Name"), max_length=100, blank=True)
+    driver_age = models.PositiveIntegerField(_("Driver Age"), null=True, blank=True)
+    driver_mobile = models.CharField(_("Driver Mobile"), max_length=15, blank=True)
+    fitness_upto = models.DateField(_("Fitness Valid Upto"), null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -30,6 +34,7 @@ class Vehicle(models.Model):
 
 class Route(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='routes', null=True, blank=True) # made nullable for migration
     name = models.CharField(_("Route Name"), max_length=100)
     
     def __str__(self):
