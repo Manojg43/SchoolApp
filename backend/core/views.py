@@ -28,6 +28,17 @@ class LoginApiView(APIView):
             # but primary source is now permission_list
             if user.is_superuser: permission_list.append('is_superuser')
 
+            # --- Custom Boolean Permissions ---
+            if user.can_access_finance: permission_list.append('can_access_finance')
+            if user.can_access_transport: permission_list.append('can_access_transport')
+            if user.can_access_certificates: permission_list.append('can_access_certificates')
+            if user.can_access_student_records: permission_list.append('can_access_student_records')
+            if user.can_access_attendance: permission_list.append('can_access_attendance')
+            if user.can_manage_payroll: permission_list.append('can_manage_payroll')
+            if user.can_manage_leaves: permission_list.append('can_manage_leaves')
+            if user.can_mark_manual_attendance: permission_list.append('can_mark_manual_attendance')
+            if user.can_use_mobile_app: permission_list.append('can_use_mobile_app')
+
             return Response({
                 'token': token.key,
                 'user_id': user.user_id,
