@@ -28,6 +28,18 @@ export default function DataTable<T extends { id: number | string }>({
     onView,
     isLoading
 }: DataTableProps<T>) {
+    const [openMenuId, setOpenMenuId] = React.useState<number | string | null>(null);
+
+    React.useEffect(() => {
+        const handleClickOutside = () => setOpenMenuId(null);
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    const toggleMenu = (e: React.MouseEvent, id: number | string) => {
+        e.stopPropagation();
+        setOpenMenuId(prev => prev === id ? null : id);
+    };
 
     if (isLoading) {
         return <div className="p-8 text-center text-gray-500">Loading data...</div>;
