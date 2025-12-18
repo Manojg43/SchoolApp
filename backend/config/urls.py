@@ -15,8 +15,8 @@ router.register(r'students', StudentViewSet)
 router.register(r'attendance', AttendanceViewSet)
 router.register(r'fees', FeeViewSet)
 router.register(r'achievements', AchievementViewSet)
-router.register(r'notices', NoticeViewSet)
-router.register(r'homework', HomeworkViewSet)
+router.register(r'notices', NoticeViewSet, basename='notice')
+router.register(r'homework', HomeworkViewSet, basename='homework')
 
 from django.conf import settings
 from django.conf.urls.static import static
