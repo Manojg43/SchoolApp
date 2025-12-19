@@ -5,6 +5,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { mobileApi } from '../lib/api';
 import { Calendar, User, Clock, ArrowLeft } from 'lucide-react-native';
 
+import { theme } from '../constants/theme';
+import { Card } from '../components/ui/Card';
+
 export default function DailyAttendanceScreen() {
     const navigation = useNavigation();
     const [date, setDate] = useState(new Date());
@@ -50,15 +53,15 @@ export default function DailyAttendanceScreen() {
     };
 
     const renderItem = ({ item }: { item: any }) => (
-        <View style={styles.card}>
+        <Card style={styles.card}>
             <View style={styles.row}>
                 <View style={styles.avatar}>
-                    <User color="#6b7280" size={20} />
+                    <User color={theme.colors.text.muted} size={20} />
                 </View>
                 <View style={styles.info}>
                     <Text style={styles.name}>{item.name}</Text>
                     <View style={styles.timeRow}>
-                        <Clock size={12} color="#9ca3af" />
+                        <Clock size={12} color={theme.colors.text.light} />
                         <Text style={styles.timeText}>
                             In: {item.check_in !== '-' ? item.check_in : '--:--'} • Out: {item.check_out !== '-' ? item.check_out : '--:--'}
                         </Text>
@@ -76,7 +79,7 @@ export default function DailyAttendanceScreen() {
                     ]}>{item.status}</Text>
                 </View>
             </View>
-        </View>
+        </Card>
     );
 
     return (
@@ -84,7 +87,7 @@ export default function DailyAttendanceScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <ArrowLeft color="#1f2937" size={24} />
+                    <ArrowLeft color={theme.colors.text.main} size={24} />
                 </TouchableOpacity>
                 <Text style={styles.title}>Daily Attendance</Text>
                 <View style={{ width: 24 }} />
@@ -93,7 +96,7 @@ export default function DailyAttendanceScreen() {
             {/* Date Selector */}
             <View style={styles.dateBar}>
                 <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.dateBtn}>
-                    <Calendar color="#3b82f6" size={20} />
+                    <Calendar color={theme.colors.primary} size={20} />
                     <Text style={styles.dateText}>{date.toDateString()}</Text>
                 </TouchableOpacity>
                 {showPicker && (
@@ -108,22 +111,22 @@ export default function DailyAttendanceScreen() {
 
             {/* Stats Summary */}
             <View style={styles.statsContainer}>
-                <View style={[styles.statBox, { backgroundColor: '#ecfdf5' }]}>
-                    <Text style={[styles.statLabel, { color: '#047857' }]}>Present</Text>
-                    <Text style={[styles.statValue, { color: '#047857' }]}>{stats.present}</Text>
+                <View style={[styles.statBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                    <Text style={[styles.statLabel, { color: theme.colors.success }]}>Present</Text>
+                    <Text style={[styles.statValue, { color: theme.colors.success }]}>{stats.present}</Text>
                 </View>
-                <View style={[styles.statBox, { backgroundColor: '#fef2f2' }]}>
-                    <Text style={[styles.statLabel, { color: '#b91c1c' }]}>Absent</Text>
-                    <Text style={[styles.statValue, { color: '#b91c1c' }]}>{stats.absent}</Text>
+                <View style={[styles.statBox, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+                    <Text style={[styles.statLabel, { color: theme.colors.error }]}>Absent</Text>
+                    <Text style={[styles.statValue, { color: theme.colors.error }]}>{stats.absent}</Text>
                 </View>
-                <View style={[styles.statBox, { backgroundColor: '#fffbeb' }]}>
-                    <Text style={[styles.statLabel, { color: '#b45309' }]}>Leave</Text>
-                    <Text style={[styles.statValue, { color: '#b45309' }]}>{stats.leave}</Text>
+                <View style={[styles.statBox, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
+                    <Text style={[styles.statLabel, { color: theme.colors.warning }]}>Leave</Text>
+                    <Text style={[styles.statValue, { color: theme.colors.warning }]}>{stats.leave}</Text>
                 </View>
             </View>
 
             {loading ? (
-                <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 50 }} />
+                <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 50 }} />
             ) : (
                 <FlatList
                     data={records}
@@ -138,39 +141,39 @@ export default function DailyAttendanceScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f3f4f6' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, backgroundColor: 'white' },
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, backgroundColor: theme.colors.surface },
     backBtn: { padding: 5 },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#1f2937' },
+    title: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text.main },
 
-    dateBar: { padding: 15, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', justifyContent: 'center' },
-    dateBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 },
-    dateText: { fontSize: 16, fontWeight: '500', color: '#374151' },
+    dateBar: { padding: 15, backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border, flexDirection: 'row', justifyContent: 'center' },
+    dateBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.borderRadius.s },
+    dateText: { fontSize: 16, fontWeight: '500', color: theme.colors.text.main },
 
     statsContainer: { flexDirection: 'row', padding: 15, gap: 10 },
-    statBox: { flex: 1, padding: 10, borderRadius: 8, alignItems: 'center' },
+    statBox: { flex: 1, padding: 10, borderRadius: theme.borderRadius.s, alignItems: 'center' },
     statLabel: { fontSize: 12, fontWeight: '600', marginBottom: 4 },
     statValue: { fontSize: 20, fontWeight: 'bold' },
 
     list: { padding: 15 },
-    card: { backgroundColor: 'white', padding: 15, borderRadius: 12, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' },
+    card: { backgroundColor: theme.colors.surface, padding: 15, borderRadius: theme.borderRadius.m, marginBottom: 10 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.background, alignItems: 'center', justifyContent: 'center' },
     info: { flex: 1 },
-    name: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 2 },
+    name: { fontSize: 16, fontWeight: '600', color: theme.colors.text.main, marginBottom: 2 },
     timeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    timeText: { fontSize: 12, color: '#6b7280' },
+    timeText: { fontSize: 12, color: theme.colors.text.muted },
 
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-    bgGreen: { backgroundColor: '#d1fae5' },
-    textGreen: { color: '#059669', fontSize: 12, fontWeight: 'bold' },
-    bgRed: { backgroundColor: '#fee2e2' },
-    textRed: { color: '#dc2626', fontSize: 12, fontWeight: 'bold' },
-    bgYellow: { backgroundColor: '#fef3c7' },
-    textYellow: { color: '#d97706', fontSize: 12, fontWeight: 'bold' },
-    bgBlue: { backgroundColor: '#dbeafe' },
-    textBlue: { color: '#2563eb', fontSize: 12, fontWeight: 'bold' },
-    badgeText: { fontSize: 12, fontWeight: 'bold' }, // Added base style for badge text
+    bgGreen: { backgroundColor: 'rgba(16, 185, 129, 0.1)' },
+    textGreen: { color: theme.colors.success, fontSize: 12, fontWeight: 'bold' },
+    bgRed: { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
+    textRed: { color: theme.colors.error, fontSize: 12, fontWeight: 'bold' },
+    bgYellow: { backgroundColor: 'rgba(245, 158, 11, 0.1)' },
+    textYellow: { color: theme.colors.warning, fontSize: 12, fontWeight: 'bold' },
+    bgBlue: { backgroundColor: 'rgba(59, 130, 246, 0.1)' },
+    textBlue: { color: '#3b82f6', fontSize: 12, fontWeight: 'bold' },
+    badgeText: { fontSize: 12, fontWeight: 'bold' },
 
-    empty: { textAlign: 'center', marginTop: 50, color: '#9ca3af' }
+    empty: { textAlign: 'center', marginTop: 50, color: theme.colors.text.light }
 });

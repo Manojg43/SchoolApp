@@ -113,3 +113,9 @@ class FeeStructureViewSet(viewsets.ModelViewSet):
         serializer.save(school=self.request.user.school)
 
 
+# ViewSet Cleanups
+# FeeViewSet is handled in students.views to avoid duplication
+
+
+
+

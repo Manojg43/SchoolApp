@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { mobileApi } from '../lib/api';
 import { QrCode, LogOut, User, Menu, Calendar, IndianRupee, CalendarCheck, Bell, BookOpen } from 'lucide-react-native';
+import { theme } from '../constants/theme';
+import { Card } from '../components/ui/Card';
 
 export default function HomeScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
     const [dashboardData, setDashboardData] = useState<any>(null);
     const [refreshing, setRefreshing] = useState(false);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         loadDashboard();
@@ -17,8 +20,13 @@ export default function HomeScreen() {
 
     const loadDashboard = async () => {
         try {
-            const data = await mobileApi.getMyProfile(); // This now returns { user, attendance, salary }
+            const data = await mobileApi.getMyProfile();
             setDashboardData(data);
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }).start();
         } catch (e) {
             // console.log("Failed to load dashboard", e);
         }
@@ -48,90 +56,108 @@ export default function HomeScreen() {
                     <Text style={styles.userName}>{user.first_name || 'Staff'} {user.last_name || ''}</Text>
                     <Text style={styles.designation}>{user.designation || 'Teacher'}</Text>
                 </View>
-                <TouchableOpacity onPress={handleLogout}>
-                    <LogOut color="#6b7280" size={24} />
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+                    <LogOut color={theme.colors.text.muted} size={24} />
                 </TouchableOpacity>
             </View>
 
             <ScrollView
                 contentContainerStyle={styles.content}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
             >
-                {/* Attendance Summary */}
-                <Text style={styles.sectionTitle}>Attendance ({new Date().toLocaleString('default', { month: 'long' })})</Text>
-                <View style={styles.statsRow}>
-                    <View style={[styles.card, styles.statCard]}>
-                        <Text style={styles.cardLabel}>Present</Text>
-                        <Text style={[styles.cardValue, { color: '#059669' }]}>{att.present || 0}</Text>
+                <Animated.View style={{ opacity: fadeAnim }}>
+                    {/* Attendance Summary */}
+                    <Text style={styles.sectionTitle}>Attendance ({new Date().toLocaleString('default', { month: 'long' })})</Text>
+                    <View style={styles.statsRow}>
+                        <Card style={[styles.statCard]}>
+                            <Text style={styles.cardLabel}>Present</Text>
+                            <Text style={[styles.cardValue, { color: theme.colors.success }]}>{att.present || 0}</Text>
+                        </Card>
+                        <Card style={[styles.statCard]}>
+                            <Text style={styles.cardLabel}>Absent</Text>
+                            <Text style={[styles.cardValue, { color: theme.colors.error }]}>{att.absent || 0}</Text>
+                        </Card>
+                        <Card style={[styles.statCard]}>
+                            <Text style={styles.cardLabel}>Leaves</Text>
+                            <Text style={[styles.cardValue, { color: theme.colors.warning }]}>{att.leaves || 0}</Text>
+                        </Card>
                     </View>
-                    <View style={[styles.card, styles.statCard]}>
-                        <Text style={styles.cardLabel}>Absent</Text>
-                        <Text style={[styles.cardValue, { color: '#dc2626' }]}>{att.absent || 0}</Text>
-                    </View>
-                    <View style={[styles.card, styles.statCard]}>
-                        <Text style={styles.cardLabel}>Leaves</Text>
-                        <Text style={[styles.cardValue, { color: '#d97706' }]}>{att.leaves || 0}</Text>
-                    </View>
-                </View>
 
-                {/* Salary Card */}
-                <Text style={styles.sectionTitle}>Salary Status</Text>
-                <TouchableOpacity style={styles.salaryCard} onPress={() => navigation.navigate('Salary')}>
-                    <View style={styles.salaryHeader}>
-                        <IndianRupee color="#0f52ba" size={24} />
-                        <Text style={styles.salaryTitle}>Last Month: {salary.month || '-'}</Text>
-                    </View>
-                    <View style={styles.salaryContent}>
-                        <Text style={styles.salaryAmount}>₹{salary.net_salary || '0.00'}</Text>
-                        <View style={[styles.badge, salary.is_paid ? styles.badgePaid : styles.badgePending]}>
-                            <Text style={[styles.badgeText, salary.is_paid ? styles.textPaid : styles.textPending]}>
-                                {salary.is_paid ? 'PAID' : 'PENDING'}
-                            </Text>
+                    {/* Salary Card */}
+                    <Text style={styles.sectionTitle}>Salary Status</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Salary')}>
+                        <Card style={styles.salaryCard}>
+                            <View style={styles.salaryHeader}>
+                                <View style={styles.iconContainer}>
+                                    <IndianRupee color={theme.colors.primary} size={24} />
+                                </View>
+                                <Text style={styles.salaryTitle}>Last Month: {salary.month || '-'}</Text>
+                            </View>
+                            <View style={styles.salaryContent}>
+                                <Text style={styles.salaryAmount}>₹{salary.net_salary || '0.00'}</Text>
+                                <View style={[styles.badge, salary.is_paid ? styles.badgePaid : styles.badgePending]}>
+                                    <Text style={[styles.badgeText, salary.is_paid ? styles.textPaid : styles.textPending]}>
+                                        {salary.is_paid ? 'PAID' : 'PENDING'}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Text style={styles.salaryFooter}>Based on {salary.present_days || 0} Working Days</Text>
+                        </Card>
+                    </TouchableOpacity>
+
+                    {/* Primary Action */}
+                    <TouchableOpacity
+                        style={styles.scanButton}
+                        onPress={() => navigation.navigate('Scan')}
+                        activeOpacity={0.9}
+                    >
+                        <QrCode color="white" size={32} />
+                        <View style={styles.scanTextContainer}>
+                            <Text style={styles.scanButtonText}>Scan Attendance</Text>
+                            <Text style={styles.scanButtonSubText}>Scan School QR to Mark Check-In</Text>
                         </View>
+                    </TouchableOpacity>
+
+                    {/* Other Actions */}
+                    <View style={styles.grid}>
+                        <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('Profile')}>
+                            <Card style={styles.gridItem}>
+                                <User color={theme.colors.primary} size={28} />
+                                <Text style={styles.gridLabel}>Profile</Text>
+                            </Card>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('Leave')}>
+                            <Card style={styles.gridItem}>
+                                <Menu color={theme.colors.primary} size={28} />
+                                <Text style={styles.gridLabel}>Leave</Text>
+                            </Card>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('DailyAttendance')}>
+                            <Card style={styles.gridItem}>
+                                <CalendarCheck color={theme.colors.primary} size={28} />
+                                <Text style={styles.gridLabel}>Logs</Text>
+                            </Card>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('Timetable')}>
+                            <Card style={styles.gridItem}>
+                                <Calendar color={theme.colors.primary} size={28} />
+                                <Text style={styles.gridLabel}>Timetable</Text>
+                            </Card>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('Notices')}>
+                            <Card style={styles.gridItem}>
+                                <Bell color={theme.colors.primary} size={28} />
+                                <Text style={styles.gridLabel}>Notices</Text>
+                            </Card>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('Homework')}>
+                            <Card style={styles.gridItem}>
+                                <BookOpen color={theme.colors.primary} size={28} />
+                                <Text style={styles.gridLabel}>Homework</Text>
+                            </Card>
+                        </TouchableOpacity>
                     </View>
-                    <Text style={styles.salaryFooter}>Based on {salary.present_days || 0} Present Days</Text>
-                </TouchableOpacity>
-
-                {/* Primary Action */}
-                <TouchableOpacity
-                    style={styles.scanButton}
-                    onPress={() => navigation.navigate('Scan')}
-                >
-                    <QrCode color="white" size={32} />
-                    <View style={styles.scanTextContainer}>
-                        <Text style={styles.scanButtonText}>Scan Attendance</Text>
-                        <Text style={styles.scanButtonSubText}>Scan School QR to Mark Check-In</Text>
-                    </View>
-                </TouchableOpacity>
-
-                {/* Other Actions */}
-                <View style={styles.grid}>
-                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Profile')}>
-                        <User color="#0f52ba" size={24} />
-                        <Text style={styles.gridLabel}>My Profile</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Leave')}>
-                        <Menu color="#0f52ba" size={24} />
-                        <Text style={styles.gridLabel}>Apply Leave</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('DailyAttendance')}>
-                        <CalendarCheck color="#0f52ba" size={24} />
-                        <Text style={styles.gridLabel}>Daily Attendance</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Timetable')}>
-                        <Calendar color="#0f52ba" size={24} />
-                        <Text style={styles.gridLabel}>Timetable</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Notices')}>
-                        <Bell color="#0f52ba" size={24} />
-                        <Text style={styles.gridLabel}>Notices</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('Homework')}>
-                        <BookOpen color="#0f52ba" size={24} />
-                        <Text style={styles.gridLabel}>Homework</Text>
-                    </TouchableOpacity>
-                </View>
-
+                </Animated.View>
             </ScrollView>
         </View>
     );
@@ -140,91 +166,89 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f3f4f6',
+        backgroundColor: theme.colors.background,
     },
     header: {
-        backgroundColor: 'white',
-        padding: 20,
+        backgroundColor: theme.colors.surface,
+        padding: 24,
         paddingTop: 60,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        borderBottomColor: theme.colors.border,
     },
     schoolName: {
         fontSize: 14,
-        color: '#6b7280',
+        color: theme.colors.text.muted,
+        marginBottom: 2,
     },
     userName: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: 'bold',
-        color: '#1f2937',
+        color: theme.colors.text.main,
     },
     designation: {
         fontSize: 14,
-        color: '#0f52ba',
-        fontWeight: '500',
+        color: theme.colors.primary,
+        fontWeight: '600',
+    },
+    logoutBtn: {
+        padding: 8,
+        borderRadius: 50,
+        backgroundColor: theme.colors.background,
     },
     content: {
-        padding: 20,
+        padding: 24,
     },
     sectionTitle: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#374151',
-        marginBottom: 10,
-        marginTop: 10,
+        fontWeight: 'bold',
+        color: theme.colors.text.main,
+        marginBottom: 12,
+        marginTop: 8,
     },
     statsRow: {
         flexDirection: 'row',
-        gap: 15,
-        marginBottom: 20,
-    },
-    card: {
-        flex: 1,
-        backgroundColor: 'white',
-        padding: 15,
-        borderRadius: 12,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
-        elevation: 2,
+        gap: 12,
+        marginBottom: 24,
     },
     statCard: {
+        flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        paddingVertical: 20,
     },
     cardLabel: {
-        color: '#6b7280',
+        color: theme.colors.text.muted,
         fontSize: 12,
-        marginBottom: 5,
+        fontWeight: '600',
+        marginBottom: 4,
+        textTransform: 'uppercase',
     },
     cardValue: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
     },
     salaryCard: {
-        backgroundColor: 'white',
+        marginBottom: 24,
         padding: 20,
-        borderRadius: 12,
-        marginBottom: 20,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
-        elevation: 2,
     },
     salaryHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 16,
+    },
+    iconContainer: {
+        padding: 8,
+        backgroundColor: 'rgba(79, 70, 229, 0.1)', // Primary alpha
+        borderRadius: 8,
     },
     salaryTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#374151',
-        marginLeft: 8,
+        color: theme.colors.text.main,
+        marginLeft: 12,
     },
     salaryContent: {
         flexDirection: 'row',
@@ -233,77 +257,78 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     salaryAmount: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: 'bold',
-        color: '#111827',
+        color: theme.colors.text.main,
     },
     salaryFooter: {
-        fontSize: 12,
-        color: '#6b7280',
+        fontSize: 13,
+        color: theme.colors.text.muted,
     },
     badge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: 20,
     },
     badgePaid: {
-        backgroundColor: '#ecfdf5',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
     },
     badgePending: {
-        backgroundColor: '#fffbeb',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
     },
     badgeText: {
         fontSize: 12,
         fontWeight: 'bold',
     },
     textPaid: {
-        color: '#059669',
+        color: theme.colors.success,
     },
     textPending: {
-        color: '#d97706',
+        color: theme.colors.warning,
     },
     scanButton: {
-        backgroundColor: '#0f52ba',
+        backgroundColor: theme.colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 20,
-        borderRadius: 16,
-        marginBottom: 30,
-        shadowColor: '#0f52ba',
+        padding: 24,
+        borderRadius: theme.borderRadius.l,
+        marginBottom: 32,
+        shadowColor: theme.colors.primary,
+        shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowRadius: 16,
+        elevation: 10,
     },
     scanTextContainer: {
-        marginLeft: 15,
+        marginLeft: 16,
     },
     scanButtonText: {
-        color: 'white',
-        fontSize: 18,
+        color: theme.colors.text.inverse,
+        fontSize: 20,
         fontWeight: 'bold',
     },
     scanButtonSubText: {
-        color: '#bfdbfe',
-        fontSize: 12,
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: 13,
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 15,
+        gap: 12,
+    },
+    gridItemContainer: {
+        width: '31%', // 3 column approx
     },
     gridItem: {
-        width: '30%',
-        backgroundColor: 'white',
-        padding: 15,
-        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 100,
+        minHeight: 110,
+        padding: 16,
     },
     gridLabel: {
-        marginTop: 10,
-        color: '#374151',
-        fontWeight: '500',
+        marginTop: 12,
+        color: theme.colors.text.main,
+        fontWeight: '600',
         fontSize: 12,
         textAlign: 'center',
     }

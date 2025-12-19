@@ -2,13 +2,16 @@
 
 import { useLanguage } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
-import { Save, Upload, RefreshCw, MapPin } from "lucide-react";
-import { useAuth, PermissionGuard } from "@/context/AuthContext";
+import { Save, Upload, RefreshCw, MapPin, Building, QrCode, Clock } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import {
     getSchoolSettings, updateSchoolSettings, regenerateQR,
     SchoolSettings
 } from "@/lib/api";
 import QRCode from "react-qr-code";
+import Animate, { AnimatePage } from "@/components/ui/Animate";
+import Card, { CardContent, CardHeader, CardTitle } from "@/components/ui/modern/Card";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function SettingsPage() {
     const { t } = useLanguage();
@@ -17,6 +20,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [settings, setSettings] = useState<Partial<SchoolSettings>>({});
+    const [activeTab, setActiveTab] = useState('branding');
 
     // QR State
     const [qrData, setQrData] = useState<{ token: string, expires_in: number, school_name: string } | null>(null);
@@ -68,6 +72,7 @@ export default function SettingsPage() {
         setSaving(true);
         try {
             await updateSchoolSettings(settings);
+            // Replace with Toast later
             alert("Settings saved successfully!");
         } catch (e) {
             console.error(e);
@@ -77,216 +82,261 @@ export default function SettingsPage() {
         }
     };
 
-    if (loading) return <div className="p-8">Loading settings...</div>;
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+    );
+
+    const tabs = [
+        { id: 'branding', label: 'Identity & Branding', icon: <Building size={18} /> },
+        { id: 'location', label: 'Location & Geo-Fencing', icon: <MapPin size={18} /> },
+        { id: 'attendance', label: 'Attendance Rules', icon: <Clock size={18} /> },
+        { id: 'qr', label: 'Staff QR Code', icon: <QrCode size={18} /> },
+    ];
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8 font-[family-name:var(--font-geist-sans)]">
-            <header className="mb-8 border-b pb-4 flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Settings & Branding</h1>
-                    <p className="text-gray-500">Customize your school identity and configuration.</p>
-                </div>
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
-                >
-                    <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-            </header>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl">
-
-                {/* Branding Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
-                    <h2 className="text-lg font-semibold mb-6 text-gray-800 border-b pb-2">School Identity</h2>
-
-                    <div className="space-y-6">
-                        {/* School Name */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">School Name</label>
-                            <input
-                                type="text"
-                                value={settings.name || ''}
-                                onChange={e => setSettings({ ...settings, name: e.target.value })}
-                                className="w-full p-2 border rounded-md"
-                            />
-                        </div>
-
-                        {/* Address */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                            <textarea
-                                value={settings.address || ''}
-                                onChange={e => setSettings({ ...settings, address: e.target.value })}
-                                className="w-full p-2 border rounded-md h-20"
-                            />
-                        </div>
-
-                        {/* Logo */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">School Logo</label>
-                            <div className="flex items-center gap-4">
-                                <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center border border-dashed border-gray-300 overflow-hidden">
-                                    {settings.logo_url ? (
-                                        <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain" />
-                                    ) : (
-                                        <span className="text-xs text-gray-400">No Logo</span>
-                                    )}
-                                </div>
-                                <label className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 cursor-pointer">
-                                    <Upload className="w-4 h-4" /> Upload
-                                    <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleFileChange('logo_url', e.target.files[0])} />
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Signature */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Principal&apos;s Signature</label>
-                            <div className="flex items-center gap-4">
-                                <div className="w-32 h-16 bg-gray-100 rounded-lg flex items-center justify-center border border-dashed border-gray-300 overflow-hidden">
-                                    {settings.signature_url ? (
-                                        <img src={settings.signature_url} alt="Sign" className="w-full h-full object-contain" />
-                                    ) : (
-                                        <span className="text-xs text-gray-400">No Signature</span>
-                                    )}
-                                </div>
-                                <label className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 cursor-pointer">
-                                    <Upload className="w-4 h-4" /> Upload
-                                    <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleFileChange('signature_url', e.target.files[0])} />
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Watermark */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Report Watermark</label>
-                            <div className="flex items-center gap-4">
-                                <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center border border-dashed border-gray-300 overflow-hidden">
-                                    {settings.watermark_url ? (
-                                        <img src={settings.watermark_url} alt="Watermark" className="w-full h-full object-contain opacity-50" />
-                                    ) : (
-                                        <span className="text-xs text-gray-400">None</span>
-                                    )}
-                                </div>
-                                <label className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 cursor-pointer">
-                                    <Upload className="w-4 h-4" /> Upload
-                                    <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleFileChange('watermark_url', e.target.files[0])} />
-                                </label>
-                            </div>
-                        </div>
+        <AnimatePage>
+            <div className="min-h-screen bg-background p-8 font-sans max-w-6xl mx-auto space-y-8">
+                <header className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold text-text-main tracking-tight">Settings & Branding</h1>
+                        <p className="text-text-muted mt-1">Customize your school identity and configuration.</p>
                     </div>
-                </div>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl hover:bg-primary-dark font-medium disabled:opacity-50 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30"
+                    >
+                        <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                </header>
 
-                <div className="space-y-8">
-                    {/* Geo-Fencing Section */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
-                        <div className="flex items-center gap-2 mb-4 border-b pb-2">
-                            <MapPin className="w-5 h-5 text-blue-600" />
-                            <h2 className="text-lg font-semibold text-gray-800">Location & Geo-Fencing</h2>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-4">Set your school&apos;s GPS coordinates to enable staff attendance geo-fencing (50m radius).</p>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                                <input
-                                    type="number"
-                                    step="any"
-                                    value={settings.gps_lat || ''}
-                                    onChange={e => setSettings({ ...settings, gps_lat: e.target.value })}
-                                    className="w-full p-2 border rounded-md"
-                                    placeholder="e.g. 18.5204"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                                <input
-                                    type="number"
-                                    step="any"
-                                    value={settings.gps_long || ''}
-                                    onChange={e => setSettings({ ...settings, gps_long: e.target.value })}
-                                    className="w-full p-2 border rounded-md"
-                                    placeholder="e.g. 73.8567"
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-400">
-                            Tip: Use Google Maps to find these coordinates.
-                        </div>
-                    </div>
-
-                    {/* Attendance Rules Section */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
-                        <div className="flex items-center gap-2 mb-4 border-b pb-2">
-                            <h2 className="text-lg font-semibold text-gray-800">Attendance Rules</h2>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-4">Define minimum working hours for auto-calculation.</p>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Min Hours (Half Day)</label>
-                                <input
-                                    type="number"
-                                    step="0.5"
-                                    value={settings.min_hours_half_day || 4.0}
-                                    onChange={e => setSettings({ ...settings, min_hours_half_day: parseFloat(e.target.value) })}
-                                    className="w-full p-2 border rounded-md"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Min Hours (Full Day)</label>
-                                <input
-                                    type="number"
-                                    step="0.5"
-                                    value={settings.min_hours_full_day || 6.0}
-                                    onChange={e => setSettings({ ...settings, min_hours_full_day: parseFloat(e.target.value) })}
-                                    className="w-full p-2 border rounded-md"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Staff QR Code Section */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
-                        <div className="flex justify-between items-center mb-4 border-b pb-2">
-                            <h2 className="text-lg font-semibold text-gray-800">Static Attendance QR (Printable)</h2>
-                            <button onClick={loadQR} className="p-1 hover:bg-gray-100 rounded-full" title="Regenerate QR">
-                                <RefreshCw className={`w-4 h-4 text-gray-500 ${qrLoading ? 'animate-spin' : ''}`} />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* Tabs Sidebar */}
+                    <div className="lg:col-span-3 space-y-2">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
+                                        ? 'bg-primary text-white shadow-md'
+                                        : 'bg-surface text-text-muted hover:bg-gray-50 hover:text-text-main'
+                                    }`}
+                            >
+                                {tab.icon}
+                                {tab.label}
                             </button>
-                        </div>
+                        ))}
+                    </div>
 
-                        <div className="flex flex-col items-center justify-center py-4 space-y-4">
-                            {qrData ? (
-                                <>
-                                    <div className="p-4 bg-white border-4 border-gray-900 rounded-xl">
-                                        <QRCode
-                                            value={JSON.stringify({
-                                                type: 'ATTENDANCE_QR',
-                                                token: qrData.token,
-                                                school: qrData.school_name,
-                                                exp: qrData.expires_in
-                                            })}
-                                            size={200}
-                                        />
+                    {/* Content Area */}
+                    <div className="lg:col-span-9">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeTab}
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {activeTab === 'branding' && (
+                                    <div className="space-y-6">
+                                        <Card>
+                                            <CardHeader><CardTitle>School Information</CardTitle></CardHeader>
+                                            <CardContent className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-text-main mb-1.5">School Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={settings.name || ''}
+                                                        onChange={e => setSettings({ ...settings, name: e.target.value })}
+                                                        className="w-full p-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-text-main mb-1.5">Address</label>
+                                                    <textarea
+                                                        value={settings.address || ''}
+                                                        onChange={e => setSettings({ ...settings, address: e.target.value })}
+                                                        className="w-full p-2.5 border border-border rounded-lg h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
+                                                    />
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card>
+                                            <CardHeader><CardTitle>Visual Assets</CardTitle></CardHeader>
+                                            <CardContent className="grid md:grid-cols-3 gap-6">
+                                                {[
+                                                    { label: 'School Logo', field: 'logo_url', type: 'contain' },
+                                                    { label: 'Principal Signature', field: 'signature_url', type: 'contain' },
+                                                    { label: 'Watermark', field: 'watermark_url', type: 'contain opacity-50' }
+                                                ].map((asset: any) => (
+                                                    <div key={asset.field}>
+                                                        <label className="block text-sm font-semibold text-text-main mb-2">{asset.label}</label>
+                                                        <div className="w-full h-32 bg-background rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden relative group hover:border-primary/50 transition-colors">
+                                                            {settings[asset.field as keyof SchoolSettings] ? (
+                                                                <img src={settings[asset.field as keyof SchoolSettings] as string} alt={asset.label} className={`w-full h-full object-${asset.type} p-2`} />
+                                                            ) : (
+                                                                <span className="text-xs text-text-muted">No Upload</span>
+                                                            )}
+                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <label className="cursor-pointer bg-white text-text-main px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 shadow-lg transform scale-95 group-hover:scale-100 transition-transform">
+                                                                    <Upload size={14} /> Change
+                                                                    <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleFileChange(asset.field, e.target.files[0])} />
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </CardContent>
+                                        </Card>
                                     </div>
-                                    <div className="text-center">
-                                        <p className="font-bold text-lg">{qrData.school_name}</p>
-                                        <p className="text-xs text-gray-500">Scan via Staff App to Mark Attendance</p>
-                                        <p className="text-xs text-green-600 mt-1 font-bold">Static QR - Valid Indefinitely</p>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="h-48 w-48 bg-gray-100 flex items-center justify-center rounded-xl text-gray-400">
-                                    QR Loading...
-                                </div>
-                            )}
-                        </div>
+                                )}
+
+                                {activeTab === 'location' && (
+                                    <Card>
+                                        <CardHeader>
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="w-5 h-5 text-secondary" />
+                                                <CardTitle>GPS Configuration</CardTitle>
+                                            </div>
+                                            <p className="text-sm text-text-muted mt-1">Required for geo-fencing functionality (50m radius).</p>
+                                        </CardHeader>
+                                        <CardContent className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-text-main mb-1.5">Latitude</label>
+                                                <input
+                                                    type="number"
+                                                    step="any"
+                                                    value={settings.gps_lat || ''}
+                                                    onChange={e => setSettings({ ...settings, gps_lat: e.target.value })}
+                                                    className="w-full p-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                                    placeholder="e.g. 18.5204"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-text-main mb-1.5">Longitude</label>
+                                                <input
+                                                    type="number"
+                                                    step="any"
+                                                    value={settings.gps_long || ''}
+                                                    onChange={e => setSettings({ ...settings, gps_long: e.target.value })}
+                                                    className="w-full p-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                                    placeholder="e.g. 73.8567"
+                                                />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <div className="bg-secondary/10 text-secondary text-xs p-3 rounded-lg flex items-center gap-2">
+                                                    <MapPin size={14} />
+                                                    Tip: Use Google Maps to verify these coordinates precisely.
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {activeTab === 'attendance' && (
+                                    <Card>
+                                        <CardHeader>
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="w-5 h-5 text-warning" />
+                                                <CardTitle>Working Hours</CardTitle>
+                                            </div>
+                                            <p className="text-sm text-text-muted mt-1">Define thresholds for auto-calculating attendance status.</p>
+                                        </CardHeader>
+                                        <CardContent className="grid grid-cols-2 gap-6">
+                                            <div className="p-4 bg-background rounded-xl border border-border">
+                                                <label className="block text-sm font-bold text-text-main mb-2">Half Day Minimum</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        step="0.5"
+                                                        value={settings.min_hours_half_day || 4.0}
+                                                        onChange={e => setSettings({ ...settings, min_hours_half_day: parseFloat(e.target.value) })}
+                                                        className="w-full p-2.5 border border-border rounded-lg focus:ring-2 focus:ring-warning/20 focus:border-warning outline-none text-lg font-mono"
+                                                    />
+                                                    <span className="text-text-muted text-sm font-medium">Hrs</span>
+                                                </div>
+                                            </div>
+                                            <div className="p-4 bg-background rounded-xl border border-border">
+                                                <label className="block text-sm font-bold text-text-main mb-2">Full Day Minimum</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        step="0.5"
+                                                        value={settings.min_hours_full_day || 6.0}
+                                                        onChange={e => setSettings({ ...settings, min_hours_full_day: parseFloat(e.target.value) })}
+                                                        className="w-full p-2.5 border border-border rounded-lg focus:ring-2 focus:ring-success/20 focus:border-success outline-none text-lg font-mono"
+                                                    />
+                                                    <span className="text-text-muted text-sm font-medium">Hrs</span>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {activeTab === 'qr' && (
+                                    <Card>
+                                        <CardHeader>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <QrCode className="w-5 h-5 text-primary" />
+                                                        <CardTitle>Staff Attendance QR</CardTitle>
+                                                    </div>
+                                                    <p className="text-sm text-text-muted mt-1">Static QR code for staff members to scan.</p>
+                                                </div>
+                                                <button
+                                                    onClick={loadQR}
+                                                    className="p-2 hover:bg-background rounded-full transition-colors text-primary"
+                                                    title="Regenerate QR"
+                                                >
+                                                    <RefreshCw className={`w-5 h-5 ${qrLoading ? 'animate-spin' : ''}`} />
+                                                </button>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="flex flex-col items-center justify-center py-8 space-y-6">
+                                                {qrData ? (
+                                                    <>
+                                                        <div className="p-6 bg-white border-4 border-text-main rounded-2xl shadow-2xl relative">
+                                                            <div className="absolute top-0 left-0 w-full h-full border-4 border-white/20 rounded-xl pointer-events-none"></div>
+                                                            <QRCode
+                                                                value={JSON.stringify({
+                                                                    type: 'ATTENDANCE_QR',
+                                                                    token: qrData.token,
+                                                                    school: qrData.school_name,
+                                                                    exp: qrData.expires_in
+                                                                })}
+                                                                size={240}
+                                                            />
+                                                        </div>
+                                                        <div className="text-center space-y-1">
+                                                            <p className="font-bold text-xl text-text-main">{qrData.school_name}</p>
+                                                            <p className="text-sm text-text-muted">Scan with Staff App to Check-in/out</p>
+                                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 text-success text-xs font-bold mt-2">
+                                                                <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+                                                                Active & Valid
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="h-64 w-64 bg-background rounded-2xl flex flex-col items-center justify-center text-text-muted gap-4 animate-pulse">
+                                                        <QrCode size={48} className="opacity-20" />
+                                                        <span className="text-sm font-medium">Generating Secure QR...</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
                 </div>
-
             </div>
-        </div>
+        </AnimatePage>
     );
 }

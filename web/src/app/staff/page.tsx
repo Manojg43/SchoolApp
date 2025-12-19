@@ -3,23 +3,29 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth, PermissionGuard } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { Briefcase, QrCode } from "lucide-react";
+import { Briefcase, QrCode, UserPlus, Users, CheckCircle, Clock } from "lucide-react";
 import QRCodeDisplay from "@/components/ui/QRCodeDisplay";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import { getStaff, deleteStaff, type Staff } from "@/lib/api";
-import StaffFormModal from "@/components/students/StaffFormModal";
+import StaffProfileDrawer from "@/components/staff/StaffProfileDrawer";
 import SalaryStructureModal from "@/components/finance/SalaryStructureModal";
+import Card, { CardContent } from "@/components/ui/modern/Card";
+import Animate, { AnimatePage } from "@/components/ui/Animate";
 
 export default function StaffPage() {
     const { t } = useLanguage();
     const { user, hasPermission } = useAuth();
-    const [qrValue, setQrValue] = useState<string | null>(null);
     const [staffList, setStaffList] = useState<Staff[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Modal State
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    // Drawer State
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [staffToEdit, setStaffToEdit] = useState<Staff | null>(null);
+    const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('create');
+
+    // Salary Modal
+    const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false);
+    const [salaryStaff, setSalaryStaff] = useState<Staff | null>(null);
 
     async function load() {
         setLoading(true);
@@ -34,29 +40,29 @@ export default function StaffPage() {
     }
 
     useEffect(() => {
-        if (user && user.school_id) {
-            setQrValue(JSON.stringify({
-                school_id: user.school_id,
-                type: 'staff_attendance_static'
-            }));
-        }
-
         if (hasPermission(['is_superuser', 'core.view_coreuser'])) {
             load();
         } else {
             setLoading(false);
         }
-
     }, [user, hasPermission]);
 
     const handleAdd = () => {
         setStaffToEdit(null);
-        setIsModalOpen(true);
+        setDrawerMode('create');
+        setIsDrawerOpen(true);
+    };
+
+    const handleView = (staff: Staff) => {
+        setStaffToEdit(staff);
+        setDrawerMode('view');
+        setIsDrawerOpen(true);
     };
 
     const handleEdit = (staff: Staff) => {
         setStaffToEdit(staff);
-        setIsModalOpen(true);
+        setDrawerMode('edit');
+        setIsDrawerOpen(true);
     };
 
     const handleDelete = async (staff: Staff) => {
@@ -74,11 +80,6 @@ export default function StaffPage() {
         load();
     };
 
-
-    // Salary Modal
-    const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false);
-    const [salaryStaff, setSalaryStaff] = useState<Staff | null>(null);
-
     const handleSalaryClick = (staff: Staff, e: React.MouseEvent) => {
         e.stopPropagation();
         setSalaryStaff(staff);
@@ -86,11 +87,30 @@ export default function StaffPage() {
     };
 
     const columns: Column<Staff>[] = [
-        { header: "Name", accessorKey: (row) => `${row.first_name} ${row.last_name}`, className: "font-medium" },
-        { header: "Designation", accessorKey: "designation" },
-        { header: "Department", accessorKey: "department" },
-        { header: "Mobile", accessorKey: "mobile" },
-        // Custom Action Column
+        {
+            header: "Staff Member",
+            accessorKey: (row) => (
+                <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleView(row)}>
+                    <div className="w-9 h-9 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-bold text-sm group-hover:bg-secondary group-hover:text-white transition-colors">
+                        {row.first_name[0]}{row.last_name[0]}
+                    </div>
+                    <div>
+                        <div className="font-medium text-text-main group-hover:text-primary transition-colors">{row.first_name} {row.last_name}</div>
+                        <div className="text-xs text-text-muted">{row.designation || 'Staff'}</div>
+                    </div>
+                </div>
+            )
+        },
+        { header: "Department", accessorKey: "department", className: "w-32" },
+        { header: "Mobile", accessorKey: "mobile", className: "w-32 font-mono text-xs" },
+        {
+            header: "Role",
+            accessorKey: (row) => (
+                <span className="px-2 py-0.5 rounded-full bg-surface border border-border text-xs font-semibold text-text-main">
+                    {row.role}
+                </span>
+            )
+        },
         {
             header: "Actions",
             accessorKey: (row) => (
@@ -98,9 +118,9 @@ export default function StaffPage() {
                     {hasPermission('core.can_manage_payroll') && (
                         <button
                             onClick={(e) => handleSalaryClick(row, e)}
-                            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
+                            className="bg-success/10 text-success hover:bg-success/20 px-2 py-1 rounded text-xs font-bold transition-colors"
                         >
-                            Manage Salary
+                            Payroll
                         </button>
                     )}
                 </div>
@@ -108,59 +128,109 @@ export default function StaffPage() {
         },
     ];
 
-    return (
-        <div className="min-h-screen bg-gray-50 p-8 font-[family-name:var(--font-geist-sans)]">
-            <header className="mb-8 flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Staff & Payroll</h1>
-                    <p className="text-gray-500">Manage teachers, staff, and salaries</p>
-                </div>
-                {hasPermission('core.add_coreuser') && (
-                    <button className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-700" onClick={handleAdd}>
-                        + Add Staff
-                    </button>
-                )}
-            </header>
-
-            <div className="space-y-6">
-                {/* Staff List Area */}
-                <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Staff Directory</h2>
-                        {hasPermission('core.can_manage_payroll') && (
-                            <a href="/finance/payroll" className="text-sm text-blue-600 hover:underline">
-                                View Payroll Dashboard →
-                            </a>
-                        )}
+    const StatCard = ({ title, value, icon, colorClass, index }: any) => (
+        <Animate animation="slideUp" delay={index * 0.1}>
+            <Card className="h-full border-l-4" style={{ borderLeftColor: 'var(--color-primary)' }}>
+                <CardContent className="flex items-center justify-between p-4">
+                    <div>
+                        <p className="text-sm font-medium text-text-muted uppercase tracking-wider">{title}</p>
+                        <p className="text-2xl font-bold text-text-main mt-1">{value}</p>
                     </div>
-                    {hasPermission('core.view_coreuser') ? (
-                        <DataTable
-                            columns={columns}
-                            data={staffList}
-                            isLoading={loading}
-                            onEdit={hasPermission('core.change_coreuser') ? handleEdit : undefined}
-                            onDelete={hasPermission('core.delete_coreuser') ? handleDelete : undefined}
-                        />
-                    ) : (
-                        <div className="p-8 text-center text-gray-500">
-                            You do not have permission to view the staff list.
-                        </div>
+                    <div className={`p-3 rounded-xl ${colorClass}`}>
+                        {icon}
+                    </div>
+                </CardContent>
+            </Card>
+        </Animate>
+    );
+
+    return (
+        <AnimatePage>
+            <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold text-text-main tracking-tight">Staff Management</h1>
+                        <p className="text-text-muted mt-1">Manage employees, track attendance, and handle payroll.</p>
+                    </div>
+                    {hasPermission('core.add_coreuser') && (
+                        <button
+                            onClick={handleAdd}
+                            className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl hover:bg-primary-dark font-medium shadow-lg shadow-primary/20 transition-all"
+                        >
+                            <UserPlus size={18} /> Add New Staff
+                        </button>
                     )}
                 </div>
+
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <StatCard
+                        index={0}
+                        title="Total Staff"
+                        value={staffList.length}
+                        icon={<Users className="h-6 w-6 text-primary" />}
+                        colorClass="bg-primary/10"
+                    />
+                    <StatCard
+                        index={1}
+                        title="Present Today"
+                        value="-" // Needs realtime data
+                        icon={<CheckCircle className="h-6 w-6 text-success" />}
+                        colorClass="bg-success/10"
+                    />
+                    <StatCard
+                        index={2}
+                        title="Pending Leaves"
+                        value="0"
+                        icon={<Clock className="h-6 w-6 text-warning" />}
+                        colorClass="bg-warning/10"
+                    />
+                </div>
+
+                {/* Main Content */}
+                <Animate animation="fade" delay={0.2}>
+                    <Card className="overflow-hidden border-border">
+                        <div className="px-6 py-4 border-b border-border bg-surface/50 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-text-main">All Staff Members</h2>
+                            <div className="flex gap-3">
+                                <a href="/staff/leaves" className="text-sm font-medium text-text-muted hover:text-primary transition-colors">Manage Leaves</a>
+                                {hasPermission('core.can_manage_payroll') && (
+                                    <a href="/finance/payroll" className="text-sm font-medium text-text-muted hover:text-primary transition-colors">Payroll Dashboard</a>
+                                )}
+                            </div>
+                        </div>
+
+                        {hasPermission('core.view_coreuser') ? (
+                            <DataTable
+                                columns={columns}
+                                data={staffList}
+                                isLoading={loading}
+                                onEdit={hasPermission('core.change_coreuser') ? handleEdit : undefined}
+                                onDelete={hasPermission('core.delete_coreuser') ? handleDelete : undefined}
+                                onView={handleView}
+                            />
+                        ) : (
+                            <div className="p-12 text-center text-text-muted">
+                                <p>You do not have permission to view the staff list.</p>
+                            </div>
+                        )}
+                    </Card>
+                </Animate>
+
+                <StaffProfileDrawer
+                    isOpen={isDrawerOpen}
+                    onClose={() => setIsDrawerOpen(false)}
+                    onSuccess={handleSuccess}
+                    staff={staffToEdit}
+                    mode={drawerMode}
+                />
+
+                <SalaryStructureModal
+                    isOpen={isSalaryModalOpen}
+                    onClose={() => setIsSalaryModalOpen(false)}
+                    staff={salaryStaff}
+                />
             </div>
-
-            <StaffFormModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSuccess={handleSuccess}
-                staffToEdit={staffToEdit}
-            />
-
-            <SalaryStructureModal
-                isOpen={isSalaryModalOpen}
-                onClose={() => setIsSalaryModalOpen(false)}
-                staff={salaryStaff}
-            />
-        </div>
+        </AnimatePage>
     );
 }

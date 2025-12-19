@@ -14,7 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.schoolapp.staff"
+      "bundleIdentifier": "com.schoolapp.staff",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan QR codes for attendance.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to verify attendance check-ins."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +28,12 @@
       "package": "com.schoolapp.staff",
       "edgeToEdgeEnabled": true,
       "usesCleartextTraffic": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

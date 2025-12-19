@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Svg, { Path } from 'react-native-svg';
 import { User, Lock, Eye, EyeOff, LogIn } from 'lucide-react-native';
+import { theme } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -63,7 +64,7 @@ export default function LoginScreen({ navigation }: { navigation: NativeStackNav
                     preserveAspectRatio="none"
                 >
                     <Path
-                        fill="#0f52ba"
+                        fill={theme.colors.primary}
                         d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
                     />
                 </Svg>
@@ -86,11 +87,11 @@ export default function LoginScreen({ navigation }: { navigation: NativeStackNav
 
                         {/* Username Input */}
                         <View style={styles.inputContainer}>
-                            <User color="#6b7280" size={20} style={styles.icon} />
+                            <User color={theme.colors.text.muted} size={20} style={styles.icon} />
                             <TextInput
                                 style={styles.input}
                                 placeholder="Username"
-                                placeholderTextColor="#9ca3af"
+                                placeholderTextColor={theme.colors.text.light}
                                 value={username}
                                 onChangeText={setUsername}
                                 autoCapitalize="none"
@@ -99,11 +100,11 @@ export default function LoginScreen({ navigation }: { navigation: NativeStackNav
 
                         {/* Password Input */}
                         <View style={styles.inputContainer}>
-                            <Lock color="#6b7280" size={20} style={styles.icon} />
+                            <Lock color={theme.colors.text.muted} size={20} style={styles.icon} />
                             <TextInput
                                 style={styles.input}
                                 placeholder="Password"
-                                placeholderTextColor="#9ca3af"
+                                placeholderTextColor={theme.colors.text.light}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={!showPassword}
@@ -114,9 +115,9 @@ export default function LoginScreen({ navigation }: { navigation: NativeStackNav
                                 style={styles.eyeButton}
                             >
                                 {showPassword ? (
-                                    <EyeOff color="#6b7280" size={20} />
+                                    <EyeOff color={theme.colors.text.muted} size={20} />
                                 ) : (
-                                    <Eye color="#6b7280" size={20} />
+                                    <Eye color={theme.colors.text.muted} size={20} />
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -151,7 +152,7 @@ export default function LoginScreen({ navigation }: { navigation: NativeStackNav
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f3f4f6',
+        backgroundColor: theme.colors.background,
     },
     headerContainer: {
         height: 300,
@@ -184,14 +185,14 @@ const styles = StyleSheet.create({
         paddingBottom: 24,
     },
     card: {
-        backgroundColor: 'white',
-        borderRadius: 24,
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.borderRadius.l,
         padding: 32,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 10,
+        shadowColor: theme.shadows.card.shadowColor,
+        shadowOffset: theme.shadows.card.shadowOffset,
+        shadowOpacity: theme.shadows.card.shadowOpacity,
+        shadowRadius: theme.shadows.card.shadowRadius,
+        elevation: 8,
     },
     formHeader: {
         alignItems: 'center',
@@ -200,15 +201,15 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#1f2937',
+        color: theme.colors.text.main,
     },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f9fafb',
+        backgroundColor: theme.colors.background,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-        borderRadius: 12,
+        borderColor: theme.colors.border,
+        borderRadius: theme.borderRadius.m,
         marginBottom: 20,
         paddingHorizontal: 16,
         height: 56,
@@ -219,26 +220,26 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 16,
-        color: '#1f2937',
+        color: theme.colors.text.main,
     },
     eyeButton: {
         padding: 8,
     },
     button: {
         height: 56,
-        backgroundColor: '#0f52ba',
-        borderRadius: 12,
+        backgroundColor: theme.colors.primary,
+        borderRadius: theme.borderRadius.m,
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 12,
-        shadowColor: '#0f52ba',
+        shadowColor: theme.colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 4,
     },
     buttonDisabled: {
-        backgroundColor: '#9ca3af',
+        backgroundColor: theme.colors.text.light,
         shadowOpacity: 0,
     },
     buttonContent: {
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
     },
     footerText: {
         textAlign: 'center',
-        color: '#6b7280',
+        color: theme.colors.text.muted,
         marginTop: 24,
         fontSize: 14,
     }

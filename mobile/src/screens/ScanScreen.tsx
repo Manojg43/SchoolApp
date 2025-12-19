@@ -4,6 +4,7 @@ import { Camera, CameraView } from 'expo-camera';
 import * as Location from 'expo-location';
 import { mobileApi } from '../lib/api';
 import { useNavigation } from '@react-navigation/native';
+import { theme } from '../constants/theme';
 
 // Haversine Algo
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -168,12 +169,12 @@ export default function ScanScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: 'black' },
-    msg: { flex: 1, backgroundColor: 'white', textAlign: 'center', paddingTop: 50 },
+    msg: { flex: 1, backgroundColor: theme.colors.background, textAlign: 'center', paddingTop: 50 },
     overlayLayer: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', zIndex: 1 },
     maskFlex: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)' },
     maskCenterRow: { flexDirection: 'row', height: 280 },
     scannerBox: { width: 280, height: 280, backgroundColor: 'transparent', position: 'relative' },
-    corner: { position: 'absolute', width: 40, height: 40, borderColor: '#4ADE80', borderWidth: 5, borderRadius: 4 },
+    corner: { position: 'absolute', width: 40, height: 40, borderColor: theme.colors.success, borderWidth: 5, borderRadius: theme.borderRadius.s },
     topLeft: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
     topRight: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
     bottomLeft: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
@@ -182,10 +183,10 @@ const styles = StyleSheet.create({
     overlayText: { color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textShadowColor: 'rgba(0,0,0,0.75)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
     buttonRow: { flexDirection: 'row', gap: 20 },
     cancelButton: { backgroundColor: 'rgba(255,255,255,0.2)', paddingVertical: 12, paddingHorizontal: 25, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
-    rescanButton: { backgroundColor: '#4ADE80', paddingVertical: 12, paddingHorizontal: 25, borderRadius: 30, borderWidth: 1, borderColor: '#22c55e' },
+    rescanButton: { backgroundColor: theme.colors.success, paddingVertical: 12, paddingHorizontal: 25, borderRadius: 30, borderWidth: 1, borderColor: '#22c55e' },
     cancelText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
     rescanText: { color: '#064e3b', fontWeight: 'bold', fontSize: 16 },
-    manualButton: { backgroundColor: '#3b82f6', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 30, elevation: 5 },
-    disabledButton: { backgroundColor: '#6b7280', opacity: 0.8 },
+    manualButton: { backgroundColor: theme.colors.primary, paddingVertical: 12, paddingHorizontal: 40, borderRadius: 30, elevation: 5 },
+    disabledButton: { backgroundColor: theme.colors.text.muted, opacity: 0.8 },
     manualButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
 });

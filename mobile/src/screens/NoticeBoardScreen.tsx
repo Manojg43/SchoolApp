@@ -4,6 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 import { mobileApi } from '../lib/api';
 import { ArrowLeft, Bell, Calendar, ChevronDown, ChevronUp } from 'lucide-react-native';
 
+import { theme } from '../constants/theme';
+import { Card } from '../components/ui/Card';
+
 if (Platform.OS === 'android') {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
         UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -45,27 +48,28 @@ export default function NoticeBoardScreen() {
         const isExpanded = expandedIds.includes(item.id);
         return (
             <TouchableOpacity
-                style={styles.card}
                 onPress={() => toggleExpand(item.id)}
                 activeOpacity={0.9}
             >
-                <View style={styles.cardHeader}>
-                    <View style={styles.iconBox}>
-                        <Bell size={20} color="#0f52ba" />
+                <Card style={styles.card}>
+                    <View style={styles.cardHeader}>
+                        <View style={styles.iconBox}>
+                            <Bell size={20} color={theme.colors.primary} />
+                        </View>
+                        <View style={styles.headerContent}>
+                            <Text style={styles.cardTitle}>{item.title}</Text>
+                            <Text style={styles.date}>{item.date}</Text>
+                        </View>
+                        <View>
+                            {isExpanded ? <ChevronUp size={20} color={theme.colors.text.light} /> : <ChevronDown size={20} color={theme.colors.text.light} />}
+                        </View>
                     </View>
-                    <View style={styles.headerContent}>
-                        <Text style={styles.title}>{item.title}</Text>
-                        <Text style={styles.date}>{item.date}</Text>
-                    </View>
-                    <View>
-                        {isExpanded ? <ChevronUp size={20} color="#9ca3af" /> : <ChevronDown size={20} color="#9ca3af" />}
-                    </View>
-                </View>
-                {isExpanded && (
-                    <View style={styles.cardBody}>
-                        <Text style={styles.content}>{item.content}</Text>
-                    </View>
-                )}
+                    {isExpanded && (
+                        <View style={styles.cardBody}>
+                            <Text style={styles.content}>{item.content}</Text>
+                        </View>
+                    )}
+                </Card>
             </TouchableOpacity>
         );
     };
@@ -75,7 +79,7 @@ export default function NoticeBoardScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <ArrowLeft color="#1f2937" size={24} />
+                    <ArrowLeft color={theme.colors.text.main} size={24} />
                 </TouchableOpacity>
                 <Text style={styles.title}>Notice Board</Text>
                 <View style={{ width: 24 }} />
@@ -83,7 +87,7 @@ export default function NoticeBoardScreen() {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#0f52ba" />
+                    <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
             ) : (
                 <FlatList
@@ -103,19 +107,20 @@ export default function NoticeBoardScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f3f4f6' },
+    container: { flex: 1, backgroundColor: theme.colors.background },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, backgroundColor: 'white' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, backgroundColor: theme.colors.surface },
     backBtn: { padding: 5 },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#1f2937' },
+    title: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text.main },
 
     list: { padding: 15 },
-    card: { backgroundColor: 'white', borderRadius: 12, marginBottom: 12, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+    card: { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.m, marginBottom: 12, overflow: 'hidden' },
     cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 15 },
-    iconBox: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#dbeafe', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+    iconBox: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(79, 70, 229, 0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
     headerContent: { flex: 1 },
-    date: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-    cardBody: { padding: 15, paddingTop: 0, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
-    content: { fontSize: 14, color: '#374151', lineHeight: 22, marginTop: 10 },
-    emptyText: { color: '#9ca3af', fontSize: 16 }
+    cardTitle: { fontSize: 16, fontWeight: '600', color: theme.colors.text.main },
+    date: { fontSize: 12, color: theme.colors.text.muted, marginTop: 2 },
+    cardBody: { padding: 15, paddingTop: 0, borderTopWidth: 1, borderTopColor: theme.colors.border },
+    content: { fontSize: 14, color: theme.colors.text.main, lineHeight: 22, marginTop: 10 },
+    emptyText: { color: theme.colors.text.muted, fontSize: 16 }
 });

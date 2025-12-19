@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Alert, Platform, ActivityIndicator } from 'react-native';
 import { mobileApi } from '../lib/api';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
+import { theme } from '../constants/theme';
+import { Card } from '../components/ui/Card';
 
 export default function LeaveScreen() {
     const navigation = useNavigation();
@@ -94,7 +97,7 @@ export default function LeaveScreen() {
     };
 
     const renderHistoryItem = ({ item }: { item: any }) => (
-        <View style={styles.card}>
+        <Card style={styles.card}>
             <View style={styles.cardHeader}>
                 <Text style={styles.dateRange}>{item.start_date} to {item.end_date}</Text>
                 <Text style={[
@@ -109,7 +112,7 @@ export default function LeaveScreen() {
             {item.status === 'APPROVED' && (
                 <Text style={styles.metaInfo}>{item.is_paid ? 'Paid Leave' : 'Unpaid Leave'}</Text>
             )}
-        </View>
+        </Card>
     );
 
     return (
@@ -141,7 +144,7 @@ export default function LeaveScreen() {
                 <View style={styles.form}>
                     <Text style={styles.label}>Start Date</Text>
                     <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.input}>
-                        <Text>{formatDate(startObj)}</Text>
+                        <Text style={styles.inputText}>{formatDate(startObj)}</Text>
                     </TouchableOpacity>
                     {showStartPicker && (
                         <DateTimePicker
@@ -155,7 +158,7 @@ export default function LeaveScreen() {
 
                     <Text style={styles.label}>End Date</Text>
                     <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.input}>
-                        <Text>{formatDate(endObj)}</Text>
+                        <Text style={styles.inputText}>{formatDate(endObj)}</Text>
                     </TouchableOpacity>
                     {showEndPicker && (
                         <DateTimePicker
@@ -171,6 +174,7 @@ export default function LeaveScreen() {
                     <TextInput
                         style={[styles.input, styles.textArea]}
                         placeholder="e.g. Sick Leave / Family Function"
+                        placeholderTextColor={theme.colors.text.light}
                         value={reason}
                         onChangeText={setReason}
                         multiline
@@ -181,7 +185,11 @@ export default function LeaveScreen() {
                         onPress={handleApply}
                         disabled={loading}
                     >
-                        <Text style={styles.submitText}>{loading ? "Submitting..." : "Submit Application"}</Text>
+                        {loading ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text style={styles.submitText}>Submit Application</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             ) : (
@@ -200,34 +208,35 @@ export default function LeaveScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F3F4F6' },
-    header: { padding: 20, paddingTop: 50, backgroundColor: 'white', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#111827' },
-    closeText: { color: '#3B82F6', fontSize: 16 },
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    header: { padding: 20, paddingTop: 50, backgroundColor: theme.colors.surface, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+    title: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text.main },
+    closeText: { color: theme.colors.primary, fontSize: 16 },
 
     tabs: { flexDirection: 'row', padding: 15, gap: 10 },
-    tab: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: '#E5E7EB' },
-    activeTab: { backgroundColor: '#3B82F6' },
-    tabText: { color: '#374151', fontWeight: '600' },
+    tab: { flex: 1, paddingVertical: 12, borderRadius: theme.borderRadius.m, alignItems: 'center', backgroundColor: theme.colors.background },
+    activeTab: { backgroundColor: theme.colors.primary },
+    tabText: { color: theme.colors.text.muted, fontWeight: '600' },
     activeTabText: { color: 'white' },
 
     form: { padding: 20 },
-    label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 5 },
-    input: { backgroundColor: 'white', borderRadius: 8, padding: 12, marginBottom: 15, borderWidth: 1, borderColor: '#D1D5DB' },
-    textArea: { height: 100, textAlignVertical: 'top' },
-    submitBtn: { backgroundColor: '#10B981', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
-    disabledBtn: { backgroundColor: '#6EE7B7' },
+    label: { fontSize: 14, fontWeight: '600', color: theme.colors.text.main, marginBottom: 8 },
+    input: { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.s, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: theme.colors.border },
+    inputText: { color: theme.colors.text.main },
+    textArea: { height: 100, textAlignVertical: 'top', color: theme.colors.text.main },
+    submitBtn: { backgroundColor: theme.colors.success, padding: 16, borderRadius: theme.borderRadius.m, alignItems: 'center', marginTop: 10 },
+    disabledBtn: { backgroundColor: theme.colors.text.light },
     submitText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
 
     list: { padding: 15 },
-    card: { backgroundColor: 'white', padding: 15, borderRadius: 10, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-    dateRange: { fontWeight: 'bold', color: '#111827' },
-    statusBadge: { fontSize: 12, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
-    statusPending: { backgroundColor: '#FEF3C7', color: '#92400E' },
-    statusApproved: { backgroundColor: '#D1FAE5', color: '#065F46' },
-    statusRejected: { backgroundColor: '#FEE2E2', color: '#991B1B' },
-    reason: { color: '#6B7280', fontStyle: 'italic', marginBottom: 5 },
-    metaInfo: { fontSize: 10, color: '#9CA3AF' },
-    emptyText: { textAlign: 'center', marginTop: 50, color: '#9CA3AF' }
+    card: { backgroundColor: theme.colors.surface, padding: 16, borderRadius: theme.borderRadius.m, marginBottom: 12 },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+    dateRange: { fontWeight: 'bold', color: theme.colors.text.main, fontSize: 16 },
+    statusBadge: { fontSize: 12, fontWeight: 'bold', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, overflow: 'hidden' },
+    statusPending: { backgroundColor: 'rgba(245, 158, 11, 0.1)', color: theme.colors.warning },
+    statusApproved: { backgroundColor: 'rgba(16, 185, 129, 0.1)', color: theme.colors.success },
+    statusRejected: { backgroundColor: 'rgba(239, 68, 68, 0.1)', color: theme.colors.error },
+    reason: { color: theme.colors.text.muted, fontStyle: 'italic', marginBottom: 8 },
+    metaInfo: { fontSize: 12, color: theme.colors.text.light },
+    emptyText: { textAlign: 'center', marginTop: 50, color: theme.colors.text.muted }
 });

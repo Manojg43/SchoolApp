@@ -2,8 +2,10 @@
 
 import { useLanguage } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
-import { FileBarChart, Users, DollarSign, TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { FileBarChart, Users, DollarSign, TrendingUp, TrendingDown, Clock, Activity, PieChart } from "lucide-react";
 import { getAttendanceAnalytics, getFinanceAnalytics, AttendanceAnalytics, FinanceAnalytics } from "@/lib/api";
+import Card, { CardContent } from "@/components/ui/modern/Card";
+import Animate, { AnimatePage } from "@/components/ui/Animate";
 
 export default function ReportsPage() {
     const { t } = useLanguage();
@@ -29,119 +31,138 @@ export default function ReportsPage() {
         load();
     }, []);
 
-    if (loading) return <div className="p-8">Loading Analytics...</div>;
+    if (loading) return (
+        <div className="flex h-screen items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+                <Activity className="w-8 h-8 text-primary animate-pulse" />
+                <p className="text-text-muted text-sm font-medium">Generating Analytics...</p>
+            </div>
+        </div>
+    );
 
     const collectionRate = finData?.overview.collection_rate || 0;
     const pendingFees = finData?.overview.pending || 0;
     const attPercentage = attData?.students.percentage || 0;
 
+    const MetricCard = ({ title, value, subtext, icon, colorClass, delay }: any) => (
+        <Animate animation="slideUp" delay={delay}>
+            <Card className="h-full border-border">
+                <div className="flex justify-between items-start mb-4">
+                    <div className={`p-3 rounded-xl ${colorClass}`}>
+                        {icon}
+                    </div>
+                </div>
+                <h3 className="text-2xl font-bold text-text-main">{value}</h3>
+                <p className="text-sm font-medium text-text-muted mt-1">{title}</p>
+                {subtext && <p className="text-xs text-text-muted mt-2">{subtext}</p>}
+            </Card>
+        </Animate>
+    );
+
     return (
-        <div className="min-h-screen bg-gray-50 p-8 font-[family-name:var(--font-geist-sans)]">
-            <header className="mb-8 border-b pb-4">
-                <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-                <p className="text-gray-500">Real-time system insights for {attData?.date}</p>
-            </header>
+        <AnimatePage>
+            <div className="max-w-[1600px] mx-auto p-6 space-y-8">
+                <header className="border-b border-border pb-6">
+                    <h1 className="text-3xl font-bold text-text-main tracking-tight">Reports & Analytics</h1>
+                    <p className="text-text-muted mt-1">Real-time system insights for {attData?.date}</p>
+                </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                {/* Metric Cards */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="bg-blue-50 p-3 rounded-lg text-blue-600">
-                            <Users className="w-6 h-6" />
-                        </div>
-                        <span className={`text-sm font-bold ${attPercentage >= 90 ? 'text-green-500' : 'text-orange-500'}`}>
-                            {attPercentage}%
-                        </span>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900">{attData?.students.present}/{attData?.students.total}</h3>
-                    <p className="text-sm text-gray-500">Students Present Today</p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <MetricCard
+                        title="Student Attendance"
+                        value={`${attData?.students.present}/${attData?.students.total}`}
+                        subtext={`${attPercentage}% Participation Rate`}
+                        icon={<Users className="w-6 h-6 text-primary" />}
+                        colorClass="bg-primary/10"
+                        delay={0.1}
+                    />
+                    <MetricCard
+                        title="Staff Attendance"
+                        value={`${attData?.staff.present}/${attData?.staff.total_marked}`}
+                        subtext="Teachers & Staff On-site"
+                        icon={<Clock className="w-6 h-6 text-warning" />}
+                        colorClass="bg-warning/10"
+                        delay={0.2}
+                    />
+                    <MetricCard
+                        title="Fees Collected"
+                        value={`₹${finData?.overview.total_collected.toLocaleString()}`}
+                        subtext={`${collectionRate}% of Invoiced Amount`}
+                        icon={<DollarSign className="w-6 h-6 text-success" />}
+                        colorClass="bg-success/10"
+                        delay={0.3}
+                    />
+                    <MetricCard
+                        title="Pending Dues"
+                        value={`₹${pendingFees.toLocaleString()}`}
+                        subtext="Outstanding Receivables"
+                        icon={<TrendingDown className="w-6 h-6 text-error" />}
+                        colorClass="bg-error/10"
+                        delay={0.4}
+                    />
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="bg-green-50 p-3 rounded-lg text-green-600">
-                            <Clock className="w-6 h-6" />
-                        </div>
-                        {/* Staff Present Metric */}
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900">{attData?.staff.present}/{attData?.staff.total_marked}</h3>
-                    <p className="text-sm text-gray-500">Staff Present Today</p>
-                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Attendance Chart */}
+                    <Animate animation="fade" delay={0.5}>
+                        <Card className="h-full border-border">
+                            <div className="px-6 py-5 border-b border-border flex items-center justify-between">
+                                <h2 className="text-lg font-bold text-text-main">Class-wise Attendance</h2>
+                                <PieChart className="w-5 h-5 text-text-muted" />
+                            </div>
+                            <div className="p-6 space-y-5">
+                                {attData?.class_distribution.map((item, idx) => (
+                                    <div key={idx}>
+                                        <div className="flex justify-between text-sm mb-2">
+                                            <span className="font-semibold text-text-main">{item.current_class__name}</span>
+                                            <span className="text-text-muted font-mono">{item.count} Students</span>
+                                        </div>
+                                        <div className="w-full bg-surface rounded-full h-2.5 overflow-hidden">
+                                            <div
+                                                className="bg-primary h-2.5 rounded-full transition-all duration-1000"
+                                                style={{ width: `${Math.min((item.count / (attData.students.total || 1)) * 100 * 5, 100)}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    </Animate>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="bg-purple-50 p-3 rounded-lg text-purple-600">
-                            <DollarSign className="w-6 h-6" />
-                        </div>
-                        <span className={`text-sm font-bold ${collectionRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
-                            {collectionRate}% Collected
-                        </span>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900">₹{finData?.overview.total_collected.toLocaleString()}</h3>
-                    <p className="text-sm text-gray-500">Total Fees Collected</p>
-                </div>
-
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-red-500">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="bg-red-50 p-3 rounded-lg text-red-600">
-                            <TrendingDown className="w-6 h-6" />
-                        </div>
-                    </div>
-                    <h3 className="text-2xl font-bold text-red-600">₹{pendingFees.toLocaleString()}</h3>
-                    <p className="text-sm text-gray-500">Pending Dues</p>
+                    {/* Financial Summary */}
+                    <Animate animation="fade" delay={0.6}>
+                        <Card className="h-full border-border">
+                            <div className="px-6 py-5 border-b border-border flex items-center justify-between">
+                                <h2 className="text-lg font-bold text-text-main">Financial Overview</h2>
+                                <TrendingUp className="w-5 h-5 text-text-muted" />
+                            </div>
+                            <div className="p-6 space-y-6">
+                                <div className="flex items-center justify-between p-4 bg-surface rounded-xl border border-border">
+                                    <div>
+                                        <p className="text-xs text-text-muted uppercase font-semibold">Total Invoiced</p>
+                                        <p className="text-xl font-bold text-text-main mt-1">₹{finData?.overview.total_invoiced.toLocaleString()}</p>
+                                    </div>
+                                    <div className="p-2 bg-background rounded-lg text-text-muted"><FileBarChart size={20} /></div>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-success/5 rounded-xl border border-success/20">
+                                    <div>
+                                        <p className="text-xs text-success uppercase font-semibold">Collected Revenue</p>
+                                        <p className="text-xl font-bold text-success mt-1">₹{finData?.overview.total_collected.toLocaleString()}</p>
+                                    </div>
+                                    <div className="p-2 bg-white rounded-lg text-success"><DollarSign size={20} /></div>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-error/5 rounded-xl border border-error/20">
+                                    <div>
+                                        <p className="text-xs text-error uppercase font-semibold">Outstanding Amount</p>
+                                        <p className="text-xl font-bold text-error mt-1">₹{finData?.overview.pending.toLocaleString()}</p>
+                                    </div>
+                                    <div className="p-2 bg-white rounded-lg text-error"><Clock size={20} /></div>
+                                </div>
+                            </div>
+                        </Card>
+                    </Animate>
                 </div>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Attendance Chart (Simple Bar) */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-800 mb-6">Class-wise Distribution</h2>
-                    <div className="space-y-4">
-                        {attData?.class_distribution.map((item, idx) => (
-                            <div key={idx}>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-medium text-gray-700">{item.current_class__name}</span>
-                                    <span className="text-gray-500">{item.count} Students</span>
-                                </div>
-                                <div className="w-full bg-gray-100 rounded-full h-2.5">
-                                    <div
-                                        className="bg-blue-600 h-2.5 rounded-full"
-                                        style={{ width: `${Math.min((item.count / (attData.students.total || 1)) * 100 * 5, 100)}%` }} // Scaling for visibility
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Financial Summary */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-800 mb-6">Financial Overview</h2>
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div>
-                                <p className="text-sm text-gray-500">Total Invoiced</p>
-                                <p className="text-lg font-bold text-gray-900">₹{finData?.overview.total_invoiced.toLocaleString()}</p>
-                            </div>
-                            <TrendingUp className="text-gray-400" />
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-100">
-                            <div>
-                                <p className="text-sm text-green-700">Collected</p>
-                                <p className="text-lg font-bold text-green-900">₹{finData?.overview.total_collected.toLocaleString()}</p>
-                            </div>
-                            <DollarSign className="text-green-600" />
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-100">
-                            <div>
-                                <p className="text-sm text-red-700">Outstanding</p>
-                                <p className="text-lg font-bold text-red-900">₹{finData?.overview.pending.toLocaleString()}</p>
-                            </div>
-                            <Clock className="text-red-600" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </AnimatePage>
     );
 }

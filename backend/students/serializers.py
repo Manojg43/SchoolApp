@@ -59,8 +59,8 @@ class FeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invoice
-        fields = ['id', 'invoice_id', 'student', 'student_name', 'class_name', 'title', 'amount', 'due_date', 'status', 'created_at']
-        read_only_fields = ['invoice_id', 'created_at']
+        fields = ['id', 'invoice_id', 'student', 'student_name', 'class_name', 'title', 'amount', 'due_date', 'status', 'paid_date', 'created_at']
+        read_only_fields = ['invoice_id', 'created_at', 'paid_date']
 
     def create(self, validated_data):
         # Allow default status if not provided, or map it if needed
