@@ -21,7 +21,7 @@ router.register(r'homework', HomeworkViewSet, basename='homework')
 from django.conf import settings
 from django.conf.urls.static import static
 
-from core.views import LoginApiView
+from core.views import LoginApiView, HeaderDebugView
 
 def api_root(request):
     return JsonResponse({
@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/reports/', include('reports.urls')),
     path('api/staff/', include('staff.urls')),
     path('api/login/', LoginApiView.as_view(), name='login'),
+    path('api/debug/headers/', HeaderDebugView.as_view(), name='debug-headers'),
     path('api/', include(router.urls)),
     path('', api_root, name='api-root'), # Root URL Fix
 ]

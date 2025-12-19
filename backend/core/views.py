@@ -58,3 +58,15 @@ class LoginApiView(APIView):
             })
         else:
             return Response({'error': 'Invalid Credentials'}, status=400)
+
+class HeaderDebugView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({
+            'is_secure': request.is_secure(),
+            'scheme': request.scheme,
+            'headers': dict(request.headers),
+            'meta_proto': request.META.get('HTTP_X_FORWARDED_PROTO'),
+            'meta_https': request.META.get('HTTPS'),
+        })
