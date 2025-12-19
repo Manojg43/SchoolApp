@@ -68,7 +68,7 @@ export default function StaffProfileDrawer({ isOpen, onClose, onSuccess, staff, 
         try {
             const payload: StaffPayload = {
                 ...data,
-                user_id: staff?.user_id || 'NEW', // Logic handle by backend usually, or we ignore user_id in create
+                // user_id handled by backend or not required for update
             };
 
             if (staff && activeMode === 'edit') {
