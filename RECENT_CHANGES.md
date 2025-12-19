@@ -5,6 +5,23 @@
 
 ---
 
+## 🚀 Latest Updates (Web & Integrations) - 2025-12-18
+### **1. 🌐 Web Dashboard**
+*   **New Modules**: Added **Communication** (Notices) and **Academic** (Homework) tabs to Sidebar.
+*   **Refactor**: Rewrote `NoticesPage` and `HomeworkPage` to remove dependencies (`date-fns`, `shadcn`) and use native `AppShell`.
+*   **Sync**: Verified real-time synchronization with Mobile App (Shared DB).
+
+### **2. 📱 Mobile Payslip (Secure Download)**
+*   **Security Upgrade**: Implemented **Signed URL** flow for PDF downloads.
+    *   Previously: Direct link (Failed due to Auth).
+    *   Now: Mobile requests temporary link -> Backend signs it -> Browser opens secure link.
+
+### **3. 🛡️ Permissions & Audit**
+*   **SuperAdmin**: Fixed `NoticeViewSet` and `HomeworkViewSet` to allow SuperAdmin full visibility.
+*   **Audit**: Conducted full system audit (`audit_report.md` available). Confirmed strict School Isolation logic in `StandardPermission`.
+
+---
+
 ## 1. 📱 Mobile App (Android)
 -   **Scanner UI**: Replaced default camera with a **Square Viewfinder** overlay (Green corners, dimmed background) in `ScanScreen.tsx`.
 -   **QR Protocol**: Now sends **JSON Data** (`{ token, school, exp }`) instead of raw strings.
