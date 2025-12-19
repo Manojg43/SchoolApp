@@ -52,7 +52,7 @@ from finance.models import Invoice
 
 class FeeSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.first_name', read_only=True)
-    class_name = serializers.CharField(source='student.current_class.name', read_only=True)
+    class_name = serializers.SerializerMethodField()
     
     # Map frontend 'amount' to model 'total_amount'
     amount = serializers.DecimalField(source='total_amount', max_digits=10, decimal_places=2)
@@ -61,6 +61,12 @@ class FeeSerializer(serializers.ModelSerializer):
         model = Invoice
         fields = ['id', 'invoice_id', 'student', 'student_name', 'class_name', 'title', 'amount', 'due_date', 'status', 'created_at']
         read_only_fields = ['invoice_id', 'created_at']
+
+    def get_class_name(self, obj):
+        # obj is Invoice. obj.student.current_class can be None.
+        if obj.student and obj.student.current_class:
+            return obj.student.current_class.name
+        return "N/A"
 
     def create(self, validated_data):
         # Allow default status if not provided, or map it if needed
