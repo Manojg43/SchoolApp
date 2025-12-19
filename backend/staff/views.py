@@ -43,7 +43,7 @@ class StaffDashboardView(APIView):
             "email": user.email,
             "mobile": user.mobile,
             "school": user.school.name if user.school else "Global/Super Admin",
-            "can_mark_manual_attendance": user.can_mark_manual_attendance,
+            "can_mark_manual_attendance": user.can_mark_manual_attendance or user.is_superuser,
             "school_gps": {
                 "lat": float(user.school.gps_lat) if user.school and user.school.gps_lat else None,
                 "long": float(user.school.gps_long) if user.school and user.school.gps_long else None,
@@ -203,7 +203,7 @@ class ScanAttendanceView(APIView):
         try:
             if is_manual:
                 # Manual GPS Check-In
-                if not request.user.can_mark_manual_attendance:
+                if not (request.user.can_mark_manual_attendance or request.user.is_superuser):
                      return Response({'error': 'Permission Denied for Manual Attendance'}, status=403)
             else:
                 # QR Verification
@@ -323,7 +323,7 @@ class UpdateAttendanceView(APIView):
     def patch(self, request, pk):
         user = request.user
         # Strict permission check: must be admin/principal
-        if not user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'is_superuser']:
+        if not (user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or user.is_superuser):
              return Response({'error': 'Unauthorized'}, status=403)
              
         try:

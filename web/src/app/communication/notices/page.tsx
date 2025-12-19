@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import AppShell from "@/components/ui/AppShell";
+
 import { api } from "@/lib/api";
 // import { format } from "date-fns"; // Removed dependency
 import { Trash2, Loader2, Plus, X } from "lucide-react";
@@ -61,7 +61,7 @@ export default function NoticesPage() {
     };
 
     return (
-        <AppShell>
+        <>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Digital Notice Board</h1>
                 <button
@@ -72,65 +72,67 @@ export default function NoticesPage() {
                 </button>
             </div>
 
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                            <h3 className="font-bold text-lg text-gray-800">Post New Notice</h3>
-                            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                                <input
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-                                    value={form.title}
-                                    onChange={e => setForm({ ...form, title: e.target.value })}
-                                    placeholder="e.g. Holiday Announcement"
-                                    required
-                                />
+            {
+                isOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                                <h3 className="font-bold text-lg text-gray-800">Post New Notice</h3>
+                                <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none transition-all text-gray-700"
-                                        value={form.target_role}
-                                        onChange={e => setForm({ ...form, target_role: e.target.value })}
-                                    >
-                                        <option value="ALL">All Staff</option>
-                                        <option value="TEACHER">Teachers Only</option>
-                                        <option value="DRIVER">Drivers Only</option>
-                                    </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                    <input
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+                                        value={form.title}
+                                        onChange={e => setForm({ ...form, title: e.target.value })}
+                                        placeholder="e.g. Holiday Announcement"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none transition-all text-gray-700"
+                                            value={form.target_role}
+                                            onChange={e => setForm({ ...form, target_role: e.target.value })}
+                                        >
+                                            <option value="ALL">All Staff</option>
+                                            <option value="TEACHER">Teachers Only</option>
+                                            <option value="DRIVER">Drivers Only</option>
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                                <textarea
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-                                    rows={4}
-                                    value={form.content}
-                                    onChange={e => setForm({ ...form, content: e.target.value })}
-                                    placeholder="Write your notice details here..."
-                                    required
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg flex justify-center items-center transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Post Notice"}
-                            </button>
-                        </form>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                                    <textarea
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+                                        rows={4}
+                                        value={form.content}
+                                        onChange={e => setForm({ ...form, content: e.target.value })}
+                                        placeholder="Write your notice details here..."
+                                        required
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg flex justify-center items-center transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Post Notice"}
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
@@ -198,6 +200,6 @@ export default function NoticesPage() {
                     </table>
                 </div>
             </div>
-        </AppShell>
+        </>
     );
 }

@@ -54,7 +54,7 @@ class LeaveManagementView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        if not (request.user.can_manage_leaves or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'SUPER_ADMIN']):
+        if not (request.user.can_manage_leaves or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
             return Response({'error': 'Unauthorized'}, status=403)
             
         status_filter = request.query_params.get('status', 'PENDING')
@@ -79,7 +79,7 @@ class LeaveManagementView(APIView):
 
     def post(self, request, pk):
         # Approve/Reject
-        if not (request.user.can_manage_leaves or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'SUPER_ADMIN']):
+        if not (request.user.can_manage_leaves or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
             return Response({'error': 'Unauthorized'}, status=403)
             
         action = request.data.get('action') # APPROVE / REJECT

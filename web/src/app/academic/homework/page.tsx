@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import AppShell from "@/components/ui/AppShell";
+
 // import { format } from "date-fns"; // Removed dependency
 import { api } from "@/lib/api";
 import { Loader2, Search, BookOpen, Calendar, User } from "lucide-react";
@@ -36,7 +36,7 @@ export default function HomeworkPage() {
     );
 
     return (
-        <AppShell>
+        <>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Homework Assignments</h1>
@@ -129,6 +129,6 @@ export default function HomeworkPage() {
                     </table>
                 </div>
             </div>
-        </AppShell>
+        </>
     );
 }

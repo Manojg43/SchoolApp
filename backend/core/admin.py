@@ -28,11 +28,33 @@ class CoreUserAdmin(UserAdmin):
     # Custom Fieldsets to include our new fields
     fieldsets = UserAdmin.fieldsets + (
         ('School & Role', {'fields': ('school', 'role', 'mobile')}),
+        ('Permissions', {'fields': (
+            'can_use_mobile_app',
+            'can_access_finance',
+            'can_access_transport',
+            'can_access_certificates',
+            'can_access_student_records',
+            'can_access_attendance',
+            'can_manage_payroll',
+            'can_manage_leaves',
+            'can_mark_manual_attendance',
+        )}),
     )
     
     # Enable adding custom fields during creation
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('School & Role', {'fields': ('school', 'role', 'mobile')}),
+        ('Permissions', {'fields': (
+            'can_use_mobile_app',
+            'can_access_finance',
+            'can_access_transport',
+            'can_access_certificates',
+            'can_access_student_records',
+            'can_access_attendance',
+            'can_manage_payroll',
+            'can_manage_leaves',
+            'can_mark_manual_attendance',
+        )}),
     )
     
     # Optimization for ManyToMany fields (Permissions)

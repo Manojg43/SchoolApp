@@ -14,7 +14,7 @@ class SalaryStructureView(APIView):
 
     def get(self, request, staff_id):
         # Check permissions
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'SUPER_ADMIN']):
+        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
             return Response({'error': 'Unauthorized'}, status=403)
             
         try:
@@ -27,7 +27,7 @@ class SalaryStructureView(APIView):
             return Response({'base_salary': 0}) # Default
 
     def post(self, request, staff_id):
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'SUPER_ADMIN']):
+        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
             return Response({'error': 'Unauthorized'}, status=403)
             
         try:
@@ -49,7 +49,7 @@ class PayrollDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'SUPER_ADMIN']):
+        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
             return Response({'error': 'Unauthorized'}, status=403)
 
         school = request.user.school
@@ -81,7 +81,7 @@ class GeneratePayrollView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'SUPER_ADMIN']):
+        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
             return Response({'error': 'Unauthorized'}, status=403)
 
         school = request.user.school
@@ -155,7 +155,7 @@ class MarkPaidView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, salary_id):
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN', 'SUPER_ADMIN']):
+        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
             return Response({'error': 'Unauthorized'}, status=403)
 
         try:
