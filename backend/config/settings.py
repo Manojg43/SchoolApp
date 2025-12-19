@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
 
 # Render/Gunicorn requires this to know it's behind a proxy terminating HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True # Redirect HTTP to HTTPS
+
 
 
 
