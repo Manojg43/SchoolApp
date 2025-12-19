@@ -39,7 +39,7 @@ export default function StaffProfileDrawer({ isOpen, onClose, onSuccess, staff, 
     }, [isOpen, staff, mode]);
 
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<StaffFormValues>({
-        resolver: zodResolver(staffSchema),
+        resolver: zodResolver(staffSchema) as any,
         defaultValues: {
             role: 'STAFF',
             can_mark_manual_attendance: false,
