@@ -28,7 +28,7 @@ export default function FeeInvoiceDrawer({ isOpen, onClose, onSuccess }: FeeInvo
     const [submitting, setSubmitting] = useState(false);
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<FeeFormValues>({
-        resolver: zodResolver(feeSchema),
+        resolver: zodResolver(feeSchema) as any,
         defaultValues: {
             title: 'Tuition Fee',
             amount: 0,
