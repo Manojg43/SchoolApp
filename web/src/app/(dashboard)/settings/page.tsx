@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
-import { Save, Upload, RefreshCw, MapPin, Building, QrCode, Clock } from "lucide-react";
+import { Save, Upload, RefreshCw, MapPin, Building, QrCode, Clock, Download } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
     getSchoolSettings, updateSchoolSettings, regenerateQR,
@@ -95,6 +95,71 @@ export default function SettingsPage() {
         { id: 'qr', label: 'Staff QR Code', icon: <QrCode size={18} /> },
     ];
 
+    const handleDownloadPoster = () => {
+        if (!qrData) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 1600;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Background - Gradient
+        const gradient = ctx.createLinearGradient(0, 0, 1200, 1600);
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(1, '#f0f9ff');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1200, 1600);
+
+        // Border
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 40;
+        ctx.strokeRect(40, 40, 1120, 1520);
+
+        // Header Text
+        ctx.font = 'bold 80px sans-serif';
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.fillText(qrData.school_name, 600, 200);
+
+        // Quote
+        ctx.font = 'italic 50px serif';
+        ctx.fillStyle = '#475569';
+        ctx.fillText('"Teaching is the one profession', 600, 320);
+        ctx.fillText('that creates all other professions."', 600, 390);
+
+        // QR Code Place Holder (White Box)
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+        ctx.shadowBlur = 40;
+        ctx.fillRect(300, 500, 600, 600);
+        ctx.shadowBlur = 0;
+
+        // Draw QR
+        const svg = document.querySelector('#qr-code-svg');
+        if (svg) {
+            const xml = new XMLSerializer().serializeToString(svg);
+            const svg64 = btoa(xml);
+            const b64Start = 'data:image/svg+xml;base64,';
+            const image64 = b64Start + svg64;
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 350, 550, 500, 500);
+
+                // Footer
+                ctx.font = '40px sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText('Scan with SchoolApp Staff', 600, 1250);
+
+                // Save
+                const link = document.createElement('a');
+                link.download = `School_QR_Poster.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            };
+            img.src = image64;
+        }
+    };
+
     return (
         <AnimatePage>
             <div className="min-h-screen bg-background p-8 font-sans max-w-6xl mx-auto space-y-8">
@@ -120,8 +185,8 @@ export default function SettingsPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
-                                        ? 'bg-primary text-white shadow-md'
-                                        : 'bg-surface text-text-muted hover:bg-gray-50 hover:text-text-main'
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-surface text-text-muted hover:bg-gray-50 hover:text-text-main'
                                     }`}
                             >
                                 {tab.icon}
@@ -288,13 +353,22 @@ export default function SettingsPage() {
                                                     </div>
                                                     <p className="text-sm text-text-muted mt-1">Static QR code for staff members to scan.</p>
                                                 </div>
-                                                <button
-                                                    onClick={loadQR}
-                                                    className="p-2 hover:bg-background rounded-full transition-colors text-primary"
-                                                    title="Regenerate QR"
-                                                >
-                                                    <RefreshCw className={`w-5 h-5 ${qrLoading ? 'animate-spin' : ''}`} />
-                                                </button>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={handleDownloadPoster}
+                                                        className="p-2 hover:bg-background rounded-full transition-colors text-primary"
+                                                        title="Download Poster"
+                                                    >
+                                                        <Download className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={loadQR}
+                                                        className="p-2 hover:bg-background rounded-full transition-colors text-primary"
+                                                        title="Regenerate QR"
+                                                    >
+                                                        <RefreshCw className={`w-5 h-5 ${qrLoading ? 'animate-spin' : ''}`} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </CardHeader>
                                         <CardContent>
@@ -304,6 +378,7 @@ export default function SettingsPage() {
                                                         <div className="p-6 bg-white border-4 border-text-main rounded-2xl shadow-2xl relative">
                                                             <div className="absolute top-0 left-0 w-full h-full border-4 border-white/20 rounded-xl pointer-events-none"></div>
                                                             <QRCode
+                                                                id="qr-code-svg"
                                                                 value={JSON.stringify({
                                                                     type: 'ATTENDANCE_QR',
                                                                     token: qrData.token,

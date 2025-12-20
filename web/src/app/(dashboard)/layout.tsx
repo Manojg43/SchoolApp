@@ -24,6 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Academic', href: '/academic/homework', icon: BookOpen },
         { name: 'Finance', href: '/finance', icon: Calculator },
         { name: 'Transport', href: '/transport', icon: Bus },
+        { name: 'Certificates', href: '/certificates', icon: Award },
         { name: 'Communication', href: '/communication/notices', icon: Megaphone },
         { name: 'Reports', href: '/reports', icon: Award },
         { name: 'Settings', href: '/settings', icon: Settings },
@@ -131,6 +132,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 </div>
                             </button>
 
+                            {/* Backdrop for Click Outside */}
+                            {isProfileOpen && (
+                                <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setProfileOpen(false)}></div>
+                            )}
+
                             <AnimatePresence>
                                 {isProfileOpen && (
                                     <motion.div
@@ -139,10 +145,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                         transition={{ duration: 0.2 }}
                                         className="absolute right-0 mt-3 w-56 bg-surface/90 backdrop-blur-xl rounded-2xl shadow-xl border border-border p-2 z-50 origin-top-right glass-card"
+                                        onClick={(e) => e.stopPropagation()}
                                     >
                                         <div className="px-3 py-2 border-b border-border/50 mb-2">
                                             <p className="font-semibold text-text-main">{user?.first_name} {user?.last_name}</p>
-                                            <p className="text-xs text-text-muted truncate">{user?.email}</p>
+                                            <p className="text-xs text-text-muted font-medium mb-1 truncate">{user?.email}</p>
+                                            <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
+                                                {typeof window !== 'undefined' ? (localStorage.getItem('school_name') || 'Sunshine High School') : 'Sunshine High School'}
+                                            </div>
                                         </div>
                                         <Link href="/settings" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-background/80 hover:text-primary rounded-xl transition-colors">
                                             <Settings className="w-4 h-4" /> Settings

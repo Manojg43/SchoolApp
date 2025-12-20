@@ -55,50 +55,18 @@ class StaffDashboardView(APIView):
             sp = user.staff_profile
             profile_data['designation'] = sp.designation
             profile_data['department'] = sp.department
+            profile_data['can_mark_manual_attendance'] = sp.can_mark_manual_attendance
         except StaffProfile.DoesNotExist:
             profile_data['designation'] = "Staff"
             profile_data['department'] = "-"
+            # Default to False unless superuser
+            profile_data['can_mark_manual_attendance'] = False
 
-        # 2. Attendance Stats (Current Month)
-        attendance_qs = StaffAttendance.objects.filter(
-            staff=user, 
-            date__gte=month_start, 
-            date__lte=today
-        )
-        present_count = attendance_qs.filter(status='PRESENT').count()
-        absent_count = attendance_qs.filter(status='ABSENT').count()
-        leaves_count = attendance_qs.filter(status='LEAVE').count()
-        
-        # Today's Status
-        today_att = attendance_qs.filter(date=today).first()
-        today_status = today_att.status if today_att else "NOT_MARKED"
-        check_in_time = str(today_att.check_in) if today_att and today_att.check_in else "-"
+        # Override for superuser if needed, or rely on the OR logic if it was in the model default
+        if user.is_superuser:
+             profile_data['can_mark_manual_attendance'] = True
 
-        # 3. Salary Info (Latest Generated)
-        last_salary = Salary.objects.filter(staff=user).order_by('-month').first()
-        salary_info = {}
-        if last_salary:
-            salary_info = {
-                "month": last_salary.month.strftime("%B %Y"),
-                "net_salary": str(last_salary.net_salary),
-                "is_paid": last_salary.is_paid,
-                "paid_date": str(last_salary.paid_date) if last_salary.paid_date else None,
-                "present_days": float(last_salary.present_days)
-            }
-        else:
-            salary_info = {"month": "-", "net_salary": "0.00", "is_paid": False}
-
-        return Response({
-            "user": profile_data,
-            "attendance": {
-                "present": present_count,
-                "absent": absent_count,
-                "leaves": leaves_count,
-                "today_status": today_status,
-                "check_in": check_in_time
-            },
-            "salary": salary_info
-        })
+        # ... (rest of GET)
 
     def patch(self, request):
         user = request.user
@@ -115,6 +83,8 @@ class StaffDashboardView(APIView):
         profile, created = StaffProfile.objects.get_or_create(user=user)
         if 'address' in data: profile.address = data['address']
         if 'bio' in data: profile.bio = data['bio']
+        if 'can_mark_manual_attendance' in data:
+            profile.can_mark_manual_attendance = data['can_mark_manual_attendance']
         profile.save()
         
         return Response({'message': 'Profile updated successfully'})
