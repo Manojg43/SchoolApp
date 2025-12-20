@@ -800,3 +800,9 @@ export const api = {
         return { data: null };
     }
 };
+
+// Access Security
+export async function generateResetCode(staffId: number, schoolId?: string): Promise<{ code: string }> {
+    return fetchWithSchool(`/staff/reset-code/${staffId}/`, schoolId);
+}
+
