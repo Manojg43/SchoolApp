@@ -16,13 +16,21 @@ export default function CertificatesPage() {
     const [showManualForm, setShowManualForm] = useState(false);
 
     // Manual Generation Form
-    const { register, handleSubmit, reset } = useForm({
+    interface ManualCertificateForm {
+        enrollment_number: string;
+        class_name: string;
+        section: string;
+        academic_year: string;
+        type: 'bonafide' | 'character' | 'leaving';
+    }
+
+    const { register, handleSubmit, reset } = useForm<ManualCertificateForm>({
         defaultValues: {
             enrollment_number: '',
             class_name: '',
             section: '',
             academic_year: new Date().getFullYear().toString(),
-            type: 'bonafide' // Added to satisfy TS and Controlled Input requirement
+            type: 'bonafide'
         }
     });
 
