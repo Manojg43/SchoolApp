@@ -146,7 +146,8 @@ class ScanAttendanceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        token = request.data.get('qr_token')
+        # Mobile app sends 'qr_token', web might send 'token'
+        token = request.data.get('token') or request.data.get('qr_token')
         is_manual = request.data.get('manual_gps')
         
         print(f"DEBUG: Received QR Token: {token!r}, Manual: {is_manual}")
