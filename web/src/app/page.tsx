@@ -89,7 +89,7 @@ export default function LoginPage() {
           </div>
 
           {serverError && (
-            <Animate animation="slide-up" className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-100 flex items-center gap-2">
+            <Animate animation="slideUp" className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-100 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               {serverError}
             </Animate>
