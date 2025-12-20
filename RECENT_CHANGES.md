@@ -5,6 +5,21 @@
 
 ---
 
+## 🚀 Latest Updates (Web & Integrations) - 2025-12-19
+### **1. 🐛 Critical Fixes (Backend)**
+*   **Admin 500 Fixed**: Resolved `NoReverseMatch` by adding `i18n` URLs for Jazzmin.
+*   **API Crash Fixed**: Patched `FeeSerializer` to safely handle students without classes.
+*   **Render Optimization**: Added **Keep-Alive** GitHub Action to prevent Free Tier sleeping.
+
+### **2. 📱 Mobile (Android)**
+*   **Build Success**: Released APK `v1.0.0` (Gradle build verified).
+
+### **3. 💻 Frontend (Web)**
+*   **Performance**: Fixed "White Screen" on tab switch by optimizing `AppShell` animations (`mode="popLayout"`).
+*   **UX**: Added Global Loading State (`loading.tsx`) for better feedback.
+
+---
+
 ## 🚀 Latest Updates (Web & Integrations) - 2025-12-18
 ### **1. 🌐 Web Dashboard**
 *   **New Modules**: Added **Communication** (Notices) and **Academic** (Homework) tabs to Sidebar.

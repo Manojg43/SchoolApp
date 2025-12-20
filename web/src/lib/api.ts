@@ -487,6 +487,7 @@ export interface AttendanceAnalytics {
     staff: {
         total_marked: number;
         present: number;
+        absent: number;
     };
     class_distribution: { current_class__name: string; count: number }[];
 }
@@ -609,6 +610,30 @@ export async function generateCertificate(studentId: number, type: string, schoo
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
     const res = await fetch(`${API_BASE_URL}/certificates/generate/${studentId}/${type}/`, {
+        method: 'GET',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to generate certificate: ${res.statusText}`);
+    return res.blob();
+}
+
+export async function generateCertificateManual(data: { enrollment_number: string, type: string, class_name?: string, section?: string, academic_year?: string }, schoolId?: string): Promise<Blob> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const queryInfo = new URLSearchParams({
+        enrollment_number: data.enrollment_number,
+        type: data.type,
+        ...(data.class_name && { class_name: data.class_name }),
+        ...(data.section && { section: data.section }),
+        ...(data.academic_year && { year: data.academic_year })
+    });
+
+    const res = await fetch(`${API_BASE_URL}/certificates/generate/manual/?${queryInfo.toString()}`, {
         method: 'GET',
         headers: {
             'X-School-ID': effectiveSchoolId,

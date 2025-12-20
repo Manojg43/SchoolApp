@@ -96,15 +96,15 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
     // Show Success Popup
     if (showSuccess) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-                <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div className="bg-surface p-8 rounded-2xl shadow-2xl flex flex-col items-center animate-scale-in border border-border">
+                    <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-4">
+                        <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Success!</h3>
-                    <p className="text-gray-500 text-center">Staff member has been added successfully.</p>
+                    <h3 className="text-xl font-bold text-text-main mb-2">Success!</h3>
+                    <p className="text-text-muted text-center">Staff member has been added successfully.</p>
                 </div>
             </div>
         );
@@ -112,20 +112,20 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
 
     // Main Form Render
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-4 border-b">
-                    <h2 className="text-xl font-semibold text-gray-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border animate-scale-in">
+                <div className="flex items-center justify-between p-4 border-b border-border">
+                    <h2 className="text-xl font-semibold text-text-main">
                         {staffToEdit ? 'Edit Staff Member' : 'Add New Staff'}
                     </h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                    <button onClick={onClose} className="text-text-muted hover:text-text-main transition-colors">
                         <X size={24} />
                     </button>
                 </div>
 
                 <div className="p-6 space-y-4">
                     {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md flex items-center gap-2">
+                        <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-md flex items-center gap-2">
                             <span className="font-bold">Error:</span> {error}
                         </div>
                     )}
@@ -133,34 +133,34 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">First Name</label>
-                                <input {...register('first_name')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                                {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name.message}</p>}
+                                <label className="block text-sm font-medium text-text-secondary">First Name</label>
+                                <input {...register('first_name')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                                {errors.first_name && <p className="text-error text-xs mt-1">{errors.first_name.message}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                                <input {...register('last_name')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                                {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name.message}</p>}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Email (Username)</label>
-                                <input type="email" {...register('email')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Mobile</label>
-                                <input {...register('mobile')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                                {errors.mobile && <p className="text-red-500 text-xs mt-1">{errors.mobile.message}</p>}
+                                <label className="block text-sm font-medium text-text-secondary">Last Name</label>
+                                <input {...register('last_name')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                                {errors.last_name && <p className="text-error text-xs mt-1">{errors.last_name.message}</p>}
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Role</label>
-                                <select {...register('role')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <label className="block text-sm font-medium text-text-secondary">Email (Username)</label>
+                                <input type="email" {...register('email')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                                {errors.email && <p className="text-error text-xs mt-1">{errors.email.message}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary">Mobile</label>
+                                <input {...register('mobile')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                                {errors.mobile && <p className="text-error text-xs mt-1">{errors.mobile.message}</p>}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary">Role</label>
+                                <select {...register('role')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
                                     <option value="TEACHER">Teacher</option>
                                     <option value="SCHOOL_ADMIN">School Admin</option>
                                     <option value="PRINCIPAL">Principal</option>
@@ -171,19 +171,19 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Designation</label>
-                                <input {...register('designation')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Senior Teacher" />
-                                {errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation.message}</p>}
+                                <label className="block text-sm font-medium text-text-secondary">Designation</label>
+                                <input {...register('designation')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="e.g. Senior Teacher" />
+                                {errors.designation && <p className="text-error text-xs mt-1">{errors.designation.message}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Department</label>
-                                <input {...register('department')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Science" />
-                                {errors.department && <p className="text-red-500 text-xs mt-1">{errors.department.message}</p>}
+                                <label className="block text-sm font-medium text-text-secondary">Department</label>
+                                <input {...register('department')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="e.g. Science" />
+                                {errors.department && <p className="text-error text-xs mt-1">{errors.department.message}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Joining Date</label>
-                                <input type="date" {...register('joining_date')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                                {errors.joining_date && <p className="text-red-500 text-xs mt-1">{errors.joining_date.message}</p>}
+                                <label className="block text-sm font-medium text-text-secondary">Joining Date</label>
+                                <input type="date" {...register('joining_date')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                                {errors.joining_date && <p className="text-error text-xs mt-1">{errors.joining_date.message}</p>}
                             </div>
                         </div>
 
@@ -192,26 +192,26 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                                 type="checkbox"
                                 id="can_mark_manual_attendance"
                                 {...register('can_mark_manual_attendance')}
-                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                className="w-4 h-4 text-primary rounded border-border focus:ring-primary"
                             />
-                            <label htmlFor="can_mark_manual_attendance" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="can_mark_manual_attendance" className="text-sm font-medium text-text-secondary">
                                 Allow Manual GPS Attendance (Without QR)
                             </label>
-                            <p className="text-xs text-gray-400">Use for staff with broken cameras or persistent scanning issues.</p>
+                            <p className="text-xs text-text-muted">Use for staff with broken cameras or persistent scanning issues.</p>
                         </div>
 
                         <div className="flex justify-end pt-4 space-x-3">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                                className="px-4 py-2 border border-border rounded-md text-text-secondary hover:bg-background text-sm font-medium transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
+                                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
                             >
                                 {loading ? 'Saving...' : 'Save Staff'}
                             </button>

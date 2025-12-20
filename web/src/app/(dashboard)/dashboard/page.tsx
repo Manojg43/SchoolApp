@@ -74,18 +74,26 @@ export default function Dashboard() {
 
     const StatCard = ({ title, value, icon, colorClass, index }: any) => (
         <Animate animation="slideUp" delay={index * 0.1}>
-            <Card hoverEffect className="h-full border-l-4" style={{ borderLeftColor: 'var(--color-primary)' }}>
-                <CardHeader className="mb-2">
-                    <CardTitle className="text-sm font-medium text-text-muted uppercase tracking-wider">{title}</CardTitle>
-                    <div className={`p-3 rounded-xl ${colorClass}`}>
-                        {icon}
+            <Card hoverEffect className="h-full border border-border/60 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-surface/80 backdrop-blur-sm group overflow-hidden relative">
+                {/* Decorative Blur blob */}
+                <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -mr-10 -mt-10 transition-opacity duration-300 group-hover:opacity-40 ${colorClass && colorClass.includes('primary') ? 'bg-primary' : colorClass && colorClass.includes('secondary') ? 'bg-secondary' : 'bg-primary'}`}></div>
+
+                <CardHeader className="mb-2 relative z-10">
+                    <div className="flex justify-between items-start">
+                        <CardTitle className="text-xs font-bold text-text-secondary uppercase tracking-wider">{title}</CardTitle>
+                        <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${colorClass} bg-gradient-to-br from-white/50 to-transparent ring-1 ring-black/5`}>
+                            {icon}
+                        </div>
                     </div>
                 </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-text-main">{value}</div>
-                    <div className="flex items-center text-xs text-success mt-2 font-medium">
-                        <ArrowUpRight className="w-3 h-3 mr-1" />
-                        +12% from last month
+                <CardContent className="relative z-10">
+                    <div className="text-3xl font-extrabold text-text-main tracking-tight">{value}</div>
+                    <div className="flex items-center text-xs text-success mt-3 font-medium">
+                        <span className="bg-success/10 px-2 py-1 rounded-full flex items-center">
+                            <ArrowUpRight className="w-3 h-3 mr-1" />
+                            +12%
+                        </span>
+                        <span className="text-text-muted ml-2">from last month</span>
                     </div>
                 </CardContent>
             </Card>
@@ -94,13 +102,17 @@ export default function Dashboard() {
 
     return (
         <AnimatePage>
-            <div className="space-y-8 p-8 max-w-7xl mx-auto">
-                <div className="flex justify-between items-center">
+            <div className="space-y-8 p-8 max-w-[1600px] mx-auto">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-text-main tracking-tight">Dashboard</h1>
-                        <p className="text-text-muted mt-1">Overview for {user?.first_name || 'User'}</p>
+                        <h1 className="text-4xl font-extrabold text-text-main tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-text-main to-text-secondary">Dashboard</h1>
+                        <p className="text-text-muted mt-1 font-medium">Overview & Analytics for {user?.first_name || 'User'}</p>
                     </div>
-                    <div className="text-sm text-text-muted bg-surface px-4 py-2 rounded-lg border border-border shadow-sm">
+                    <div className="flex items-center gap-2 text-sm text-text-secondary bg-surface/80 backdrop-blur-sm px-4 py-2 rounded-xl border border-border/50 shadow-sm">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                        </span>
                         {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                 </div>
@@ -112,28 +124,28 @@ export default function Dashboard() {
                         title="Total Students"
                         value={stats.students}
                         icon={<GraduationCap className="h-5 w-5 text-primary" />}
-                        colorClass="bg-primary/10"
+                        colorClass="bg-primary/10 shadow-inner"
                     />
                     <StatCard
                         index={1}
                         title="Total Staff"
                         value={stats.staff}
                         icon={<Users className="h-5 w-5 text-secondary" />}
-                        colorClass="bg-secondary/10"
+                        colorClass="bg-secondary/10 shadow-inner"
                     />
                     <StatCard
                         index={2}
                         title="Fees Collected"
                         value={`₹${stats.collected}`}
                         icon={<IndianRupee className="h-5 w-5 text-success" />}
-                        colorClass="bg-success/10"
+                        colorClass="bg-success/10 shadow-inner"
                     />
                     <StatCard
                         index={3}
                         title="Fees Pending"
                         value={`₹${stats.pending}`}
                         icon={<AlertCircle className="h-5 w-5 text-error" />}
-                        colorClass="bg-error/10"
+                        colorClass="bg-error/10 shadow-inner"
                     />
                 </div>
 
@@ -142,11 +154,11 @@ export default function Dashboard() {
                     {/* Recent Students */}
                     <PermissionGuard perm={['is_superuser', 'SCHOOL_ADMIN', 'PRINCIPAL']}>
                         <Animate animation="fade" delay={0.4}>
-                            <Card className="h-full overflow-hidden">
-                                <CardHeader className="bg-background/50 px-6 py-4 border-b border-border mb-0">
+                            <Card className="h-full overflow-hidden border-border/60 shadow-lg bg-surface/80 backdrop-blur-sm">
+                                <CardHeader className="bg-surface/50 px-6 py-4 border-b border-border/50 mb-0">
                                     <div className="flex items-center justify-between w-full">
-                                        <CardTitle>Recent Admissions</CardTitle>
-                                        <button className="text-xs text-primary font-medium hover:underline">View All</button>
+                                        <CardTitle className=" text-lg font-bold">Recent Admissions</CardTitle>
+                                        <button className="text-xs text-primary font-bold hover:underline bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">View Directory</button>
                                     </div>
                                 </CardHeader>
                                 <div className="p-0">
@@ -159,11 +171,11 @@ export default function Dashboard() {
                     {/* Recent Fees */}
                     <PermissionGuard perm={['is_superuser', 'SCHOOL_ADMIN', 'ACCOUNTANT']}>
                         <Animate animation="fade" delay={0.5}>
-                            <Card className="h-full overflow-hidden">
-                                <CardHeader className="bg-background/50 px-6 py-4 border-b border-border mb-0">
+                            <Card className="h-full overflow-hidden border-border/60 shadow-lg bg-surface/80 backdrop-blur-sm">
+                                <CardHeader className="bg-surface/50 px-6 py-4 border-b border-border/50 mb-0">
                                     <div className="flex items-center justify-between w-full">
-                                        <CardTitle>Recent Invoices</CardTitle>
-                                        <button className="text-xs text-primary font-medium hover:underline">View All</button>
+                                        <CardTitle className="text-lg font-bold">Recent Invoices</CardTitle>
+                                        <button className="text-xs text-primary font-bold hover:underline bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">View Finance</button>
                                     </div>
                                 </CardHeader>
                                 <div className="p-0">

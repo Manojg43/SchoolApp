@@ -34,12 +34,11 @@ export default function ScanScreen() {
 
     useEffect(() => {
         const init = async () => {
-            // 1. Permissions
+            // 1. Permissions - ONLY Camera for QR Scan
             const cameraStatus = await Camera.requestCameraPermissionsAsync();
-            const locationStatus = await Location.requestForegroundPermissionsAsync();
-            setHasPermission(cameraStatus.status === 'granted' && locationStatus.status === 'granted');
+            setHasPermission(cameraStatus.status === 'granted');
 
-            // 2. Fetch Profile for Rules
+            // 2. Fetch Profile for Rules (Background)
             try {
                 const profile = await mobileApi.getMyProfile();
                 if (profile?.user?.can_mark_manual_attendance) {
@@ -53,34 +52,51 @@ export default function ScanScreen() {
         init();
     }, []);
 
-    // Monitor Location for Manual Button
+    // Monitor Location for Manual Button - Only if we have permissions and manual is enabled
     useEffect(() => {
         let subscriber: any;
-        if (hasPermission && canManual && schoolGPS) {
-            (async () => {
-                subscriber = await Location.watchPositionAsync(
-                    { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 5 },
-                    (loc) => {
+        const startWatching = async () => {
+            // Check if we have location permission before watching
+            const { status } = await Location.getForegroundPermissionsAsync();
+            if (status !== 'granted') return;
+
+            subscriber = await Location.watchPositionAsync(
+                { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 5 },
+                (loc) => {
+                    if (schoolGPS) {
                         const dist = calculateDistance(
                             loc.coords.latitude, loc.coords.longitude,
                             schoolGPS.lat, schoolGPS.long
                         );
                         setDistance(dist);
                     }
-                );
-            })();
+                }
+            );
+        };
+
+        if (canManual && schoolGPS) {
+            startWatching();
         }
+
         return () => {
             if (subscriber) subscriber.remove();
         };
-    }, [hasPermission, canManual, schoolGPS]);
+    }, [canManual, schoolGPS]);
 
     const handleBarCodeScanned = async ({ type, data }: any) => {
         if (scanned) return;
         setScanned(true);
         try {
-            const location = await Location.getCurrentPositionAsync({});
-            await mobileApi.scanQR(data, location.coords.latitude, location.coords.longitude);
+            // Try to get location, but don't fail if we can't
+            let lat = 0, long = 0;
+            const { status } = await Location.getForegroundPermissionsAsync();
+            if (status === 'granted') {
+                const location = await Location.getCurrentPositionAsync({});
+                lat = location.coords.latitude;
+                long = location.coords.longitude;
+            }
+
+            await mobileApi.scanQR(data, lat, long);
             Alert.alert("Success", "Attendance Marked Successfully!", [{ text: "OK", onPress: () => navigation.goBack() }]);
         } catch (error: any) {
             Alert.alert("Error", error.message || "Attendance Failed", [{ text: "Try Again", onPress: () => setScanned(false) }]);
@@ -90,6 +106,14 @@ export default function ScanScreen() {
     const handleManualCheckIn = async () => {
         setLoadingManual(true);
         try {
+            // Ensure we have location permission for Manual GPS
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert("Permission Required", "Location access is needed to verify your presence at school.");
+                setLoadingManual(false);
+                return;
+            }
+
             const location = await Location.getCurrentPositionAsync({});
             // Send NULL as token, true as isManual
             await mobileApi.scanQR(null, location.coords.latitude, location.coords.longitude, true);
@@ -101,8 +125,8 @@ export default function ScanScreen() {
         }
     };
 
-    if (hasPermission === null) return <Text style={styles.msg}>Requesting permissions...</Text>;
-    if (hasPermission === false) return <Text style={styles.msg}>No access to camera or location</Text>;
+    if (hasPermission === null) return <Text style={styles.msg}>Requesting camera permission...</Text>;
+    if (hasPermission === false) return <Text style={styles.msg}>No access to camera</Text>;
 
     const isInRange = distance !== null && distance <= 55; // 50m tolerance + 5m buffer
 

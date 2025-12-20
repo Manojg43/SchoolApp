@@ -1,53 +1,82 @@
 @import "tailwindcss";
 
 :root {
-  /* Modern SaaS Palette (Indigo/Slate) */
-  --color-primary: #4f46e5;
-  /* Indigo 600 */
-  --color-primary-dark: #4338ca;
-  /* Indigo 700 */
-  --color-secondary: #0ea5e9;
-  /* Sky 500 */
-  --color-accent: #f0f9ff;
-  /* Sky 50 */
+  /* VIBRANT THEME: Sapphire & Teal */
+  /* Purpose: High contrast, professional yet energetic, premium feel */
 
+  /* Primary: Vibrant Royal Blue */
+  --color-primary: #2563eb;
+  /* Blue 600 */
+  --color-primary-light: #60a5fa;
+  /* Blue 400 */
+  --color-primary-dark: #1e40af;
+  /* Blue 800 */
+
+  /* Secondary: Teal/Cyan (Fresh accents) */
+  --color-secondary: #06b6d4;
+  /* Cyan 500 */
+  --color-secondary-light: #67e8f9;
+  /* Cyan 300 */
+
+  /* Backgrounds */
+  --color-background: #f0f4f8;
+  /* Cool, light blue-grey */
+  --color-surface: #ffffff;
+  --color-surface-glass: rgba(255, 255, 255, 0.7);
+  /* For Backdrop Blur */
+
+  /* State Colors */
   --color-success: #10b981;
   /* Emerald 500 */
   --color-warning: #f59e0b;
   /* Amber 500 */
   --color-error: #ef4444;
   /* Red 500 */
+  --color-info: #3b82f6;
+  /* Blue 500 */
 
-  --color-surface: #ffffff;
-  --color-background: #f8fafc;
-  /* Slate 50 */
-  --color-border: #e2e8f0;
-  /* Slate 200 */
-
+  /* Text */
   --color-text-main: #0f172a;
   /* Slate 900 */
+  --color-text-secondary: #334155;
+  /* Slate 700 */
   --color-text-muted: #64748b;
   /* Slate 500 */
+
+  /* Borders */
+  --color-border: #e2e8f0;
+  /* Slate 200 */
+  --color-border-glass: rgba(255, 255, 255, 0.5);
 }
 
 @theme inline {
   --color-primary: var(--color-primary);
+  --color-primary-light: var(--color-primary-light);
   --color-primary-dark: var(--color-primary-dark);
+
   --color-secondary: var(--color-secondary);
-  --color-accent: var(--color-accent);
+  --color-secondary-light: var(--color-secondary-light);
+
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-glass: var(--color-surface-glass);
+
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-error: var(--color-error);
-  --color-surface: var(--color-surface);
-  --color-background: var(--color-background);
-  --color-border: var(--color-border);
+
   --color-text-main: var(--color-text-main);
+  --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-border: var(--color-border);
 
-  --animate-fade-in: fade-in 0.3s ease-out;
-  --animate-slide-up: slide-up 0.4s ease-out;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Animations for smooth entrances - fixing flicker by avoiding layout shifts */
+  --animate-fade-in: fade-in 0.4s ease-out forwards;
+  --animate-scale-in: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
   @keyframes fade-in {
     from {
@@ -59,10 +88,22 @@
     }
   }
 
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   @keyframes slide-up {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(20px);
     }
 
     to {
@@ -76,4 +117,46 @@ body {
   background: var(--color-background);
   color: var(--color-text-main);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border-glass);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  border-color: var(--color-primary-light);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

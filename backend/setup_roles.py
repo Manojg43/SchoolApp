@@ -1,10 +1,13 @@
 import os
 import django
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
 
+# 1. Configure Django FIRST
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
+
+# 2. Now import Django models and App models
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 
 from core.models import CoreUser
 from finance.models import Invoice, Receipt, Salary, FeeStructure
@@ -20,8 +23,7 @@ def setup_roles():
     roles = {
         'Finance Manager': {
             'models': [Invoice, Receipt, Salary, FeeStructure],
-            'custom_perms': [], # Handled by CoreUser fields, but Groups can enforce it too if we used a custom backend. 
-                                # For now, we use Groups to group standard perms.
+            'custom_perms': [],
             'description': "Can manage all financial records."
         },
         'Transport Manager': {
@@ -30,17 +32,17 @@ def setup_roles():
             'description': "Can manage vehicles and routes."
         },
         'Certificate Manager': {
-            'models': [Certificate],
+            'models': [Certificate, Student],
             'custom_perms': [],
             'description': "Can issue certificates."
         },
         'Teacher': {
-            'models': [Student, Attendance],
+            'models': [Student, Attendance, Certificate], # Added Certificate
             'custom_perms': [], 
-            'description': "Can manage students and attendance."
+            'description': "Can manage students, attendance, and issue certificates."
         },
         'Staff': {
-            'models': [],
+            'models': [Student],
             'custom_perms': [],
             'description': "Basic staff access."
         }

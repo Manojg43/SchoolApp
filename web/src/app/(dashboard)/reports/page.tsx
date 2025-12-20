@@ -1,35 +1,26 @@
 'use client';
 
 import { useLanguage } from "@/context/LanguageContext";
-import { useEffect, useState } from "react";
 import { FileBarChart, Users, DollarSign, TrendingUp, TrendingDown, Clock, Activity, PieChart } from "lucide-react";
 import { getAttendanceAnalytics, getFinanceAnalytics, AttendanceAnalytics, FinanceAnalytics } from "@/lib/api";
 import Card, { CardContent } from "@/components/ui/modern/Card";
 import Animate, { AnimatePage } from "@/components/ui/Animate";
+import { useCachedData } from "@/hooks/useCachedData";
 
 export default function ReportsPage() {
     const { t } = useLanguage();
-    const [attData, setAttData] = useState<AttendanceAnalytics | null>(null);
-    const [finData, setFinData] = useState<FinanceAnalytics | null>(null);
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        async function load() {
-            try {
-                const [att, fin] = await Promise.all([
-                    getAttendanceAnalytics(),
-                    getFinanceAnalytics()
-                ]);
-                setAttData(att);
-                setFinData(fin);
-            } catch (e) {
-                console.error("Failed to load reports", e);
-            } finally {
-                setLoading(false);
-            }
-        }
-        load();
-    }, []);
+    const { data: attData, loading: attLoading } = useCachedData<AttendanceAnalytics>(
+        'attendance_analytics',
+        getAttendanceAnalytics
+    );
+
+    const { data: finData, loading: finLoading } = useCachedData<FinanceAnalytics>(
+        'finance_analytics',
+        getFinanceAnalytics
+    );
+
+    const loading = attLoading || finLoading || !attData || !finData;
 
     if (loading) return (
         <div className="flex h-screen items-center justify-center">

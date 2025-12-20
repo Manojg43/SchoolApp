@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { AuthProvider } from "@/context/AuthContext";
-import AppShell from "@/components/ui/AppShell";
+
 
 export const metadata: Metadata = {
   title: "School SaaS",
@@ -19,9 +19,7 @@ export default function RootLayout({
       <body>
         <LanguageProvider>
           <AuthProvider>
-            <AppShell>
-              {children}
-            </AppShell>
+            {children}
           </AuthProvider>
         </LanguageProvider>
       </body>

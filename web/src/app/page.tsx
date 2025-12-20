@@ -69,81 +69,92 @@ export default function LoginPage() {
   if (user) return null; // Prevent flicker while redirecting
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 font-sans relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/5 rounded-full blur-3xl opacity-60" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 font-sans relative overflow-hidden">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
       </div>
 
-      <Animate animation="fade" className="z-10 w-full max-w-md">
-        <div className="bg-surface p-8 rounded-2xl shadow-xl border border-border w-full">
+      <Animate animation="scale-in" className="z-10 w-full max-w-md p-4">
+        <div className="glass-card p-8 rounded-3xl shadow-2xl w-full border border-white/40">
           <div className="flex flex-col items-center mb-8">
-            <Animate animation="scale" delay={0.2} className="bg-primary/10 p-4 rounded-2xl text-primary mb-4 shadow-sm">
-              <School className="w-10 h-10" />
+            <Animate animation="fade-in" delay={0.2} className="w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg shadow-primary/30 transform rotate-3">
+              <School className="w-8 h-8" />
             </Animate>
-            <h1 className="text-3xl font-extrabold text-text-main tracking-tight">Welcome Back</h1>
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark tracking-tight">Welcome Back</h1>
             <p className="text-text-muted mt-2 font-medium">Sign in to your dashboard</p>
           </div>
 
           {serverError && (
-            <Animate animation="slideUp" className="bg-error/10 text-error p-4 rounded-xl text-sm mb-6 border border-error/20 flex items-center gap-2">
+            <Animate animation="slide-up" className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-100 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               {serverError}
             </Animate>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-text-main mb-2">Username</label>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Username</label>
               <div className="relative group">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-5 h-5 group-focus-within:text-primary transition-colors" />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">
+                  <User size={18} />
+                </div>
                 <input
                   {...register('username')}
                   type="text"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 outline-none transition-all bg-background ${errors.username
-                    ? 'border-error/30 focus:ring-error/20 focus:border-error'
-                    : 'border-border focus:ring-primary/20 focus:border-primary'
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-4 focus:ring-primary/10 outline-none transition-all duration-300 bg-white/50 backdrop-blur-sm ${errors.username
+                    ? 'border-error/50 focus:border-error'
+                    : 'border-slate-200 focus:border-primary hover:border-primary/50'
                     }`}
                   placeholder="Enter your username"
                 />
               </div>
               {errors.username && (
-                <p className="text-error text-xs mt-1.5 ml-1">{errors.username.message}</p>
+                <p className="text-error text-xs mt-1.5 ml-1 font-medium">{errors.username.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-text-main mb-2">Password</label>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Password</label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-5 h-5 group-focus-within:text-primary transition-colors" />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">
+                  <Lock size={18} />
+                </div>
                 <input
                   {...register('password')}
                   type="password"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 outline-none transition-all bg-background ${errors.password
-                    ? 'border-error/30 focus:ring-error/20 focus:border-error'
-                    : 'border-border focus:ring-primary/20 focus:border-primary'
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-4 focus:ring-primary/10 outline-none transition-all duration-300 bg-white/50 backdrop-blur-sm ${errors.password
+                    ? 'border-error/50 focus:border-error'
+                    : 'border-slate-200 focus:border-primary hover:border-primary/50'
                     }`}
                   placeholder="••••••••"
                 />
               </div>
               {errors.password && (
-                <p className="text-error text-xs mt-1.5 ml-1">{errors.password.message}</p>
+                <p className="text-error text-xs mt-1.5 ml-1 font-medium">{errors.password.message}</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-70 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 disabled:opacity-70 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:scale-[0.98] mt-2"
             >
-              {isLoading ? 'Authenticating...' : 'Sign In'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Authenticating...
+                </span>
+              ) : 'Sign In'}
             </button>
           </form>
 
           <div className="mt-8 text-center">
-            <p className="text-xs text-text-muted font-medium bg-background py-2 rounded-lg border border-border">
-              Secured by Multi-Tenant Architecture
+            <p className="text-xs text-text-muted font-medium bg-white/50 py-2 rounded-lg border border-slate-100 inline-block px-4 shadow-sm">
+              Secured by <span className="text-primary font-bold">SchoolApp Secure</span>
             </p>
           </div>
         </div>
