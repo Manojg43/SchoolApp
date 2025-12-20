@@ -1,11 +1,15 @@
 export const theme = {
     colors: {
-        primary: '#4f46e5', // Indigo 600
-        primaryDark: '#4338ca', // Indigo 700
-        primaryLight: '#818cf8', // Indigo 400
+        primary: '#2563eb', // Vibrant Royal Blue - Web Match
+        primaryDark: '#1e40af', // Blue 800
+        primaryLight: '#60a5fa', // Blue 400
 
-        background: '#f8fafc', // Slate 50
+        secondary: '#06b6d4', // Cyan 500
+        secondaryLight: '#67e8f9',
+
+        background: '#f0f4f8', // Cool light blue-grey
         surface: '#ffffff',
+        surfaceGlass: 'rgba(255, 255, 255, 0.85)',
 
         text: {
             main: '#0f172a', // Slate 900

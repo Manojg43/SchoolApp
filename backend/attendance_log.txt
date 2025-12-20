@@ -1,0 +1,25 @@
+--- Verifying Manual Attendance ---
+Created Test User
+--- Verifying Manual Attendance ---
+
+Test 1: Deny Permission
+Status: 403
+Response: {'error': 'Permission Denied for Manual Attendance'}
+PASS: Permission correctly denied.
+
+Test 2: Allow Permission + Create Attendance
+Status: 403
+Response: {'error': 'Outside Geo-Fence', 'distance': '880216.1m', 'allowed': '50m'}
+FAIL: API request failed.
+--- Verifying Manual Attendance ---
+Using Coords: 19.980169, 73.753914
+
+Test 1: Deny Permission
+Status: 403
+Response: {'error': 'Permission Denied for Manual Attendance'}
+PASS: Permission correctly denied.
+
+Test 2: Allow Permission + Create Attendance
+Status: 403
+Response: {'error': 'Permission Denied for Manual Attendance'}
+FAIL: API request failed.

@@ -174,7 +174,11 @@ class ScanAttendanceView(APIView):
         try:
             if is_manual:
                 # Manual GPS Check-In
-                if not (request.user.can_mark_manual_attendance or request.user.is_superuser):
+                has_perm = request.user.is_superuser
+                if not has_perm and hasattr(request.user, 'staff_profile'):
+                    has_perm = request.user.staff_profile.can_mark_manual_attendance
+                
+                if not has_perm:
                      return Response({'error': 'Permission Denied for Manual Attendance'}, status=403)
             else:
                 # QR Verification
@@ -497,3 +501,77 @@ class StaffDailyAttendanceView(APIView):
             'date': target_date.strftime("%Y-%m-%d"),
             'records': data
         })
+
+from rest_framework.permissions import AllowAny
+from django.contrib.auth import get_user_model
+
+class StaffPasswordResetView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        mobile = request.data.get('mobile')
+        reset_code = request.data.get('reset_code')
+        new_password = request.data.get('new_password')
+
+        if not mobile or not reset_code or not new_password:
+            return Response({'error': 'Mobile, Reset Code, and New Password are required'}, status=400)
+
+        User = get_user_model()
+        try:
+            # Find user by mobile
+            user = User.objects.filter(mobile=mobile).first()
+            
+            if not user:
+                return Response({'error': 'User not found with this mobile number'}, status=404)
+
+            # Check profile
+            if not hasattr(user, 'staff_profile'):
+                 return Response({'error': 'Not a staff account (No Profile)'}, status=400)
+            
+            # Verify Reset Code
+            if not user.staff_profile.reset_code:
+                 return Response({'error': 'No reset code generated. Contact Admin.'}, status=400)
+                 
+            if user.staff_profile.reset_code != reset_code:
+                return Response({'error': 'Invalid Reset Code'}, status=403)
+
+            # Allow Reset & Clear Code
+            user.set_password(new_password)
+            user.staff_profile.reset_code = None # One-time use
+            user.staff_profile.save()
+            user.save()
+            
+            return Response({'message': 'Password reset successfully. Please login.'})
+
+        except Exception as e:
+            print(f"Reset Error: {e}")
+            return Response({'error': 'Server Error'}, status=500)
+
+from rest_framework import permissions
+import random
+
+class GenerateResetCodeView(APIView):
+    permission_classes = [permissions.IsAuthenticated] # Admin only
+    
+    def post(self, request, pk):
+        # Only Allow Admins/Principals
+        if not (request.user.is_superuser or request.user.role in ['SCHOOL_ADMIN', 'PRINCIPAL']):
+            return Response({'error': 'Permission Denied'}, status=403)
+            
+        try:
+            User = get_user_model()
+            target_user = User.objects.get(pk=pk)
+            
+            # Generate 6 digit code
+            code = str(random.randint(100000, 999999))
+            
+            if hasattr(target_user, 'staff_profile'):
+                target_user.staff_profile.reset_code = code
+                target_user.staff_profile.save()
+                return Response({'message': 'Reset Code Generated', 'code': code})
+            else:
+                return Response({'error': 'User has no staff profile'}, status=400)
+                
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=404)

@@ -33,14 +33,23 @@ class StaffSerializer(serializers.ModelSerializer):
             return obj.teacher_profile.joining_date
         return None 
 
+    can_mark_manual_attendance = serializers.BooleanField(default=False)
+
+    def get_can_mark_manual_attendance(self, obj):
+         if hasattr(obj, 'staff_profile'):
+             return obj.staff_profile.can_mark_manual_attendance
+         return False
+
     class Meta:
         model = CoreUser
-        fields = ['id', 'user_id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'designation', 'department', 'joining_date', 'password', 'is_active']
+        fields = ['id', 'user_id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'designation', 'department', 'joining_date', 'password', 'is_active', 'can_mark_manual_attendance']
         read_only_fields = ['id', 'user_id']
 
     def create(self, validated_data):
         profile_data = {}
         # Extract profile fields
+        manual_attendance = validated_data.pop('can_mark_manual_attendance', False)
+        
         if 'staff_profile' in validated_data:
              profile_data = validated_data.pop('staff_profile')
         
@@ -55,12 +64,13 @@ class StaffSerializer(serializers.ModelSerializer):
         user = CoreUser.objects.create_user(**validated_data, password=password)
         
         # Create Profile
-        StaffProfile.objects.create(user=user, **profile_data)
+        StaffProfile.objects.create(user=user, can_mark_manual_attendance=manual_attendance, **profile_data)
         return user
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('staff_profile', {})
-        
+        manual_attendance = validated_data.pop('can_mark_manual_attendance', None)
+
         # Update User fields
         for attr, value in validated_data.items():
             if attr != 'password':
@@ -68,10 +78,17 @@ class StaffSerializer(serializers.ModelSerializer):
         instance.save()
         
         # Update Profile
+        # Always ensure profile exists
+        profile, created = StaffProfile.objects.get_or_create(user=instance)
+        
+        # Update manual attendance if provided
+        if manual_attendance is not None:
+             profile.can_mark_manual_attendance = manual_attendance
+
         if profile_data:
-            profile, created = StaffProfile.objects.get_or_create(user=instance)
             for attr, value in profile_data.items():
                  setattr(profile, attr, value)
-            profile.save()
+        
+        profile.save()
             
         return instance

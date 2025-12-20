@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
@@ -11,11 +11,16 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const [isSidebarOpen, setSidebarOpen] = useState(true);
-    const pathname = usePathname();
     const { user, logout } = useAuth();
-    const [isProfileOpen, setProfileOpen] = useState(false);
     const router = useRouter();
+    const pathname = usePathname();
+    const [isSidebarOpen, setSidebarOpen] = useState(true);
+    const [isProfileOpen, setProfileOpen] = useState(false);
+
+    // Close profile dropdown when route changes
+    useEffect(() => {
+        setProfileOpen(false);
+    }, [pathname]);
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },

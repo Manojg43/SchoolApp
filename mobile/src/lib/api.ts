@@ -50,6 +50,9 @@ export const mobileApi = {
     login: (username: string, password: string) =>
         apiRequest('/login/', 'POST', { username, password }),
 
+    resetPassword: (mobile: string, reset_code: string, new_password: string) =>
+        apiRequest('/staff/reset-password/', 'POST', { mobile, reset_code, new_password }),
+
     generateQR: () => apiRequest('/staff/qr/generate/', 'GET'),
 
     scanQR: (qrToken: string | null, lat: number, long: number, isManual: boolean = false) =>

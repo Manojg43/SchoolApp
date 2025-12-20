@@ -67,7 +67,7 @@ export default function CertificatesPage() {
     const onManualSubmit = (data: any) => {
         // Mocking ID for manual generation or handling logic
         // true flag indicates manual generation flow
-        handleGenerate(data, 'bonafide', 'Manual_Student', true);
+        handleGenerate(data, data.type || 'bonafide', 'Manual_Student', true);
     };
 
     const columns: Column<Student>[] = [
@@ -148,7 +148,15 @@ export default function CertificatesPage() {
                             <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
                             <div className="p-6">
                                 <h3 className="text-lg font-bold text-text-main mb-4">Manual Certificate Generation</h3>
-                                <form onSubmit={handleSubmit(onManualSubmit)} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                <form onSubmit={handleSubmit(onManualSubmit)} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                                    <div>
+                                        <label className="text-xs font-medium text-text-secondary block mb-1">Type</label>
+                                        <select {...register('type')} className="w-full rounded-lg border-border bg-background px-3 py-2 text-sm focus:ring-primary">
+                                            <option value="bonafide">Bonafide</option>
+                                            <option value="character">Character</option>
+                                            <option value="leaving">Leaving</option>
+                                        </select>
+                                    </div>
                                     <div>
                                         <label className="text-xs font-medium text-text-secondary block mb-1">Enrollment No.</label>
                                         <input {...register('enrollment_number')} className="w-full rounded-lg border-border bg-background px-3 py-2 text-sm focus:ring-primary" placeholder="S-1234" required />

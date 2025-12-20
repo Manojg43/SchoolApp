@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 import { getStudents, getStaff, getFees, type Student, type Fee } from '@/lib/api';
 import { GraduationCap, Users, IndianRupee, AlertCircle, ArrowUpRight } from 'lucide-react';
 import DataTable, { Column } from '@/components/ui/DataTable';
@@ -74,26 +75,20 @@ export default function Dashboard() {
 
     const StatCard = ({ title, value, icon, colorClass, index }: any) => (
         <Animate animation="slideUp" delay={index * 0.1}>
-            <Card hoverEffect className="h-full border border-border/60 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-surface/80 backdrop-blur-sm group overflow-hidden relative">
-                {/* Decorative Blur blob */}
-                <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -mr-10 -mt-10 transition-opacity duration-300 group-hover:opacity-40 ${colorClass && colorClass.includes('primary') ? 'bg-primary' : colorClass && colorClass.includes('secondary') ? 'bg-secondary' : 'bg-primary'}`}></div>
-
-                <CardHeader className="mb-2 relative z-10">
-                    <div className="flex justify-between items-start">
-                        <CardTitle className="text-xs font-bold text-text-secondary uppercase tracking-wider">{title}</CardTitle>
-                        <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${colorClass} bg-gradient-to-br from-white/50 to-transparent ring-1 ring-black/5`}>
+            <Card hoverEffect className="h-full border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 bg-surface border-l-4 border-l-primary group overflow-hidden relative">
+                <CardHeader className="pb-2">
+                    <div className="flex justify-between items-center">
+                        <CardTitle className="text-sm font-semibold text-text-secondary uppercase tracking-wider">{title}</CardTitle>
+                        <div className={`p-2 rounded-lg bg-background/50 text-primary transition-transform duration-300 group-hover:scale-110`}>
                             {icon}
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="relative z-10">
-                    <div className="text-3xl font-extrabold text-text-main tracking-tight">{value}</div>
-                    <div className="flex items-center text-xs text-success mt-3 font-medium">
-                        <span className="bg-success/10 px-2 py-1 rounded-full flex items-center">
-                            <ArrowUpRight className="w-3 h-3 mr-1" />
-                            +12%
-                        </span>
-                        <span className="text-text-muted ml-2">from last month</span>
+                <CardContent>
+                    <div className="text-3xl font-bold text-text-main tracking-tight">{value}</div>
+                    <div className="flex items-center text-xs text-text-muted mt-2">
+                        <span className="font-medium text-success mr-2">+12%</span>
+                        <span>from last month</span>
                     </div>
                 </CardContent>
             </Card>
@@ -156,26 +151,20 @@ export default function Dashboard() {
                         <Animate animation="fade" delay={0.4}>
                             <Card className="h-full overflow-hidden border-border/60 shadow-lg bg-surface/80 backdrop-blur-sm">
                                 <CardHeader className="bg-surface/50 px-6 py-4 border-b border-border/50 mb-0">
+                                    import Link from 'next/link'; // Added import
+
+                                    // ... inside component
+
                                     <div className="flex items-center justify-between w-full">
                                         <CardTitle className=" text-lg font-bold">Recent Admissions</CardTitle>
-                                        <button className="text-xs text-primary font-bold hover:underline bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">View Directory</button>
+                                        <Link href="/students" className="text-xs text-primary font-bold hover:underline bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">View Directory</Link>
                                     </div>
-                                </CardHeader>
-                                <div className="p-0">
-                                    <DataTable columns={studentColumns} data={recentStudents} isLoading={loading} />
-                                </div>
-                            </Card>
-                        </Animate>
-                    </PermissionGuard>
 
-                    {/* Recent Fees */}
-                    <PermissionGuard perm={['is_superuser', 'SCHOOL_ADMIN', 'ACCOUNTANT']}>
-                        <Animate animation="fade" delay={0.5}>
-                            <Card className="h-full overflow-hidden border-border/60 shadow-lg bg-surface/80 backdrop-blur-sm">
-                                <CardHeader className="bg-surface/50 px-6 py-4 border-b border-border/50 mb-0">
+// ... inside fees card
+
                                     <div className="flex items-center justify-between w-full">
                                         <CardTitle className="text-lg font-bold">Recent Invoices</CardTitle>
-                                        <button className="text-xs text-primary font-bold hover:underline bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">View Finance</button>
+                                        <Link href="/fees" className="text-xs text-primary font-bold hover:underline bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">View Finance</Link>
                                     </div>
                                 </CardHeader>
                                 <div className="p-0">

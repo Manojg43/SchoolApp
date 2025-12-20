@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X } from 'lucide-react';
-import { createStaff, updateStaff, type Staff, type StaffPayload } from '@/lib/api';
+import { X, KeyRound } from 'lucide-react';
+import { createStaff, updateStaff, generateResetCode, type Staff, type StaffPayload } from '@/lib/api';
 
 const staffSchema = z.object({
     first_name: z.string().min(2, "First Name is required"),
@@ -14,6 +14,7 @@ const staffSchema = z.object({
     designation: z.string().min(1, "Designation is required"),
     department: z.string().min(1, "Department is required"),
     joining_date: z.string().min(1, "Joining Date is required"),
+    password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal('')),
     can_mark_manual_attendance: z.boolean().optional(),
 });
 
@@ -29,6 +30,7 @@ interface StaffFormModalProps {
 export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit }: StaffFormModalProps) {
     const [loading, setLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [resetCode, setResetCode] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<StaffFormValues>({
@@ -41,6 +43,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
 
     // Populate Form on Edit
     useEffect(() => {
+        setResetCode(null);
         if (staffToEdit) {
             setValue('first_name', staffToEdit.first_name);
             setValue('last_name', staffToEdit.last_name);
@@ -60,6 +63,16 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
         console.error("Validation Errors:", errors);
         const firstError = Object.values(errors)[0] as { message?: string };
         setError(firstError?.message || "Please check the form for errors.");
+    };
+
+    const handleGenerateCode = async () => {
+        if (!staffToEdit) return;
+        try {
+            const res = await generateResetCode(staffToEdit.id);
+            setResetCode(res.code);
+        } catch (err: any) {
+            setError(err.message || "Failed to generate code");
+        }
     };
 
     const onSubmit = async (data: StaffFormValues) => {
@@ -104,7 +117,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                         </svg>
                     </div>
                     <h3 className="text-xl font-bold text-text-main mb-2">Success!</h3>
-                    <p className="text-text-muted text-center">Staff member has been added successfully.</p>
+                    <p className="text-text-muted text-center">Staff member has been updated successfully.</p>
                 </div>
             </div>
         );
@@ -185,6 +198,31 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                                 <input type="date" {...register('joining_date')} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
                                 {errors.joining_date && <p className="text-error text-xs mt-1">{errors.joining_date.message}</p>}
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary">Password Support</label>
+                                <div className="mt-1">
+                                    <input type="password" {...register('password')} className="block w-full rounded-md border border-border bg-background px-3 py-2 text-text-main shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Set/Change Password" />
+                                </div>
+                            </div>
+                            {staffToEdit && (
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary">Mobile App Reset</label>
+                                    <div className="mt-1 flex gap-2 items-center">
+                                        <button type="button" onClick={handleGenerateCode} className="px-3 py-2 bg-secondary/10 text-secondary rounded-md text-sm font-bold flex items-center gap-2 hover:bg-secondary/20 transition-colors">
+                                            <KeyRound size={16} />
+                                            Generate Code
+                                        </button>
+                                        {resetCode && (
+                                            <div className="px-3 py-2 bg-text-main text-black rounded-md font-mono font-bold tracking-widest animate-scale-in">
+                                                {resetCode}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-2 pt-2">

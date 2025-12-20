@@ -20,6 +20,7 @@ class StaffProfile(models.Model):
     department = models.CharField(_("Department"), max_length=100, blank=True)
     joining_date = models.DateField(_("Joining Date"), null=True, blank=True)
     can_mark_manual_attendance = models.BooleanField(_("Can Mark Manual Attendance"), default=False)
+    reset_code = models.CharField(_("Password Reset Code"), max_length=6, blank=True, null=True)
 
     def __str__(self):
         return f"{self.designation}: {self.user.get_full_name()}"
