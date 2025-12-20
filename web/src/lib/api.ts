@@ -80,6 +80,7 @@ export interface Student {
     father_name: string;
     mother_name: string;
     emergency_mobile: string;
+    mobile?: string;
     address: string;
 
     language: string;
