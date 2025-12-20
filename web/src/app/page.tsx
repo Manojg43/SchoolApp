@@ -78,10 +78,10 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
       </div>
 
-      <Animate animation="scale-in" className="z-10 w-full max-w-md p-4">
+      <Animate animation="scale" className="z-10 w-full max-w-md p-4">
         <div className="glass-card p-8 rounded-3xl shadow-2xl w-full border border-white/40">
           <div className="flex flex-col items-center mb-8">
-            <Animate animation="fade-in" delay={0.2} className="w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg shadow-primary/30 transform rotate-3">
+            <Animate animation="fade" delay={0.2} className="w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg shadow-primary/30 transform rotate-3">
               <School className="w-8 h-8" />
             </Animate>
             <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark tracking-tight">Welcome Back</h1>
