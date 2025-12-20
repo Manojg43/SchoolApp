@@ -66,7 +66,33 @@ class StaffDashboardView(APIView):
         if user.is_superuser:
              profile_data['can_mark_manual_attendance'] = True
 
-        # ... (rest of GET)
+        # 2. Attendance Stats (Current Month)
+        attendance_qs = StaffAttendance.objects.filter(
+            staff=user,
+            date__gte=month_start,
+            date__lte=today
+        )
+        
+        stats = {
+            'present': attendance_qs.filter(status='PRESENT').count(),
+            'absent': attendance_qs.filter(status='ABSENT').count(),
+            'late': attendance_qs.filter(status='HALF_DAY').count(), # Using Half Day as proxy for irregularities
+            'total_working_days': 26 # Placeholder or distinct count
+        }
+
+        # 3. Today's Status
+        today_att = attendance_qs.filter(date=today).first()
+        today_status = {
+            'status': today_att.status if today_att else 'NOT_MARKED',
+            'check_in': today_att.check_in if today_att else None,
+            'check_out': today_att.check_out if today_att else None
+        }
+
+        return Response({
+            'profile': profile_data,
+            'stats': stats,
+            'today': today_status
+        })
 
     def patch(self, request):
         user = request.user

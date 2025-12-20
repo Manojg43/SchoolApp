@@ -21,7 +21,8 @@ export default function CertificatesPage() {
             enrollment_number: '',
             class_name: '',
             section: '',
-            academic_year: new Date().getFullYear().toString()
+            academic_year: new Date().getFullYear().toString(),
+            type: 'bonafide' // Added to satisfy TS and Controlled Input requirement
         }
     });
 
