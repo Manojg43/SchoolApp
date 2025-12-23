@@ -39,6 +39,13 @@ class Student(models.Model):
         unique_together = ('school', 'enrollment_number')
         verbose_name = _("Student")
         verbose_name_plural = _("Students")
+        indexes = [
+            models.Index(fields=['school', 'is_active'], name='student_school_active_idx'),
+            models.Index(fields=['current_class', 'section'], name='student_class_section_idx'),
+            models.Index(fields=['enrollment_number'], name='student_enrollment_idx'),
+            models.Index(fields=['created_at'], name='student_created_at_idx'),
+            models.Index(fields=['academic_year'], name='student_academic_year_idx'),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.student_id:
@@ -73,6 +80,12 @@ class Attendance(models.Model):
 
     class Meta:
         unique_together = ('student', 'date')
+        indexes = [
+            models.Index(fields=['school', 'date'], name='attendance_school_date_idx'),
+            models.Index(fields=['student', 'date'], name='attendance_student_date_idx'),
+            models.Index(fields=['status'], name='attendance_status_idx'),
+            models.Index(fields=['date'], name='attendance_date_idx'),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.attendance_id:

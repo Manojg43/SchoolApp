@@ -38,6 +38,24 @@ export async function apiRequest(endpoint: string, method: string = 'GET', body?
             throw new Error(data.message || data.error || 'API Request Failed');
         }
 
+        // Handle paginated responses automatically
+        // If the response has 'results' key, it's paginated - extract the results
+        // but keep pagination metadata accessible
+        if (data && typeof data === 'object' && 'results' in data) {
+            // Paginated response - return results directly for backward compatibility
+            // but attach pagination info as metadata
+            const results = data.results;
+            if (Array.isArray(results)) {
+                // Attach pagination metadata to the array for advanced use cases
+                (results as any).__pagination = {
+                    count: data.count,
+                    next: data.next,
+                    previous: data.previous,
+                };
+            }
+            return results;
+        }
+
         return data;
     } catch (error) {
         console.error(`API Error (${endpoint}):`, error);
@@ -61,6 +79,13 @@ export const mobileApi = {
             gps_lat: lat,
             gps_long: long,
             manual_gps: isManual
+        }),
+
+    // Real-time location check for visual feedback
+    checkLocation: (lat: number, long: number) =>
+        apiRequest('/staff/attendance/check-location/', 'POST', {
+            gps_lat: lat,
+            gps_long: long
         }),
 
     getMyProfile: () => apiRequest('/staff/dashboard/', 'GET'),

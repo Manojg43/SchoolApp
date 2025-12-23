@@ -10,27 +10,36 @@ from .serializers import StudentSerializer, FeeSerializer, AttendanceSerializer
 from schools.models import Class, AcademicYear, Section
 
 from core.permissions import StandardPermission
+from core.pagination import StandardResultsPagination, LargeResultsPagination
 
 class StudentViewSet(viewsets.ModelViewSet):
     permission_classes = [StandardPermission] # Teachers can manage students
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
+    pagination_class = StandardResultsPagination
     
     def perform_create(self, serializer):
         serializer.save(school=self.request.user.school)
     
     def get_queryset(self):
         if self.request.user.is_superuser:
-            return Student.objects.filter(is_active=True)
-        return Student.objects.filter(school=self.request.user.school, is_active=True)
+            return Student.objects.select_related(
+                'school', 'academic_year', 'current_class', 'section'
+            ).filter(is_active=True)
+        return Student.objects.select_related(
+            'school', 'academic_year', 'current_class', 'section'
+        ).filter(school=self.request.user.school, is_active=True)
 
 class AttendanceViewSet(viewsets.ModelViewSet):
     permission_classes = [StandardPermission]
     queryset = Attendance.objects.all()
     serializer_class = AttendanceSerializer
+    pagination_class = LargeResultsPagination
     
     def get_queryset(self):
-        return Attendance.objects.filter(school=self.request.user.school)
+        return Attendance.objects.select_related(
+            'school', 'student', 'student__current_class', 'student__section'
+        ).filter(school=self.request.user.school)
 
 from finance.models import Invoice
 
@@ -38,11 +47,16 @@ class FeeViewSet(viewsets.ModelViewSet):
     permission_classes = [StandardPermission] 
     queryset = Invoice.objects.all()
     serializer_class = FeeSerializer
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         if self.request.user.is_superuser:
-            return Invoice.objects.all()
-        return Invoice.objects.filter(school=self.request.user.school)
+            return Invoice.objects.select_related(
+                'student', 'student__current_class', 'student__section', 'fee_structure'
+            ).all()
+        return Invoice.objects.select_related(
+            'student', 'student__current_class', 'student__section', 'fee_structure'
+        ).filter(school=self.request.user.school)
 
     def perform_create(self, serializer):
         serializer.save(school=self.request.user.school)

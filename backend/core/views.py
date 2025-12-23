@@ -53,8 +53,15 @@ class LoginApiView(APIView):
                 'role': user.role,
                 'school_id': user.school.school_id if user.school else None,
                 'name': user.get_full_name(),
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'email': user.email,
-                'permissions': permission_list
+                'permissions': permission_list,
+                'user': {
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'role': user.role,
+                }
             })
         else:
             return Response({'error': 'Invalid Credentials'}, status=400)

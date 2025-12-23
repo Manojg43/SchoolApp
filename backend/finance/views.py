@@ -72,14 +72,16 @@ from .models import FeeCategory, FeeStructure
 from .serializers import FeeCategorySerializer, FeeStructureSerializer
 from core.permissions import StandardPermission
 from core.middleware import get_current_school_id
+from core.pagination import StandardResultsPagination
 
 class FeeCategoryViewSet(viewsets.ModelViewSet):
     queryset = FeeCategory.objects.all()
     serializer_class = FeeCategorySerializer
     permission_classes = [StandardPermission]
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        queryset = FeeCategory.objects.all()
+        queryset = FeeCategory.objects.select_related('school').all()
         school_id = get_current_school_id()
         if school_id:
             queryset = queryset.filter(school__school_id=school_id)
@@ -92,9 +94,12 @@ class FeeStructureViewSet(viewsets.ModelViewSet):
     queryset = FeeStructure.objects.all()
     serializer_class = FeeStructureSerializer
     permission_classes = [StandardPermission]
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        queryset = FeeStructure.objects.all()
+        queryset = FeeStructure.objects.select_related(
+            'school', 'academic_year', 'class_assigned', 'category'
+        ).all()
         school_id = get_current_school_id()
         class_id = self.request.query_params.get('class_assigned')
         category_id = self.request.query_params.get('category')

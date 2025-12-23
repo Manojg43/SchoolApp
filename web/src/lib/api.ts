@@ -34,7 +34,23 @@ export async function fetchWithSchool(endpoint: string, schoolId: string | undef
         throw new Error(`API call failed: ${res.statusText}`);
     }
 
-    return res.json();
+    const data = await res.json();
+
+    // Handle paginated responses automatically
+    // If the response has 'results' key, it's paginated - extract the results
+    if (data && typeof data === 'object' && 'results' in data && Array.isArray(data.results)) {
+        // Paginated response - return results directly for backward compatibility
+        // but attach pagination metadata for advanced use cases
+        const results = data.results;
+        (results as any).__pagination = {
+            count: data.count,
+            next: data.next,
+            previous: data.previous,
+        };
+        return results;
+    }
+
+    return data;
 }
 
 export interface Achievement {

@@ -88,10 +88,28 @@ class StaffDashboardView(APIView):
             'check_out': today_att.check_out if today_att else None
         }
 
+        # 4. Salary Status (Current Month)
+        salary_data = {
+            'total_earned': 0.0,
+            'is_paid': False,
+            'generated': False
+        }
+        try:
+            # Use the existing Report logic or simple summary
+            from finance.models import Salary
+            sal_obj = Salary.objects.filter(staff=user, month=month_start).first()
+            if sal_obj:
+                salary_data['total_earned'] = float(sal_obj.net_salary)
+                salary_data['is_paid'] = sal_obj.is_paid
+                salary_data['generated'] = True
+        except:
+            pass
+
         return Response({
-            'profile': profile_data,
-            'stats': stats,
-            'today': today_status
+            'user': profile_data,
+            'attendance': stats,
+            'today': today_status,
+            'salary': salary_data
         })
 
     def patch(self, request):
@@ -526,6 +544,72 @@ class StaffDailyAttendanceView(APIView):
         return Response({
             'date': target_date.strftime("%Y-%m-%d"),
             'records': data
+        })
+
+
+class CheckLocationView(APIView):
+    """
+    Real-time location validation endpoint for visual feedback.
+    Returns distance from school and validation status for green/red light indicator.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        lat = request.data.get('latitude') or request.data.get('gps_lat')
+        lng = request.data.get('longitude') or request.data.get('gps_long')
+        
+        if not lat or not lng:
+            return Response({'error': 'Missing location data'}, status=400)
+        
+        school = request.user.school
+        if not school.gps_lat or not school.gps_long:
+            return Response({
+                'error': 'School GPS not configured',
+                'status': 'unknown',
+                'can_mark': False
+            }, status=400)
+        
+        # Calculate distance
+        distance = calculate_distance(lat, lng, school.gps_lat, school.gps_long)
+        
+        # Determine status
+        if distance <= 20:
+            status = 'excellent'  # Green - Perfect location
+            can_mark = True
+            message = f"Perfect! You're at the school ({distance:.0f}m)"
+            color = '#10b981'  # Green
+        elif distance <= 35:
+            status = 'good'  # Light Green - Good location
+            can_mark = True
+            message = f"Good location ({distance:.0f}m away)"
+            color = '#84cc16'  # Lime
+        elif distance <= 50:
+            status = 'acceptable'  # Yellow - Acceptable
+            can_mark = True
+            message = f"Acceptable ({distance:.0f}m away)"
+            color = '#eab308'  # Yellow
+        elif distance <= 70:
+            status = 'warning'  # Orange - Getting far
+            can_mark = False
+            message = f"Too far! Move closer ({distance:.0f}m away)"
+            color = '#f97316'  # Orange
+        else:
+            status = 'error'  # Red - Outside fence
+            can_mark = False
+            message = f"Outside geo-fence ({distance:.0f}m away, max: 50m)"
+            color = '#ef4444'  # Red
+        
+        return Response({
+            'distance': round(distance, 1),
+            'max_distance': 50,
+            'status': status,
+            'can_mark': can_mark,
+            'message': message,
+            'color': color,
+            'school_location': {
+                'lat': float(school.gps_lat),
+                'lng': float(school.gps_long)
+            }
         })
 
 from rest_framework.permissions import AllowAny

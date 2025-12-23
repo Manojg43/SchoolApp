@@ -57,6 +57,12 @@ class StaffAttendance(models.Model):
         unique_together = ('staff', 'date')
         verbose_name = _("Staff Attendance")
         verbose_name_plural = _("Staff Attendance")
+        indexes = [
+            models.Index(fields=['school', 'date'], name='staffatt_school_date_idx'),
+            models.Index(fields=['staff', 'date'], name='staffatt_staff_date_idx'),
+            models.Index(fields=['status'], name='staffatt_status_idx'),
+            models.Index(fields=['date'], name='staffatt_date_idx'),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.attendance_id:

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import StaffDashboardView, GenerateSchoolQR, ScanAttendanceView, StaffViewSet, StaffAttendanceReportView, UpdateAttendanceView, StaffDailyAttendanceView, StaffPasswordResetView, GenerateResetCodeView
+from .views import StaffDashboardView, GenerateSchoolQR, ScanAttendanceView, StaffViewSet, StaffAttendanceReportView, UpdateAttendanceView, StaffDailyAttendanceView, StaffPasswordResetView, GenerateResetCodeView, CheckLocationView
 from .views_leave import ApplyLeaveView, MyLeavesView, LeaveManagementView
 from .views_academic import TeacherTimetableView, HomeworkView
 from .views_communication import NoticeBoardView
@@ -12,6 +12,7 @@ urlpatterns = [
     path('dashboard/', StaffDashboardView.as_view(), name='staff-dashboard'),
     path('qr/generate/', GenerateSchoolQR.as_view(), name='generate-qr'),
     path('attendance/scan/', ScanAttendanceView.as_view(), name='scan-attendance'),
+    path('attendance/check-location/', CheckLocationView.as_view(), name='check-location'),
     path('attendance/report/', StaffAttendanceReportView.as_view(), name='attendance-report'),
     path('reset-password/', StaffPasswordResetView.as_view(), name='staff-reset-password'),
     path('reset-code/<int:pk>/', GenerateResetCodeView.as_view(), name='generate-reset-code'),

@@ -22,6 +22,11 @@ class FeeStructure(models.Model):
     
     class Meta:
         unique_together = ('academic_year', 'class_assigned', 'category')
+        indexes = [
+            models.Index(fields=['school', 'academic_year'], name='feestructure_school_year_idx'),
+            models.Index(fields=['class_assigned'], name='feestructure_class_idx'),
+            models.Index(fields=['category'], name='feestructure_category_idx'),
+        ]
 
     def __str__(self):
         return f"{self.class_assigned} - {self.category}: {self.amount}"
@@ -61,6 +66,15 @@ class Invoice(models.Model):
             self.status = 'PARTIAL'
             
         super().save(*args, **kwargs)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['school', 'status'], name='invoice_school_status_idx'),
+            models.Index(fields=['student', 'created_at'], name='invoice_student_created_idx'),
+            models.Index(fields=['due_date'], name='invoice_due_date_idx'),
+            models.Index(fields=['invoice_id'], name='invoice_id_idx'),
+            models.Index(fields=['status'], name='invoice_status_idx'),
+        ]
 
     def __str__(self):
         return f"{self.invoice_id} - {self.student.first_name}"
@@ -143,3 +157,11 @@ class Salary(models.Model):
             self.salary_id = generate_business_id('SAL')
         self.net_salary = self.amount + self.bonus - self.deductions
         super().save(*args, **kwargs)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['school', 'month'], name='salary_school_month_idx'),
+            models.Index(fields=['staff', 'month'], name='salary_staff_month_idx'),
+            models.Index(fields=['is_paid'], name='salary_is_paid_idx'),
+            models.Index(fields=['salary_id'], name='salary_id_idx'),
+        ]

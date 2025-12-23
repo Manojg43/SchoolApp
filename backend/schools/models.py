@@ -153,6 +153,12 @@ class Notice(models.Model):
     
     class Meta:
         ordering = ['-date']
+        indexes = [
+            models.Index(fields=['school', 'date'], name='notice_school_date_idx'),
+            models.Index(fields=['is_active'], name='notice_is_active_idx'),
+            models.Index(fields=['target_role'], name='notice_target_role_idx'),
+            models.Index(fields=['date'], name='notice_date_idx'),
+        ]
 
     def __str__(self):
         return self.title
@@ -170,6 +176,12 @@ class Homework(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['school', 'created_at'], name='homework_school_created_idx'),
+            models.Index(fields=['class_assigned'], name='homework_class_idx'),
+            models.Index(fields=['due_date'], name='homework_due_date_idx'),
+            models.Index(fields=['created_at'], name='homework_created_at_idx'),
+        ]
 
     def __str__(self):
         return f"{self.subject} - {self.class_assigned.name}"

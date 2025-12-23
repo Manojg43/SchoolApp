@@ -45,14 +45,14 @@ const LoginScreen = ({ navigation }: any) => {
         setLoading(true);
         try {
             const response = await mobileApi.login(username, password);
-            await AsyncStorage.setItem('token', response.token);
+            await AsyncStorage.setItem('auth_token', response.token);
             await AsyncStorage.setItem('user', JSON.stringify(response.user));
 
             // Navigate to Main App
             // Assuming the parent navigator has a 'Main' stack or 'Dashboard' screen
             // We'll use replace to prevent going back to login
             if (navigation && navigation.replace) {
-                navigation.replace('Main');
+                navigation.replace('Home');
             } else {
                 // Fallback if navigation prop is missing types (should cause error if not handled)
                 console.error("Navigation prop missing");
@@ -411,3 +411,5 @@ const styles = StyleSheet.create({
         elevation: 2,
     }
 });
+
+export default LoginScreen;
