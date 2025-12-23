@@ -157,6 +157,317 @@ export async function getFeeStructureAmount(classId: number, categoryId: number,
     }
 }
 
+
+// ===========================
+// FEE SETTLEMENT APIS (Phase 3)
+// ===========================
+
+// Interfaces for new models
+export interface FeeInstallment {
+    id: number;
+    installment_id: string;
+    invoice: number;
+    installment_number: number;
+    amount: number;
+    due_date: string;
+    status: 'PENDING' | 'PAID' | 'OVERDUE';
+    paid_date?: string;
+    paid_amount: number;
+    balance_due: number;
+}
+
+export interface FeeDiscount {
+    id: number;
+    student: number;
+    student_name: string;
+    academic_year: number;
+    discount_type: 'PERCENTAGE' | 'FIXED';
+    discount_value: number;
+    category?: number;
+    category_name?: string;
+    reason: string;
+    valid_from: string;
+    valid_until: string;
+    is_active: boolean;
+    created_by?: number;
+    created_by_name?: string;
+}
+
+export interface CertificateFee {
+    id: number;
+    school: number;
+    certificate_type: string;
+    certificate_type_display: string;
+    fee_amount: number;
+    is_active: boolean;
+}
+
+export interface SettlementSummary {
+    academic_year: string;
+    total_invoices: number;
+    total_amount: number;
+    total_paid: number;
+    total_pending: number;
+    total_discount: number;
+    collection_percentage: number;
+    status_breakdown: {
+        pending: number;
+        partial: number;
+        paid: number;
+        overdue: number;
+    };
+    settlement: {
+        settled_count: number;
+        unsettled_count: number;
+    };
+    classwise: Array<{
+        class: string;
+        total_amount: number;
+        paid_amount: number;
+        pending_amount: number;
+        percentage_collected: number;
+        invoice_count: number;
+    }>;
+}
+
+// Settlement Summary
+export async function getSettlementSummary(yearId: number, schoolId?: string): Promise<SettlementSummary> {
+    return fetchWithSchool(`/finance/settlement/${yearId}/summary/`, schoolId);
+}
+
+// Bulk Fee Generation
+export async function generateYearEndFees(
+    academicYearId: number,
+    options?: {
+        auto_apply_discounts?: boolean;
+        skip_pending_fees?: boolean;
+    },
+    schoolId?: string
+) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || '';
+
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/finance/settlement/generate/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+            academic_year_id: academicYearId,
+            options: options || {}
+        })
+    });
+
+    if (!res.ok) throw new Error('Failed to generate fees');
+    return res.json();
+}
+
+// Settle Year
+export async function settleYear(yearId: number, schoolId?: string) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || '';
+
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/finance/settlement/${yearId}/settle/`, {
+        method: 'POST',
+        headers
+    });
+
+    if (!res.ok) throw new Error('Failed to settle year');
+    return res.json();
+}
+
+// Student Promotion with Fee Check
+export async function promoteStudentWithFees(
+    studentId: number,
+    newClassId: number,
+    newYearId: number,
+    schoolId?: string
+) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || '';
+
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/finance/students/${studentId}/promote/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+            new_class_id: newClassId,
+            new_academic_year_id: newYearId
+        })
+    });
+
+    if (!res.ok) throw new Error('Failed to promote student');
+    return res.json();
+}
+
+// Check Certificate Fee
+export async function checkCertificateFee(certType: string, schoolId?: string) {
+    return fetchWithSchool(`/finance/certificate-fee/${certType}/`, schoolId);
+}
+
+// Get Fee Discounts
+export async function getFeeDiscounts(filters?: {
+    student?: number;
+    academic_year?: number;
+    is_active?: boolean;
+}, schoolId?: string): Promise<FeeDiscount[]> {
+    const params = new URLSearchParams();
+    if (filters?.student) params.append('student', filters.student.toString());
+    if (filters?.academic_year) params.append('academic_year', filters.academic_year.toString());
+    if (filters?.is_active !== undefined) params.append('is_active', filters.is_active.toString());
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return fetchWithSchool(`/finance/discounts/${query}`, schoolId);
+}
+
+// Create Fee Discount
+export async function createFeeDiscount(data: Partial<FeeDiscount>, schoolId?: string) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || '';
+
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/finance/discounts/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error('Failed to create discount');
+    return res.json();
+}
+
+// Delete Fee Discount
+export async function deleteFeeDiscount(id: number, schoolId?: string) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || '';
+
+    const headers: HeadersInit = {};
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/finance/discounts/${id}/`, {
+        method: 'DELETE',
+        headers
+    });
+
+    if (!res.ok) throw new Error('Failed to delete discount');
+}
+
+// Get Fee Installments
+export async function getFeeInstallments(invoiceId?: number, schoolId?: string): Promise<FeeInstallment[]> {
+    const query = invoiceId ? `?invoice=${invoiceId}` : '';
+    return fetchWithSchool(`/finance/installments/${query}`, schoolId);
+}
+
+// Get Certificate Fees
+export async function getCertificateFees(schoolId?: string): Promise<CertificateFee[]> {
+    return fetchWithSchool('/finance/certificate-fees/', schoolId);
+}
+
+// Update Certificate Fee
+export async function updateCertificateFee(id: number, data: Partial<CertificateFee>, schoolId?: string) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || '';
+
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/finance/certificate-fees/${id}/`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error('Failed to update certificate fee');
+    return res.json();
+}
+
+// Create Certificate Fee
+export async function createCertificateFee(data: Partial<CertificateFee>, schoolId?: string) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || '';
+
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/finance/certificate-fees/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error('Failed to create certificate fee');
+    return res.json();
+}
+
 export async function getAttendance(schoolId?: string): Promise<Attendance[]> {
     return fetchWithSchool('/attendance/', schoolId);
 }
