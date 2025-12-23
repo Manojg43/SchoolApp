@@ -27,6 +27,72 @@ class Student(models.Model):
     emergency_mobile = models.CharField(_("Emergency Mobile"), max_length=15, blank=True)
     address = models.TextField(_("Address"), blank=True)
     
+    # PHASE 4A: Document Management
+    birth_certificate = models.FileField(
+        _("Birth Certificate"),
+        upload_to='students/docs/birth_cert/',
+        blank=True,
+        null=True,
+        help_text="Upload birth certificate document (PDF/Image)"
+    )
+    transfer_certificate = models.FileField(
+        _("Transfer Certificate"),
+        upload_to='students/docs/tc/',
+        blank=True,
+        null=True,
+        help_text="Transfer certificate from previous school"
+    )
+    aadhar_card = models.FileField(
+        _("Aadhar Card"),
+        upload_to='students/docs/aadhar/',
+        blank=True,
+        null=True,
+        help_text="Aadhar card document"
+    )
+    photo = models.ImageField(
+        _("Student Photo"),
+        upload_to='students/photos/',
+        blank=True,
+        null=True,
+        help_text="Student photograph for ID card"
+    )
+    
+    # PHASE 4A: Medical Records
+    BLOOD_GROUP_CHOICES = [
+        ('A+', 'A Positive'),
+        ('A-', 'A Negative'),
+        ('B+', 'B Positive'),
+        ('B-', 'B Negative'),
+        ('O+', 'O Positive'),
+        ('O-', 'O Negative'),
+        ('AB+', 'AB Positive'),
+        ('AB-', 'AB Negative'),
+    ]
+    
+    blood_group = models.CharField(
+        _("Blood Group"),
+        max_length=5,
+        choices=BLOOD_GROUP_CHOICES,
+        blank=True,
+        help_text="Student's blood group"
+    )
+    medical_conditions = models.TextField(
+        _("Medical Conditions"),
+        blank=True,
+        help_text="Any existing medical conditions (e.g., diabetes, asthma, epilepsy)"
+    )
+    allergies = models.TextField(
+        _("Allergies"),
+        blank=True,
+        help_text="Food or medicine allergies"
+    )
+    current_medications = models.TextField(
+        _("Current Medications"),
+        blank=True,
+        help_text="Medications currently being taken regularly"
+    )
+    
+    # Status
     language = models.CharField(_("Preferred Language"), max_length=10, default='en')
     is_active = models.BooleanField(_("Is Active"), default=True)
     is_alumni = models.BooleanField(_("Is Alumni"), default=False)
@@ -51,6 +117,10 @@ class Student(models.Model):
         if not self.student_id:
             self.student_id = generate_business_id('STU')
         super().save(*args, **kwargs)
+    
+    def get_full_name(self):
+        """Return student's full name"""
+        return f"{self.first_name} {self.last_name}"
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.student_id})"
