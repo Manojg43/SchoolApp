@@ -21,10 +21,35 @@ urlpatterns = [
 ]
 
 from rest_framework.routers import DefaultRouter
-from .views import FeeCategoryViewSet, FeeStructureViewSet
+from .views import (
+    FeeCategoryViewSet, FeeStructureViewSet,
+    # Fee Settlement ViewSets (Phase 2)
+    FeeInstallmentViewSet, FeeDiscountViewSet, CertificateFeeViewSet,
+    # Fee Settlement Views
+    BulkFeeGenerationView, YearSettlementView, SettlementSummaryView,
+    StudentPromotionView, CertificateFeeCheckView
+)
 
 router = DefaultRouter()
 router.register(r'categories', FeeCategoryViewSet)
 router.register(r'structure', FeeStructureViewSet)
+# Fee Settlement ViewSets
+router.register(r'installments', FeeInstallmentViewSet)
+router.register(r'discounts', FeeDiscountViewSet)
+router.register(r'certificate-fees', CertificateFeeViewSet)
+
+# Add settlement endpoints to urlpatterns
+urlpatterns += [
+    # Bulk operations
+    path('settlement/generate/', BulkFeeGenerationView.as_view(), name='bulk-fee-generation'),
+    path('settlement/<int:year_id>/settle/', YearSettlementView.as_view(), name='year-settlement'),
+    path('settlement/<int:year_id>/summary/', SettlementSummaryView.as_view(), name='settlement-summary'),
+    
+    # Student promotion
+    path('students/<int:student_id>/promote/', StudentPromotionView.as_view(), name='student-promotion'),
+    
+    # Certificate fee check
+    path('certificate-fee/<str:cert_type>/', CertificateFeeCheckView.as_view(), name='certificate-fee-check'),
+]
 
 urlpatterns += router.urls
