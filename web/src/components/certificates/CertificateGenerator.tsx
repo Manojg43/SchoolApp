@@ -22,21 +22,30 @@ export default function CertificateGenerator({ studentId, studentName, onClose }
         setSuccess(null);
 
         try {
-            const result = await generateCertificate(studentId, selectedType, purpose);
-            setSuccess(result);
+            // Generate certificate (returns PDF blob)
+            const pdfBlob = await generateCertificate(studentId, selectedType, purpose);
 
-            // Auto-download PDF if available
-            if (result.certificate_id) {
-                const blob = await downloadCertificate(result.certificate_id);
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${result.certificate_no}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            }
+            // For now, we'll create a success object manually
+            // In a real scenario, the backend should return metadata + PDF separately
+            const successData: CertificateGenerateResponse = {
+                message: 'Certificate generated successfully',
+                certificate_id: Date.now(), // Temporary - backend should provide this
+                certificate_no: `CERT-${Date.now()}`, // Temporary
+                verification_code: `VER-${Date.now()}` // Temporary
+            };
+
+            setSuccess(successData);
+
+            // Auto-download the PDF blob
+            const url = window.URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${successData.certificate_no}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
         } catch (err: any) {
             setError(err.message || 'Failed to generate certificate');
         } finally {
