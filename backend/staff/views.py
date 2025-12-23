@@ -656,7 +656,33 @@ class StaffPasswordResetView(APIView):
 
         except Exception as e:
             print(f"Reset Error: {e}")
-            return Response({'error': 'Server Error'}, status=500)
+            return Response(serializer.errors, status=400)
+
+
+# Toggle Staff Active Status
+class ToggleStaffActiveView(APIView):
+    """Toggle staff is_active status"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, staff_id):
+        try:
+            # Get CoreUser (staff)
+            staff = CoreUser.objects.get(id=staff_id, school=request.user.school)
+            
+            # Only superuser or admin can toggle staff status
+            if not request.user.is_superuser:
+                return Response({'error': 'Permission denied'}, status=403)
+            
+            staff.is_active = not staff.is_active
+            staff.save()
+            
+            return Response({
+                'success': True,
+                'is_active': staff.is_active,
+                'message': f'Staff {"activated" if staff.is_active else "deactivated"} successfully'
+            })
+        except CoreUser.DoesNotExist:
+            return Response({'error': 'Staff not found'}, status=404)
 
 from rest_framework import permissions
 import random

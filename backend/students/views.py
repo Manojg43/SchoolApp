@@ -137,3 +137,23 @@ class StudentHistoryView(APIView):
              return Response(history)
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+
+
+# Toggle Student Active Status
+class ToggleStudentActiveView(APIView):
+    """Toggle student is_active status"""
+    permission_classes = [IsAuthenticated, StandardPermission]
+    
+    def post(self, request, student_id):
+        try:
+            student = Student.objects.get(id=student_id, school=request.user.school)
+            student.is_active = not student.is_active
+            student.save()
+            
+            return Response({
+                'success': True,
+                'is_active': student.is_active,
+                'message': f'Student {"activated" if student.is_active else "deactivated"} successfully'
+            })
+        except Student.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
