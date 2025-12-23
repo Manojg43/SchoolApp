@@ -31,7 +31,8 @@ export default function CertificateGenerator({ studentId, studentName, onClose }
                 message: 'Certificate generated successfully',
                 certificate_id: Date.now(), // Temporary - backend should provide this
                 certificate_no: `CERT-${Date.now()}`, // Temporary
-                verification_code: `VER-${Date.now()}` // Temporary
+                verification_code: `VER-${Date.now()}`, // Temporary
+                success: true // Added to match interface
             };
 
             setSuccess(successData);
