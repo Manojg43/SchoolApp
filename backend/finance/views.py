@@ -392,6 +392,7 @@ class CertificateFeeViewSet(ModelViewSet):
     queryset = CertificateFee.objects.all()
     serializer_class = CertificateFeeSerializer
     permission_classes = [StandardPermission]
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         queryset = CertificateFee.objects.select_related('school').all()
