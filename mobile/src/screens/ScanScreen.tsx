@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import * as Location from 'expo-location';
 import { mobileApi } from '../lib/api';
@@ -25,6 +25,7 @@ export default function ScanScreen() {
     const navigation = useNavigation();
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [scanned, setScanned] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     // Manual GPS State
     const [canManual, setCanManual] = useState(false);
@@ -86,6 +87,7 @@ export default function ScanScreen() {
     const handleBarCodeScanned = async ({ type, data }: any) => {
         if (scanned) return;
         setScanned(true);
+        setLoading(true);
         try {
             // Request location permission first
             const { status } = await Location.requestForegroundPermissionsAsync();
@@ -93,7 +95,7 @@ export default function ScanScreen() {
                 Alert.alert(
                     "Location Required",
                     "Location access is needed to verify attendance at school.",
-                    [{ text: "Try Again", onPress: () => setScanned(false) }]
+                    [{ text: "Try Again", onPress: () => { setScanned(false); setLoading(false); } }]
                 );
                 return;
             }
@@ -104,8 +106,10 @@ export default function ScanScreen() {
             });
 
             await mobileApi.scanQR(data, location.coords.latitude, location.coords.longitude);
+            setLoading(false);
             Alert.alert("Success", "Attendance Marked Successfully!", [{ text: "OK", onPress: () => navigation.goBack() }]);
         } catch (error: any) {
+            setLoading(false);
             Alert.alert("Error", error.message || "Attendance Failed", [{ text: "Try Again", onPress: () => setScanned(false) }]);
         }
     };
@@ -194,6 +198,17 @@ export default function ScanScreen() {
                     </View>
                 )}
             </View>
+
+            {/* Loading Overlay */}
+            {loading && (
+                <View style={styles.loadingOverlay}>
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#10b981" />
+                        <Text style={styles.loadingText}>Processing Attendance...</Text>
+                        <Text style={styles.loadingSubtext}>Verifying your location</Text>
+                    </View>
+                </View>
+            )}
         </View>
     );
 }
@@ -219,5 +234,35 @@ const styles = StyleSheet.create({
     rescanText: { color: '#064e3b', fontWeight: 'bold', fontSize: 16 },
     manualButton: { backgroundColor: theme.colors.primary, paddingVertical: 12, paddingHorizontal: 40, borderRadius: 30, elevation: 5 },
     disabledButton: { backgroundColor: theme.colors.text.muted, opacity: 0.8 },
-    manualButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
+    manualButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 999
+    },
+    loadingContainer: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        minWidth: 250,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10
+    },
+    loadingText: {
+        color: '#1f2937',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 15
+    },
+    loadingSubtext: {
+        color: '#6b7280',
+        fontSize: 14,
+        marginTop: 5
+    }
 });
