@@ -53,6 +53,73 @@ class Invoice(models.Model):
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     
+    # Fee Settlement Enhancement - Phase 1
+    academic_year = models.ForeignKey(
+        AcademicYear, 
+        on_delete=models.CASCADE,
+        null=True,  # Nullable for backward compatibility
+        blank=True,
+        help_text="Academic year for this invoice"
+    )
+    
+    FEE_TERM_CHOICES = [
+        ('TERM1', 'Term 1'),
+        ('TERM2', 'Term 2'),
+        ('TERM3', 'Term 3'),
+        ('ANNUAL', 'Annual'),
+        ('MONTHLY', 'Monthly'),
+        ('ONETIME', 'One-Time'),
+    ]
+    fee_term = models.CharField(
+        max_length=20,
+        choices=FEE_TERM_CHOICES,
+        default='ANNUAL',
+        help_text="Payment term for this invoice"
+    )
+    
+    # Settlement tracking
+    is_settled = models.BooleanField(
+        default=False,
+        help_text="Whether this invoice has been settled for the year"
+    )
+    settled_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when invoice was settled"
+    )
+    settlement_note = models.TextField(
+        blank=True,
+        help_text="Notes about settlement"
+    )
+    
+    # Late fee management
+    late_fee = models.DecimalField(
+        _("Late Fee"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text="Late payment fee charged"
+    )
+    late_fee_applied_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when late fee was applied"
+    )
+    
+    # Discount tracking
+    discount_amount = models.DecimalField(
+        _("Discount Amount"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text="Discount applied to this invoice"
+    )
+    discount_reason = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Reason for discount (e.g., Scholarship, Sibling Discount)"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -67,6 +134,17 @@ class Invoice(models.Model):
             
         super().save(*args, **kwargs)
     
+    @property
+    def balance_due(self):
+        """Calculate remaining balance"""
+        return self.total_amount - self.paid_amount
+    
+    @property
+    def is_overdue(self):
+        """Check if invoice is overdue"""
+        from datetime import date
+        return self.due_date < date.today() and self.status != 'PAID'
+    
     class Meta:
         indexes = [
             models.Index(fields=['school', 'status'], name='invoice_school_status_idx'),
@@ -74,6 +152,9 @@ class Invoice(models.Model):
             models.Index(fields=['due_date'], name='invoice_due_date_idx'),
             models.Index(fields=['invoice_id'], name='invoice_id_idx'),
             models.Index(fields=['status'], name='invoice_status_idx'),
+            # New indexes for settlement
+            models.Index(fields=['academic_year', 'is_settled'], name='invoice_year_settled_idx'),
+            models.Index(fields=['fee_term'], name='invoice_term_idx'),
         ]
 
     def __str__(self):
@@ -165,3 +246,178 @@ class Salary(models.Model):
             models.Index(fields=['is_paid'], name='salary_is_paid_idx'),
             models.Index(fields=['salary_id'], name='salary_id_idx'),
         ]
+
+
+# Fee Settlement Enhancement - New Models (Phase 1)
+
+class FeeInstallment(models.Model):
+    """Track installment-based payments for invoices"""
+    id = models.AutoField(primary_key=True)
+    installment_id = models.CharField(max_length=50, unique=True, editable=False)
+    
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='installments')
+    
+    installment_number = models.IntegerField(help_text="1, 2, 3, etc.")
+    amount = models.DecimalField(
+        _("Installment Amount"),
+        max_digits=10,
+        decimal_places=2,
+        help_text="Amount for this installment"
+    )
+    due_date = models.DateField(_("Due Date"))
+    
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('PAID', 'Paid'),
+        ('OVERDUE', 'Overdue'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    paid_date = models.DateField(null=True, blank=True)
+    paid_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text="Amount paid for this installment"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.installment_id:
+            self.installment_id = generate_business_id('INST')
+        
+        # Auto-update status
+        if self.paid_amount >= self.amount:
+            self.status = 'PAID'
+            if not self.paid_date:
+                from datetime import date
+                self.paid_date = date.today()
+        
+        super().save(*args, **kwargs)
+    
+    class Meta:
+        unique_together = ('invoice', 'installment_number')
+        ordering = ['installment_number']
+        indexes = [
+            models.Index(fields=['school', 'status'], name='installment_school_status_idx'),
+            models.Index(fields=['invoice', 'installment_number'], name='installment_invoice_num_idx'),
+            models.Index(fields=['due_date'], name='installment_due_date_idx'),
+        ]
+    
+    def __str__(self):
+        return f"{self.installment_id} - Installment {self.installment_number}"
+
+
+class FeeDiscount(models.Model):
+    """Manage student discounts/scholarships"""
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='fee_discounts')
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+    
+    DISCOUNT_TYPE_CHOICES = [
+        ('PERCENTAGE', 'Percentage'),
+        ('FIXED', 'Fixed Amount'),
+    ]
+    discount_type = models.CharField(
+        max_length=20,
+        choices=DISCOUNT_TYPE_CHOICES,
+        help_text="Percentage or fixed amount discount"
+    )
+    discount_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Percentage (e.g., 50 for 50%) or fixed amount (e.g., 5000)"
+    )
+    
+    # Optional: Apply to specific category or all fees
+    category = models.ForeignKey(
+        FeeCategory,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="Leave blank to apply to all fees"
+    )
+    
+    reason = models.CharField(
+        max_length=200,
+        help_text="e.g., Merit Scholarship, Sibling Discount, Financial Aid"
+    )
+    
+    valid_from = models.DateField(help_text="Start date for discount")
+    valid_until = models.DateField(help_text="End date for discount")
+    is_active = models.BooleanField(default=True)
+    
+    created_by = models.ForeignKey(
+        CoreUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_discounts'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['school', 'student'], name='discount_school_student_idx'),
+            models.Index(fields=['academic_year', 'is_active'], name='discount_year_active_idx'),
+            models.Index(fields=['student', 'is_active'], name='discount_student_active_idx'),
+        ]
+    
+    def __str__(self):
+        return f"{self.student.first_name} - {self.reason} ({self.discount_type})"
+    
+    def get_discount_amount(self, base_amount):
+        """Calculate discount amount based on base amount"""
+        if self.discount_type == 'PERCENTAGE':
+            return (base_amount * self.discount_value) / 100
+        else:
+            return self.discount_value
+
+
+class CertificateFee(models.Model):
+    """Fee configuration for certificates"""
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    
+    # Certificate types from certificates app
+    CERTIFICATE_TYPE_CHOICES = [
+        ('BONAFIDE', 'Bonafide Certificate'),
+        ('TC', 'Transfer Certificate'),
+        ('LC', 'Leaving Certificate'),
+        ('MIGRATION', 'Migration Certificate'),
+        ('CHARACTER', 'Character Certificate'),
+        ('CONDUCT', 'Conduct Certificate'),
+        ('STUDY', 'Study Certificate'),
+        ('ATTENDANCE', 'Attendance Certificate'),
+        ('SPORTS', 'Sports Participation'),
+        ('ACHIEVEMENT', ' Certificate'),
+        ('FEE_CLEARANCE', 'Fee Clearance Certificate'),
+        ('COURSE_COMPLETION', 'Course Completion'),
+        ('CUSTOM', 'Custom Certificate'),
+    ]
+    certificate_type = models.CharField(
+        max_length=50,
+        choices=CERTIFICATE_TYPE_CHOICES,
+        help_text="Type of certificate"
+    )
+    
+    fee_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Fee amount for this certificate type"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether fee is currently active"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('school', 'certificate_type')
+        indexes = [
+            models.Index(fields=['school', 'is_active'], name='certfee_school_active_idx'),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_certificate_type_display()} - ₹{self.fee_amount}"

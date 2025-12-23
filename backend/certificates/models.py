@@ -92,6 +92,7 @@ class Certificate(models.Model):
         editable=False,
         help_text="Unique code for certificate verification"
     )
+    # QR Code and PDF storage
     qr_code_image = models.ImageField(
         _("QR Code"),
         upload_to='certificates/qr/',
@@ -99,8 +100,6 @@ class Certificate(models.Model):
         null=True,
         help_text="QR code image for verification"
     )
-    
-    # PDF storage
     pdf_file = models.FileField(
         _("PDF File"),
         upload_to='certificates/pdfs/',
@@ -109,7 +108,28 @@ class Certificate(models.Model):
         help_text="Generated PDF certificate"
     )
     
-    # Status
+    # Fee Integration (Phase 1 - Fee Settlement)
+    fee_amount = models.DecimalField(
+        _("Certificate Fee"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text="Fee charged for this certificate"
+    )
+    fee_paid = models.BooleanField(
+        default=False,
+        help_text="Whether the certificate fee has been paid"
+    )
+    fee_invoice = models.ForeignKey(
+        'finance.Invoice',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='certificates',
+        help_text="Invoice for certificate fee payment"
+    )
+    
+    # Revocation system
     is_revoked = models.BooleanField(_("Is Revoked"), default=False)
     revoked_reason = models.TextField(_("Revocation Reason"), blank=True)
     revoked_date = models.DateTimeField(_("Revoked Date"), null=True, blank=True)
