@@ -822,3 +822,157 @@ export async function generateResetCode(staffId: number, schoolId?: string): Pro
     return fetchWithSchool(`/staff/reset-code/${staffId}/`, schoolId);
 }
 
+// ============================================
+// CERTIFICATE API
+// ============================================
+
+export interface Certificate {
+    id: number;
+    certificate_no: string;
+    verification_code: string;
+    type: string;
+    purpose?: string;
+    issued_date: string;
+    pdf_url?: string;
+    qr_code_url?: string;
+    is_revoked: boolean;
+    student: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        enrollment_number: string;
+    };
+}
+
+export interface CertificateGenerateRequest {
+    purpose?: string;
+}
+
+export interface CertificateGenerateResponse {
+    success: boolean;
+    certificate_id: number;
+    certificate_no: string;
+    verification_code: string;
+    pdf_url?: string;
+    message: string;
+}
+
+export interface CertificateVerificationResponse {
+    valid: boolean;
+    status: 'VALID' | 'REVOKED' | 'EXPIRED' | 'NOT_FOUND';
+    certificate_no?: string;
+    type?: string;
+    student_name?: string;
+    school_name?: string;
+    issued_date?: string;
+    message?: string;
+}
+
+// Certificate types
+export const CERTIFICATE_TYPES = [
+    { value: 'BONAFIDE', label: 'Bonafide Certificate' },
+    { value: 'TC', label: 'Transfer Certificate' },
+    { value: 'LC', label: 'Leaving Certificate' },
+    { value: 'MIGRATION', label: 'Migration Certificate' },
+    { value: 'CHARACTER', label: 'Character Certificate' },
+    { value: 'CONDUCT', label: 'Conduct Certificate' },
+    { value: 'STUDY', label: 'Study Certificate' },
+    { value: 'ATTENDANCE', label: 'Attendance Certificate' },
+    { value: 'SPORTS', label: 'Sports Participation' },
+    { value: 'ACHIEVEMENT', label: 'Achievement Certificate' },
+    { value: 'FEE_CLEARANCE', label: 'Fee Clearance Certificate' },
+    { value: 'COURSE_COMPLETION', label: 'Course Completion' },
+    { value: 'CUSTOM', label: 'Custom Certificate' },
+];
+
+// Generate certificate for a student
+export async function generateCertificate(
+    studentId: number,
+    certType: string,
+    purpose?: string,
+    schoolId?: string
+): Promise<CertificateGenerateResponse> {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(
+        `${API_BASE_URL}/certificates/generate/${studentId}/${certType}/`,
+        {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ purpose: purpose || '' })
+        }
+    );
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to generate certificate');
+    }
+
+    return res.json();
+}
+
+// Download certificate PDF
+export async function downloadCertificate(
+    certificateId: number,
+    schoolId?: string
+): Promise<Blob> {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+
+    const headers: HeadersInit = {};
+
+    if (effectiveSchoolId) {
+        headers['X-School-ID'] = effectiveSchoolId;
+    }
+
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    const res = await fetch(
+        `${API_BASE_URL}/certificates/download/${certificateId}/`,
+        { headers }
+    );
+
+    if (!res.ok) {
+        throw new Error('Failed to download certificate');
+    }
+
+    return res.blob();
+}
+
+// Verify certificate (public endpoint)
+export async function verifyCertificate(
+    verificationCode: string
+): Promise<CertificateVerificationResponse> {
+    const res = await fetch(
+        `${API_BASE_URL}/certificates/verify/${verificationCode}/`
+    );
+
+    if (!res.ok && res.status !== 404) {
+        throw new Error('Failed to verify certificate');
+    }
+
+    return res.json();
+}
+
+// Get all certificates for a student
+export async function getStudentCertificates(
+    studentId: number,
+    schoolId?: string
+): Promise<Certificate[]> {
+    return fetchWithSchool(`/students/${studentId}/certificates/`, schoolId);
+}
