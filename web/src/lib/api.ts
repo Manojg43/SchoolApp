@@ -694,6 +694,41 @@ export async function deleteStudent(id: number, schoolId?: string): Promise<void
     if (!res.ok) throw new Error(`Failed to delete student: ${res.statusText}`);
 }
 
+// Toggle Student Active Status
+export async function toggleStudentActive(studentId: number, schoolId?: string) {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/students/${studentId}/toggle-active/`, {
+        method: 'POST',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to toggle student status: ${res.statusText}`);
+    return res.json();
+}
+
+// Toggle Staff Active Status
+export async function toggleStaffActive(staffId: number, schoolId?: string) {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem(' school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/staff/${staffId}/toggle-active/`, {
+        method: 'POST',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to toggle staff status: ${res.statusText}`);
+    return res.json();
+}
+
+
 
 // Transport
 export interface Vehicle {
