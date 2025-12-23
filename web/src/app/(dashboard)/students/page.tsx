@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { getStudents, deleteStudent, getClasses, type Student, type ClassItem } from "@/lib/api";
-import { Download, Plus, Edit, Trash2, GraduationCap, Users, UserPlus } from "lucide-react";
+import { getStudents, deleteStudent, getClasses, toggleStudentActive, type Student, type ClassItem } from "@/lib/api";
+import { Download, Plus, Edit, Trash2, GraduationCap, Users, UserPlus, Power } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import FilterBar from "@/components/ui/FilterBar";
@@ -76,6 +76,21 @@ export default function StudentList() {
         loadData();
     };
 
+    const handleToggleActive = async (student: Student) => {
+        try {
+            const result = await toggleStudentActive(student.id);
+            if (result.success) {
+                // Update student in local state
+                setStudents(prev => prev.map(s =>
+                    s.id === student.id ? { ...s, is_active: result.is_active } : s
+                ));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to toggle student status.");
+        }
+    };
+
     // Derived Data
     const filtered = students.filter(s => {
         const matchesSearch =
@@ -110,9 +125,24 @@ export default function StudentList() {
         {
             header: "Status",
             accessorKey: (row) => (
-                <span className={`px-2 py-0.5 inline-flex text-xs font-bold rounded-full ${row.is_active ? 'bg-success/10 text-success' : 'bg-text-muted/10 text-text-muted'}`}>
-                    {row.is_active ? 'Active' : 'Inactive'}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 inline-flex text-xs font-bold rounded-full ${row.is_active ? 'bg-success/10 text-success' : 'bg-text-muted/10 text-text-muted'}`}>
+                        {row.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleActive(row);
+                        }}
+                        className={`p-1.5 rounded-lg transition-colors ${row.is_active
+                                ? 'bg-success/10 text-success hover:bg-success/20'
+                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                            }`}
+                        title={row.is_active ? 'Click to deactivate' : 'Click to activate'}
+                    >
+                        <Power size={14} />
+                    </button>
+                </div>
             )
         },
     ];

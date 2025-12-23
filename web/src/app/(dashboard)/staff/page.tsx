@@ -3,10 +3,10 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth, PermissionGuard } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { Briefcase, QrCode, UserPlus, Users, CheckCircle, Clock } from "lucide-react";
+import { Briefcase, QrCode, UserPlus, Users, CheckCircle, Clock, Power } from "lucide-react";
 import QRCodeDisplay from "@/components/ui/QRCodeDisplay";
 import DataTable, { Column } from "@/components/ui/DataTable";
-import { getStaff, deleteStaff, type Staff } from "@/lib/api";
+import { getStaff, deleteStaff, toggleStaffActive, type Staff } from "@/lib/api";
 import StaffProfileDrawer from "@/components/staff/StaffProfileDrawer";
 import SalaryStructureModal from "@/components/finance/SalaryStructureModal";
 import Card, { CardContent } from "@/components/ui/modern/Card";
@@ -86,6 +86,21 @@ export default function StaffPage() {
         setIsSalaryModalOpen(true);
     };
 
+    const handleToggleActive = async (staff: Staff) => {
+        try {
+            const result = await toggleStaffActive(staff.id);
+            if (result.success) {
+                // Update staff in local state
+                setStaffList(prev => prev.map(s =>
+                    s.id === staff.id ? { ...s, is_active: result.is_active } : s
+                ));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to toggle staff status.");
+        }
+    };
+
     const columns: Column<Staff>[] = [
         {
             header: "Staff Member",
@@ -109,6 +124,31 @@ export default function StaffPage() {
                 <span className="px-2 py-0.5 rounded-full bg-surface border border-border text-xs font-semibold text-text-main">
                     {row.role}
                 </span>
+            )
+        },
+        {
+            header: "Status",
+            accessorKey: (row) => (
+                <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 inline-flex text-xs font-bold rounded-full ${row.is_active ? 'bg-success/10 text-success' : 'bg-text-muted/10 text-text-muted'}`}>
+                        {row.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    {hasPermission('is_superuser') && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleActive(row);
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${row.is_active
+                                    ? 'bg-success/10 text-success hover:bg-success/20'
+                                    : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                                }`}
+                            title={row.is_active ? 'Click to deactivate' : 'Click to activate'}
+                        >
+                            <Power size={14} />
+                        </button>
+                    )}
+                </div>
             )
         },
         {
