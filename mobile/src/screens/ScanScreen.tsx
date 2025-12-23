@@ -87,16 +87,23 @@ export default function ScanScreen() {
         if (scanned) return;
         setScanned(true);
         try {
-            // Try to get location, but don't fail if we can't
-            let lat = 0, long = 0;
-            const { status } = await Location.getForegroundPermissionsAsync();
-            if (status === 'granted') {
-                const location = await Location.getCurrentPositionAsync({});
-                lat = location.coords.latitude;
-                long = location.coords.longitude;
+            // Request location permission first
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert(
+                    "Location Required",
+                    "Location access is needed to verify attendance at school.",
+                    [{ text: "Try Again", onPress: () => setScanned(false) }]
+                );
+                return;
             }
 
-            await mobileApi.scanQR(data, lat, long);
+            // Get current location
+            const location = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.High
+            });
+
+            await mobileApi.scanQR(data, location.coords.latitude, location.coords.longitude);
             Alert.alert("Success", "Attendance Marked Successfully!", [{ text: "OK", onPress: () => navigation.goBack() }]);
         } catch (error: any) {
             Alert.alert("Error", error.message || "Attendance Failed", [{ text: "Try Again", onPress: () => setScanned(false) }]);
