@@ -14,17 +14,35 @@ import {
     Briefcase,
     GraduationCap,
     Clock,
-    FileText
+    FileText,
+    ChevronDown,
+    TrendingUp,
+    Gift,
+    Award,
+    DollarSign
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext'; // Import Auth
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 const MENU_ITEMS = [
     { href: '/', label: 'Overview', icon: LayoutDashboard }, // Public / Basic
     { href: '/students', label: 'Students', icon: GraduationCap, permission: 'can_access_student_records' },
     { href: '/attendance', label: 'Attendance', icon: CalendarCheck, permission: 'can_access_attendance' },
-    { href: '/fees', label: 'Fees & Invoices', icon: Receipt, permission: 'can_access_finance' },
+    {
+        href: '/fees',
+        label: 'Finance',
+        icon: Receipt,
+        permission: 'can_access_finance',
+        submenu: [
+            { href: '/fees', label: 'Fees & Invoices', icon: Receipt },
+            { href: '/finance/settlement', label: 'Settlement Dashboard', icon: TrendingUp },
+            { href: '/finance/settlement/yearend', label: 'Year-End Generator', icon: Award },
+            { href: '/finance/discounts', label: 'Discounts & Scholarships', icon: Gift },
+            { href: '/finance/certificates-fees', label: 'Certificate Fees', icon: DollarSign },
+        ]
+    },
     { href: '/staff', label: 'Staff & Payroll', icon: Briefcase, permission: 'is_superuser' },
     { href: '/staff/attendance', label: 'Staff Attendance', icon: Clock, permission: 'is_superuser' },
     { href: '/staff/leaves', label: 'Leave Applications', icon: FileText, permission: 'can_manage_leaves' },
@@ -37,6 +55,15 @@ export function Sidebar() {
     const pathname = usePathname();
     const { t } = useLanguage();
     const { hasPermission } = useAuth(); // Use Auth Hook
+    const [expandedMenus, setExpandedMenus] = useState<string[]>(['/fees']); // Finance expanded by default
+
+    const toggleMenu = (href: string) => {
+        setExpandedMenus(prev =>
+            prev.includes(href)
+                ? prev.filter(h => h !== href)
+                : [...prev, href]
+        );
+    };
 
     return (
         <aside className="w-64 bg-white border-r h-screen sticky top-0 flex-col hidden md:flex">
@@ -52,31 +79,90 @@ export function Sidebar() {
                         return null;
                     }
 
-                    const isActive = pathname === item.href;
+                    const hasSubmenu = item.submenu && item.submenu.length > 0;
+                    const isExpanded = expandedMenus.includes(item.href);
+                    const isActive = pathname === item.href || (hasSubmenu && item.submenu?.some(sub => pathname === sub.href));
                     const Icon = item.icon;
 
                     return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative",
-                                isActive
-                                    ? "text-blue-600 bg-blue-50"
-                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        <div key={item.href}>
+                            {/* Main Menu Item */}
+                            {hasSubmenu ? (
+                                <button
+                                    onClick={() => toggleMenu(item.href)}
+                                    className={cn(
+                                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative w-full",
+                                        isActive
+                                            ? "text-blue-600 bg-blue-50"
+                                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    )}
+                                >
+                                    <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
+                                    <span className="flex-1 text-left">{item.label}</span>
+                                    <ChevronDown
+                                        className={cn(
+                                            "w-4 h-4 transition-transform",
+                                            isExpanded ? "rotate-180" : ""
+                                        )}
+                                    />
+                                </button>
+                            ) : (
+                                <Link
+                                    href={item.href}
+                                    className={cn(
+                                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative",
+                                        isActive
+                                            ? "text-blue-600 bg-blue-50"
+                                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    )}
+                                >
+                                    {isActive && (
+                                        <motion.div
+                                            layoutId="active-sidebar"
+                                            className="absolute left-0 w-1 h-2/3 bg-blue-600 rounded-r-full"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                        />
+                                    )}
+                                    <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
+                                    {item.label}
+                                </Link>
                             )}
-                        >
-                            {isActive && (
-                                <motion.div
-                                    layoutId="active-sidebar"
-                                    className="absolute left-0 w-1 h-2/3 bg-blue-600 rounded-r-full"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                />
+
+                            {/* Submenu */}
+                            {hasSubmenu && isExpanded && (
+                                <div className="ml-4 mt-1 space-y-1">
+                                    {item.submenu?.map((subItem) => {
+                                        const isSubActive = pathname === subItem.href;
+                                        const SubIcon = subItem.icon;
+
+                                        return (
+                                            <Link
+                                                key={subItem.href}
+                                                href={subItem.href}
+                                                className={cn(
+                                                    "flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors relative",
+                                                    isSubActive
+                                                        ? "text-blue-600 bg-blue-50 font-medium"
+                                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                                )}
+                                            >
+                                                {isSubActive && (
+                                                    <motion.div
+                                                        layoutId="active-sidebar"
+                                                        className="absolute left-0 w-1 h-2/3 bg-blue-600 rounded-r-full"
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                    />
+                                                )}
+                                                <SubIcon className={cn("w-4 h-4", isSubActive ? "text-blue-600" : "text-gray-400")} />
+                                                {subItem.label}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
                             )}
-                            <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
-                            {item.label}
-                        </Link>
+                        </div>
                     );
                 })}
             </nav>
