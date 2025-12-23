@@ -1,0 +1,66 @@
+{% extends "certificates/base_certificate.html" %}
+
+{% block certificate_title %}
+BONAFIDE CERTIFICATE
+{% endblock %}
+
+{% block content %}
+<p style="margin-top: 30px;">
+    This is to certify that <span class="highlight">{{ student_name }}</span>,
+    son/daughter of <span class="highlight">{{ father_name }}</span> and
+    <span class="highlight">{{ mother_name }}</span>,
+    bearing Enrollment No. <span class="highlight">{{ enrollment_number }}</span>,
+    is a bonafide student of this institution.
+</p>
+
+<p>
+    <strong>Student Details:</strong>
+</p>
+
+<table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+    <tr>
+        <td style="padding: 8px; width: 40%;"><strong>Name:</strong></td>
+        <td style="padding: 8px;">{{ student_name }}</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px;"><strong>Father's Name:</strong></td>
+        <td style="padding: 8px;">{{ father_name }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;"><strong>Mother's Name:</strong></td>
+        <td style="padding: 8px;">{{ mother_name }}</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px;"><strong>Enrollment Number:</strong></td>
+        <td style="padding: 8px;">{{ enrollment_number }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;"><strong>Class:</strong></td>
+        <td style="padding: 8px;">{{ class_name }} - Section {{ section }}</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px;"><strong>Date of Birth:</strong></td>
+        <td style="padding: 8px;">{{ dob|date:"d F, Y" }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;"><strong>Academic Year:</strong></td>
+        <td style="padding: 8px;">{{ academic_year }}</td>
+    </tr>
+</table>
+
+<p>
+    He/She is Regular student pursuing studies in our institution during the academic year
+    <span class="highlight">{{ academic_year }}</span>.
+</p>
+
+{% if purpose %}
+<p style="margin-top: 25px;">
+    This certificate is issued for the purpose of <span class="highlight">{{ purpose }}</span>
+    as per the request of the student/parent.
+</p>
+{% endif %}
+
+<p style="margin-top: 25px;">
+    To the best of our knowledge and belief, the above particulars are correct.
+</p>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "certificates/base_certificate.html" %}
+
+{% block certificate_title %}
+LEAVING CERTIFICATE
+{% endblock %}
+
+{% block content %}
+<p style="margin-top: 30px; text-align: center; font-size: 13pt;">
+    <strong>TO WHOMSOEVER IT MAY CONCERN</strong>
+</p>
+
+<p style="margin-top: 25px;">
+    This is to certify that <span class="highlight">{{ student_name }}</span>,
+    son/daughter of <span class="highlight">{{ father_name }}</span>,
+    bearing Enrollment No. <span class="highlight">{{ enrollment_number }}</span>,
+    was a student of this institution from <span class="highlight">{{ admission_date|date:"d F, Y" }}</span> to
+    <span class="highlight">{{ issue_date|date:"d F, Y" }}</span>.
+</p>
+
+<table style="width: 100%; margin: 25px 0; border-collapse: collapse;">
+    <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px; width: 40%; border: 1px solid #ddd;"><strong>Class Last Attended:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ class_name }} - Section {{ section }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Academic Year:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ academic_year }}</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Date of Birth:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ dob|date:"d F, Y" }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>Conduct & Character:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ conduct|default:"Good" }}</td>
+    </tr>
+</table>
+
+<p>
+    He/She is leaving the school on his/her own accord/request of parent.
+    All the school dues have been cleared.
+</p>
+
+<p style="margin-top: 25px;">
+    We wish him/her all the best for future endeavors.
+</p>
+{% endblock %}

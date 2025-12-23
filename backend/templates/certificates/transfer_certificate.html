@@ -1,0 +1,78 @@
+{% extends "certificates/base_certificate.html" %}
+
+{% block certificate_title %}
+TRANSFER CERTIFICATE
+{% endblock %}
+
+{% block content %}
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background-color: #f5f5f5;">
+        <td colspan="2" style="padding: 10px; text-align: center; font-weight: bold; border: 1px solid #ddd;">
+            STUDENT INFORMATION
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; width: 40%; border: 1px solid #ddd;"><strong>1. Name of Student:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ student_name }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>2. Father's Name:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ father_name }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>3. Mother's Name:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ mother_name }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>4. Date of Birth:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ dob|date:"d F, Y" }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>5. Gender:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ gender }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>6. Enrollment Number:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ enrollment_number }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>7. Class Last Studied:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ class_name }} - Section {{ section }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>8. Date of Admission:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ admission_date|date:"d F, Y" }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>9. Date of Leaving:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ issue_date|date:"d F, Y" }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>10. Academic Year:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ academic_year }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>11. Conduct:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ conduct|default:"Good" }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>12. Character:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ character|default:"Good" }}</td>
+    </tr>
+    {% if reason_for_leaving %}
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;"><strong>13. Reason for Leaving:</strong></td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ reason_for_leaving }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+<p style="margin-top: 30px;">
+    This is to certify that the above particulars are correct according to the admission register and school records.
+</p>
+
+<p>
+    <strong>Note:</strong> This Transfer Certificate is issued on the request of the parent/guardian.
+    The school is not responsible for any further admission procedures.
+</p>
+{% endblock %}

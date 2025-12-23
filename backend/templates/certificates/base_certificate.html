@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: {
+                    {
+                    font_family|default: "Times New Roman, serif"
+                }
+            }
+
+            ;
+            font-size: 12pt;
+            line-height: 1.8;
+            color: #000;
+        }
+
+        .certificate-container {
+            width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+
+            border-bottom: 3px solid {
+                    {
+                    header_color|default: "#000"
+                }
+            }
+
+            ;
+            padding-bottom: 20px;
+        }
+
+        .school-logo {
+            max-width: 120px;
+            max-height: 120px;
+            margin-bottom: 15px;
+        }
+
+        .school-name {
+            font-size: 24pt;
+            font-weight: bold;
+
+            color: {
+                    {
+                    header_color|default: "#000"
+                }
+            }
+
+            ;
+            margin: 10px 0;
+            text-transform: uppercase;
+        }
+
+        .school-address {
+            font-size: 10pt;
+            color: #555;
+            margin: 5px 0;
+        }
+
+        .certificate-title {
+            font-size: 20pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 30px 0;
+
+            color: {
+                    {
+                    header_color|default: "#000"
+                }
+            }
+
+            ;
+        }
+
+        .certificate-no {
+            font-size: 10pt;
+            text-align: right;
+            margin: 10px 0;
+            color: #666;
+        }
+
+        .content {
+            margin: 40px 0;
+            text-align: justify;
+        }
+
+        .content p {
+            margin: 15px 0;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: #000;
+        }
+
+        .signature-section {
+            margin-top: 80px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-block {
+            text-align: center;
+            width: 200px;
+        }
+
+        .signature-image {
+            max-width: 150px;
+            max-height: 60px;
+            margin-bottom: 5px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-top: 50px;
+            padding-top: 5px;
+            font-size: 10pt;
+        }
+
+        .seal {
+            position: absolute;
+            bottom: 150px;
+            left: 50px;
+            opacity: 0.3;
+            max-width: 100px;
+        }
+
+        .qr-code {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            max-width: 100px;
+            max-height: 100px;
+        }
+
+        .verification-code {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 8pt;
+            color: #666;
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 9pt;
+            color: #888;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="certificate-container">
+        <!-- Header -->
+        <div class="header">
+            {% if include_logo and school_logo %}
+            <img src="{{ school_logo }}" class="school-logo" alt="School Logo">
+            {% endif %}
+
+            <div class="school-name">{{ school_name }}</div>
+
+            {% if school_address %}
+            <div class="school-address">{{ school_address }}</div>
+            {% endif %}
+
+            <div class="certificate-title">
+                {% block certificate_title %}CERTIFICATE{% endblock %}
+            </div>
+        </div>
+
+        <!-- Certificate Number and Date -->
+        <div class="certificate-no">
+            Certificate No: <span class="highlight">{{ certificate_no }}</span><br>
+            Date: <span class="highlight">{{ issue_date|date:"d F, Y" }}</span>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            {% block content %}
+            <!-- Certificate specific content goes here -->
+            {% endblock %}
+        </div>
+
+        <!-- Signature Section -->
+        <div class="signature-section">
+            <div class="signature-block">
+                <div class="signature-line">Date: {{ issue_date|date:"d/m/Y" }}</div>
+            </div>
+
+            <div class="signature-block">
+                {% if include_signature and principal_signature %}
+                <img src="{{ principal_signature }}" class="signature-image" alt="Signature">
+                {% endif %}
+                <div class="signature-line">
+                    <strong>Principal</strong><br>
+                    {{ school_name }}
+                </div>
+            </div>
+        </div>
+
+        <!-- School Seal -->
+        {% if include_seal and school_seal %}
+        <img src="{{ school_seal }}" class="seal" alt="School Seal">
+        {% endif %}
+
+        <!-- QR Code for Verification -->
+        {% if include_qr_code and qr_code_image %}
+        <img src="{{ qr_code_image }}" class="qr-code" alt="QR Code">
+        {% endif %}
+
+        <!-- Verification Code -->
+        <div class="verification-code">
+            Verification Code: {{ verification_code }}
+        </div>
+    </div>
+</body>
+
+</html>
