@@ -885,45 +885,6 @@ export const CERTIFICATE_TYPES = [
     { value: 'CUSTOM', label: 'Custom Certificate' },
 ];
 
-// Generate certificate for a student
-export async function generateCertificate(
-    studentId: number,
-    certType: string,
-    purpose?: string,
-    schoolId?: string
-): Promise<CertificateGenerateResponse> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
-    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
-
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-
-    if (effectiveSchoolId) {
-        headers['X-School-ID'] = effectiveSchoolId;
-    }
-
-    if (token) {
-        headers['Authorization'] = `Token ${token}`;
-    }
-
-    const res = await fetch(
-        `${API_BASE_URL}/certificates/generate/${studentId}/${certType}/`,
-        {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ purpose: purpose || '' })
-        }
-    );
-
-    if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to generate certificate');
-    }
-
-    return res.json();
-}
-
 // Download certificate PDF
 export async function downloadCertificate(
     certificateId: number,
