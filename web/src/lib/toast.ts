@@ -8,40 +8,28 @@ export const toast = {
      * Show success message
      */
     success: (message: string, description?: string) => {
-        return sonnerToast.success(message, {
-            description,
-            icon: '✅',
-        });
+        return sonnerToast.success(message, description ? { description } : undefined);
     },
 
     /**
      * Show error message
      */
     error: (message: string, description?: string) => {
-        return sonnerToast.error(message, {
-            description,
-            icon: '❌',
-        });
+        return sonnerToast.error(message, description ? { description } : undefined);
     },
 
     /**
      * Show info message
      */
     info: (message: string, description?: string) => {
-        return sonnerToast.info(message, {
-            description,
-            icon: 'ℹ️',
-        });
+        return sonnerToast.info(message, description ? { description } : undefined);
     },
 
     /**
      * Show warning message
      */
     warning: (message: string, description?: string) => {
-        return sonnerToast.warning(message, {
-            description,
-            icon: '⚠️',
-        });
+        return sonnerToast.warning(message, description ? { description } : undefined);
     },
 
     /**

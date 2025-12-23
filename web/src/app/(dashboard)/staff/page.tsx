@@ -7,6 +7,7 @@ import { Briefcase, QrCode, UserPlus, Users, CheckCircle, Clock, Power } from "l
 import QRCodeDisplay from "@/components/ui/QRCodeDisplay";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import { getStaff, deleteStaff, toggleStaffActive, type Staff } from "@/lib/api";
+import { toast } from "@/lib/toast";
 import StaffProfileDrawer from "@/components/staff/StaffProfileDrawer";
 import SalaryStructureModal from "@/components/finance/SalaryStructureModal";
 import Card, { CardContent } from "@/components/ui/modern/Card";
@@ -66,14 +67,28 @@ export default function StaffPage() {
     };
 
     const handleDelete = async (staff: Staff) => {
-        if (!confirm(`Are you sure you want to delete ${staff.first_name}?`)) return;
-        try {
-            await deleteStaff(staff.id);
-            load();
-        } catch (e) {
-            console.error(e);
-            alert("Failed to delete staff.");
-        }
+        toast.confirm({
+            title: `Delete ${staff.first_name} ${staff.last_name}?`,
+            description: 'This will permanently remove all staff records and cannot be undone.',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                const loadingToast = toast.loading('Deleting staff member...');
+                try {
+                    await deleteStaff(staff.id);
+                    load();
+                    toast.success('Staff member deleted',
+                        `${staff.first_name} ${staff.last_name} has been removed`
+                    );
+                } catch (e) {
+                    console.error(e);
+                    toast.error('Failed to delete staff member',
+                        'Please try again or contact support'
+                    );
+                } finally {
+                    toast.dismiss(loadingToast);
+                }
+            },
+        });
     };
 
     const handleSuccess = () => {
@@ -87,6 +102,9 @@ export default function StaffPage() {
     };
 
     const handleToggleActive = async (staff: Staff) => {
+        const loadingToast = toast.loading(
+            staff.is_active ? 'Deactivating staff...' : 'Activating staff...'
+        );
         try {
             const result = await toggleStaffActive(staff.id);
             if (result.success) {
@@ -94,10 +112,17 @@ export default function StaffPage() {
                 setStaffList(prev => prev.map(s =>
                     s.id === staff.id ? { ...s, is_active: result.is_active } : s
                 ));
+                toast.success(result.message,
+                    `${staff.first_name} ${staff.last_name}`
+                );
             }
         } catch (e) {
             console.error(e);
-            alert("Failed to toggle staff status.");
+            toast.error('Failed to toggle staff status',
+                'Please try again'
+            );
+        } finally {
+            toast.dismiss(loadingToast);
         }
     };
 
@@ -140,8 +165,8 @@ export default function StaffPage() {
                                 handleToggleActive(row);
                             }}
                             className={`p-1.5 rounded-lg transition-colors ${row.is_active
-                                    ? 'bg-success/10 text-success hover:bg-success/20'
-                                    : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                                ? 'bg-success/10 text-success hover:bg-success/20'
+                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                                 }`}
                             title={row.is_active ? 'Click to deactivate' : 'Click to activate'}
                         >

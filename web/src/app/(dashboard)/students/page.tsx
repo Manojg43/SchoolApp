@@ -5,6 +5,7 @@ import { getStudents, deleteStudent, getClasses, toggleStudentActive, type Stude
 import { Download, Plus, Edit, Trash2, GraduationCap, Users, UserPlus, Power } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/lib/toast";
 import FilterBar from "@/components/ui/FilterBar";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import Card, { CardContent, CardHeader, CardTitle } from "@/components/ui/modern/Card";
@@ -62,14 +63,28 @@ export default function StudentList() {
     };
 
     const handleDelete = async (student: Student) => {
-        if (!confirm(`Are you sure you want to delete ${student.first_name} ${student.last_name}?`)) return;
-        try {
-            await deleteStudent(student.id);
-            setStudents(prev => prev.filter(s => s.id !== student.id));
-        } catch (e) {
-            console.error(e);
-            alert("Failed to delete student.");
-        }
+        toast.confirm({
+            title: `Delete ${student.first_name} ${student.last_name}?`,
+            description: 'This action cannot be undone. All student records will be permanently removed.',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                const loadingToast = toast.loading('Deleting student...');
+                try {
+                    await deleteStudent(student.id);
+                    setStudents(prev => prev.filter(s => s.id !== student.id));
+                    toast.success('Student deleted successfully',
+                        `${student.first_name} ${student.last_name} has been removed`
+                    );
+                } catch (e) {
+                    console.error(e);
+                    toast.error('Failed to delete student',
+                        'Please try again or contact support'
+                    );
+                } finally {
+                    toast.dismiss(loadingToast);
+                }
+            },
+        });
     };
 
     const handleSuccess = () => {
@@ -77,6 +92,9 @@ export default function StudentList() {
     };
 
     const handleToggleActive = async (student: Student) => {
+        const loadingToast = toast.loading(
+            student.is_active ? 'Deactivating student...' : 'Activating student...'
+        );
         try {
             const result = await toggleStudentActive(student.id);
             if (result.success) {
@@ -84,10 +102,17 @@ export default function StudentList() {
                 setStudents(prev => prev.map(s =>
                     s.id === student.id ? { ...s, is_active: result.is_active } : s
                 ));
+                toast.success(result.message,
+                    `${student.first_name} ${student.last_name}`
+                );
             }
         } catch (e) {
             console.error(e);
-            alert("Failed to toggle student status.");
+            toast.error('Failed to toggle student status',
+                'Please try again'
+            );
+        } finally {
+            toast.dismiss(loadingToast);
         }
     };
 
@@ -135,8 +160,8 @@ export default function StudentList() {
                             handleToggleActive(row);
                         }}
                         className={`p-1.5 rounded-lg transition-colors ${row.is_active
-                                ? 'bg-success/10 text-success hover:bg-success/20'
-                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                            ? 'bg-success/10 text-success hover:bg-success/20'
+                            : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                             }`}
                         title={row.is_active ? 'Click to deactivate' : 'Click to activate'}
                     >
