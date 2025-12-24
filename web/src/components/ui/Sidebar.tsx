@@ -109,7 +109,16 @@ export function Sidebar() {
     const pathname = usePathname();
     const { t } = useLanguage();
     const { hasPermission } = useAuth(); // Use Auth Hook
-    const [expandedMenus, setExpandedMenus] = useState<string[]>(['/fees']); // Finance expanded by default
+    // Expand all menu sections by default so sub-pages are visible
+    const [expandedMenus, setExpandedMenus] = useState<string[]>([
+        '/students',
+        '/fees',
+        '/staff',
+        '/transport',
+        '/academic',
+        '/communication',
+        '/reports'
+    ]);
 
     const toggleMenu = (href: string) => {
         setExpandedMenus(prev =>
