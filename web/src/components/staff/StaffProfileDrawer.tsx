@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { X, User, Edit2, Save, Trash2, Phone, Mail, Briefcase, Settings, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createStaff, updateStaff, type Staff, type StaffPayload } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 const staffSchema = z.object({
     first_name: z.string().min(2, "First Name is required"),
@@ -79,7 +80,7 @@ export default function StaffProfileDrawer({ isOpen, onClose, onSuccess, staff, 
             onSuccess();
             onClose();
         } catch (e: any) {
-            alert(`Error: ${e.message}`);
+            toast.error('Error saving staff', e.message);
         } finally {
             setLoading(false);
         }

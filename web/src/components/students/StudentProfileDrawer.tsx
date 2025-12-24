@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -6,6 +5,7 @@ import { X, User, Edit2, Save, Trash2, Phone, Calendar, MapPin, Hash, BookOpen }
 import { motion, AnimatePresence } from 'framer-motion';
 import { getClasses, getSections, createStudent, updateStudent, type Student, type ClassItem, type SectionItem, type StudentPayload } from '@/lib/api';
 import Animate from '@/components/ui/Animate';
+import { toast } from '@/lib/toast';
 
 // Reuse Schema
 const studentSchema = z.object({
@@ -110,7 +110,7 @@ export default function StudentProfileDrawer({ isOpen, onClose, onSuccess, stude
             onSuccess();
             onClose();
         } catch (e: any) {
-            alert(`Error: ${e.message}`);
+            toast.error('Error saving student', e.message);
         } finally {
             setLoading(false);
         }

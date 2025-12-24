@@ -52,7 +52,7 @@ export default function FeeInvoiceDrawer({ isOpen, onClose, onSuccess }: FeeInvo
             onSuccess();
             onClose();
         } catch (e: any) {
-            alert(`Failed: ${e.message}`);
+            toast.error('Failed to fetch invoice', e.message);
         } finally {
             setSubmitting(false);
         }

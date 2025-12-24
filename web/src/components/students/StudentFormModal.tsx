@@ -68,7 +68,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             } catch (err) {
                 console.error("Failed to load metadata:", err);
                 const msg = err instanceof Error ? err.message : 'Unknown Error';
-                alert(`Failed to load Classes/Sections: ${msg}. Check Console.`);
+                toast.error('Failed to load class data', msg);
             }
         }
         if (isOpen) loadMeta();
@@ -141,7 +141,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
         } catch (error: unknown) {
             console.error("Failed to save student", error);
             const msg = error instanceof Error ? error.message : 'Unknown Error';
-            alert(`Failed to save student: ${msg}`);
+            toast.error('Failed to save student', msg);
         } finally {
             setLoading(false);
         }
