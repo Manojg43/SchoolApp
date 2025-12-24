@@ -543,6 +543,7 @@ export interface Staff {
     department?: string;
     joining_date?: string;
     can_mark_manual_attendance?: boolean;
+    is_active?: boolean;
 }
 
 export async function getStaff(schoolId?: string): Promise<Staff[]> {
