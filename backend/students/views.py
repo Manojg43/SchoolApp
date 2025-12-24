@@ -22,13 +22,21 @@ class StudentViewSet(viewsets.ModelViewSet):
         serializer.save(school=self.request.user.school)
     
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return Student.objects.select_related(
-                'school', 'academic_year', 'current_class', 'section'
-            ).filter(is_active=True)
-        return Student.objects.select_related(
+        queryset = Student.objects.select_related(
             'school', 'academic_year', 'current_class', 'section'
-        ).filter(school=self.request.user.school, is_active=True)
+        )
+        
+        # Add prefetch for detail views to avoid N+1 queries
+        if self.action == 'retrieve':
+            queryset = queryset.prefetch_related(
+                'invoices',
+                'attendance_set',
+                'transport_subscriptions'
+            )
+        
+        if self.request.user.is_superuser:
+            return queryset.filter(is_active=True)
+        return queryset.filter(school=self.request.user.school, is_active=True)
 
 class AttendanceViewSet(viewsets.ModelViewSet):
     permission_classes = [StandardPermission]
