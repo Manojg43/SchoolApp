@@ -4,6 +4,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { Bus, MapPin, Plus, Trash2, Edit2 } from "lucide-react";
+import { toast } from "@/lib/toast";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import { getVehicles, createVehicle, deleteVehicle, getRoutes, createRoute, type Vehicle, type Route } from "@/lib/api";
 import Card, { CardContent } from "@/components/ui/modern/Card";
@@ -50,7 +51,7 @@ export default function TransportPage() {
             await createVehicle({ registration_number: reg, model, capacity: parseInt(capacity) });
             load();
         } catch (e) {
-            alert("Failed to create vehicle");
+            toast.error('Failed to create vehicle', 'Please try again');
         }
     };
 
@@ -61,18 +62,28 @@ export default function TransportPage() {
             await createRoute({ name, stops: [] });
             load();
         } catch (e) {
-            alert("Failed to create route");
+            toast.error('Failed to create route', 'Please try again');
         }
     };
 
     const handleDeleteVehicle = async (v: Vehicle) => {
-        if (!confirm("Delete vehicle?")) return;
-        try {
-            await deleteVehicle(v.id);
-            load();
-        } catch (e) {
-            alert("Failed to delete vehicle");
-        }
+        toast.confirm({
+            title: 'Delete Vehicle?',
+            description: `Delete ${v.registration_number}? This action cannot be undone`,
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                const loadingToast = toast.loading('Deleting vehicle...');
+                try {
+                    await deleteVehicle(v.id);
+                    load();
+                    toast.success('Vehicle deleted successfully');
+                } catch (e) {
+                    toast.error('Failed to delete vehicle', 'Please try again');
+                } finally {
+                    toast.dismiss(loadingToast);
+                }
+            }
+        });
     }
 
     const vehicleColumns: Column<Vehicle>[] = [
@@ -111,7 +122,7 @@ export default function TransportPage() {
             header: "Actions",
             accessorKey: (row) => (
                 <div className="flex gap-2">
-                    <button onClick={() => alert("Edit Route (Pending)")} className="p-1.5 hover:bg-primary/10 text-primary rounded transition-colors">
+                    <button onClick={() => toast.info('Edit Route', 'Feature coming soon')} className="p-1.5 hover:bg-primary/10 text-primary rounded transition-colors">
                         <Edit2 size={16} />
                     </button>
                 </div>

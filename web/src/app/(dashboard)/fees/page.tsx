@@ -4,6 +4,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { getFees, deleteFee, type Fee } from "@/lib/api";
+import { toast } from "@/lib/toast";
 import { Loader2, DollarSign, Download, Plus, Trash2, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import Card, { CardContent } from "@/components/ui/modern/Card";
 import Animate, { AnimatePage } from "@/components/ui/Animate";
@@ -34,13 +35,24 @@ export default function FeesPage() {
     }, []);
 
     const handleDelete = async (fee: Fee) => {
-        if (!confirm(`Delete invoice for ${fee.student_name}?`)) return;
-        try {
-            await deleteFee(fee.id);
-            load();
-        } catch (e) {
-            alert("Failed to delete invoice");
-        }
+        toast.confirm({
+            title: `Delete invoice for ${fee.student_name}?`,
+            description: 'This action cannot be undone',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                const loadingToast = toast.loading('Deleting invoice...');
+                try {
+                    await deleteFee(fee.id);
+                    load();
+                    toast.success('Invoice deleted successfully');
+                } catch (e) {
+                    console.error(e);
+                    toast.error('Failed to delete invoice', 'Please try again');
+                } finally {
+                    toast.dismiss(loadingToast);
+                }
+            }
+        });
     };
 
     const columns: Column<Fee>[] = [
@@ -60,8 +72,8 @@ export default function FeesPage() {
             header: "Status",
             accessorKey: (row) => (
                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${row.status === 'PAID' ? 'bg-success/10 text-success' :
-                        row.status === 'OVERDUE' ? 'bg-error/10 text-error' :
-                            'bg-warning/10 text-warning'
+                    row.status === 'OVERDUE' ? 'bg-error/10 text-error' :
+                        'bg-warning/10 text-warning'
                     }`}>
                     {row.status}
                 </span>

@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { getLeaveApplications, processLeaveApplication, type LeaveApplication } from "@/lib/api";
+import { toast } from "@/lib/toast";
 import { Check, X, Calendar, User, FileText } from "lucide-react";
 
 export default function LeavesPage() {
@@ -28,13 +29,33 @@ export default function LeavesPage() {
     };
 
     const handleAction = async (id: number, action: 'APPROVE' | 'REJECT') => {
-        const isPaid = action === 'APPROVE' ? confirm("Should this leave be PAiD? OK = Paid, Cancel = Unpaid (LWP)") : false;
-
-        try {
-            await processLeaveApplication(id, action, isPaid);
-            loadLeaves();
-        } catch (e) {
-            alert("Failed to process leave");
+        if (action === 'APPROVE') {
+            toast.confirm({
+                title: 'Approve Leave?',
+                description: 'Should this leave be PAID? Click Confirm for Paid, Cancel for Unpaid (LWP)',
+                confirmText: 'Paid Leave',
+                cancelText: 'Unpaid (LWP)',
+                onConfirm: async () => {
+                    try {
+                        await processLeaveApplication(id, action, true);
+                        loadLeaves();
+                        toast.success('Leave approved as PAID');
+                    } catch (e) {
+                        toast.error('Failed to process leave', 'Please try again');
+                    }
+                }
+            });
+        } else {
+            const loadingToast = toast.loading('Processing leave...');
+            try {
+                await processLeaveApplication(id, action, false);
+                loadLeaves();
+                toast.success('Leave rejected');
+            } catch (e) {
+                toast.error('Failed to process leave', 'Please try again');
+            } finally {
+                toast.dismiss(loadingToast);
+            }
         }
     };
 
@@ -83,8 +104,8 @@ export default function LeavesPage() {
                                     <div>
                                         <h3 className="font-semibold text-gray-900">{leave.staff_name}</h3>
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${leave.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                                leave.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                                                    'bg-red-100 text-red-800'
+                                            leave.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                                'bg-red-100 text-red-800'
                                             }`}>
                                             {leave.status}
                                         </span>

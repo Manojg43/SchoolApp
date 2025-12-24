@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 
 import { api } from "@/lib/api";
+import { toast } from "@/lib/toast";
 // import { format } from "date-fns"; // Removed dependency
 import { Trash2, Loader2, Plus, X } from "lucide-react";
 
@@ -44,20 +45,27 @@ export default function NoticesPage() {
             setForm({ title: "", content: "", target_role: "ALL" });
             fetchNotices();
         } catch (error) {
-            alert("Failed to save notice");
+            toast.error('Failed to save notice', 'Please try again');
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure?")) return;
-        try {
-            await api.delete(`/notices/${id}/`);
-            fetchNotices();
-        } catch (error) {
-            alert("Failed to delete");
-        }
+        toast.confirm({
+            title: 'Delete Notice?',
+            description: 'This action cannot be undone',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/notices/${id}/`);
+                    fetchNotices();
+                    toast.success('Notice deleted successfully');
+                } catch (error) {
+                    toast.error('Failed to delete notice');
+                }
+            }
+        });
     };
 
     return (

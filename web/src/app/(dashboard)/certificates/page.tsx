@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { getStudents, generateCertificate, generateCertificateManual, type Student } from "@/lib/api";
+import { toast } from "@/lib/toast";
 import { Download, Award, FileText, Loader2, Filter, Search, PlusCircle } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import Card, { CardContent } from "@/components/ui/modern/Card";
@@ -67,7 +68,7 @@ export default function CertificatesPage() {
             if (isManual) setShowManualForm(false);
         } catch (e) {
             console.error("Certificate generation failed", e);
-            alert("Failed to generate certificate. Please verify details.");
+            toast.error('Failed to generate certificate', 'Please verify details and try again');
         } finally {
             setGenerating(null);
         }

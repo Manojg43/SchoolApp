@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { getPayrollDashboard, generatePayroll, markSalaryPaid, getSchoolSettings, updateSchoolSettings, type PayrollEntry } from "@/lib/api";
+import { toast } from "@/lib/toast";
 import { Search, Loader2, CheckCircle, XCircle } from "lucide-react";
 
 export default function PayrollDashboard() {
@@ -52,28 +53,43 @@ export default function PayrollDashboard() {
     };
 
     const handleGenerate = async () => {
-        if (!confirm(`Generate payroll for ${month}/${year}? This will overwrite existing calculations for this month.`)) return;
-        setGenerating(true);
-        try {
-            const res = await generatePayroll(month, year);
-            alert(res.message);
-            loadData();
-        } catch (e) {
-            alert("Failed to generate payroll");
-        } finally {
-            setGenerating(false);
-        }
+        toast.confirm({
+            title: `Generate payroll for ${month}/${year}?`,
+            description: 'This will overwrite existing calculations for this month',
+            confirmText: 'Generate',
+            onConfirm: async () => {
+                setGenerating(true);
+                const loadingToast = toast.loading('Generating payroll...');
+                try {
+                    const res = await generatePayroll(month, year);
+                    toast.success('Payroll generated', res.message);
+                    loadData();
+                } catch (e) {
+                    toast.error('Failed to generate payroll', 'Please try again');
+                } finally {
+                    setGenerating(false);
+                    toast.dismiss(loadingToast);
+                }
+            }
+        });
     };
 
     const handleMarkPaid = async (id: number) => {
-        if (!confirm("Mark this record as PAID?")) return;
-        try {
-            await markSalaryPaid(id);
-            // Optimistic update
-            setEntries(prev => prev.map(e => e.id === id ? { ...e, is_paid: true, paid_date: new Date().toISOString().split('T')[0] } : e));
-        } catch (e) {
-            alert("Failed to update status");
-        }
+        toast.confirm({
+            title: 'Mark this record as PAID?',
+            description: 'This will record the salary payment',
+            confirmText: 'Mark Paid',
+            onConfirm: async () => {
+                try {
+                    await markSalaryPaid(id);
+                    // Optimistic update
+                    setEntries(prev => prev.map(e => e.id === id ? { ...e, is_paid: true, paid_date: new Date().toISOString().split('T')[0] } : e));
+                    toast.success('Marked as paid successfully');
+                } catch (e) {
+                    toast.error('Failed to update status', 'Please try again');
+                }
+            }
+        });
     };
 
     // Derived Filtering

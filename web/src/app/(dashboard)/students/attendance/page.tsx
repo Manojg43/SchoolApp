@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getClasses, getStudents, type ClassItem, type Student, getAttendance, type Attendance as AttendanceType, api } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import Animate, { AnimatePage } from '@/components/ui/Animate';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/modern/Card';
 import { Calendar, CheckCircle, XCircle, Clock, Save, Hash } from 'lucide-react';
@@ -81,10 +82,10 @@ export default function StudentAttendancePage() {
 
             // Mock Save
             await new Promise(r => setTimeout(r, 1000));
-            alert("Attendance Saved Successfully!");
+            toast.success('Attendance Saved Successfully!');
         } catch (e) {
             console.error(e);
-            alert("Failed to save.");
+            toast.error('Failed to save attendance', 'Please try again');
         } finally {
             setSaving(false);
         }

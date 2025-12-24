@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/lib/toast';
 import { createVehicle } from '@/lib/api';
 import { ArrowLeft, Plus, Trash2, Bus, User, MapPin, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -53,11 +54,11 @@ export default function CreateVehiclePage() {
                 driver_mobile: driverMobile,
                 routes: routes.filter(r => r.name.trim() !== '') // Send nested routes
             });
-            alert("Vehicle and Routes Created Successfully!");
+            toast.success('Vehicle and Routes Created Successfully!');
             router.push('/transport');
         } catch (err) {
             console.error(err);
-            alert("Failed to create vehicle");
+            toast.error('Failed to create vehicle', 'Please try again');
         } finally {
             setSubmitting(false);
         }

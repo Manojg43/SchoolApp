@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { X, Save, DollarSign, Calendar, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createFee, getStudents, type Student, type FeePayload } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 const feeSchema = z.object({
     student: z.coerce.number().min(1, "Student is required"),

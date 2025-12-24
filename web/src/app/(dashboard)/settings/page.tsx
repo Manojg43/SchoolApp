@@ -2,6 +2,7 @@
 
 import { useLanguage } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
+import { toast } from "@/lib/toast";
 import { Save, Upload, RefreshCw, MapPin, Building, QrCode, Clock, Download } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -73,10 +74,10 @@ export default function SettingsPage() {
         try {
             await updateSchoolSettings(settings);
             // Replace with Toast later
-            alert("Settings saved successfully!");
+            toast.success('Settings saved successfully!');
         } catch (e) {
             console.error(e);
-            alert("Failed to save settings.");
+            toast.error('Failed to save settings', 'Please try again');
         } finally {
             setSaving(false);
         }
