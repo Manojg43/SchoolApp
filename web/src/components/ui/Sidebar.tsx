@@ -17,11 +17,13 @@ import {
     TrendingUp,
     Gift,
     Award,
-    DollarSign
+    DollarSign,
+    ChevronDown
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 // TypeScript interfaces for menu items
@@ -121,7 +123,40 @@ const MENU_ITEMS: MenuItem[] = [
 export function Sidebar() {
     const pathname = usePathname();
     const { t } = useLanguage();
-    const { hasPermission } = useAuth(); // Use Auth Hook
+    const { hasPermission } = useAuth();
+
+    // State to track which menus are expanded
+    const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+
+    // Auto-expand menu if user is on a subpage
+    useEffect(() => {
+        const expandedSections: string[] = [];
+        MENU_ITEMS.forEach(item => {
+            if (item.submenu?.some(sub => pathname === sub.href || pathname.startsWith(sub.href + '/'))) {
+                expandedSections.push(item.href);
+            }
+        });
+        if (expandedSections.length > 0) {
+            setExpandedMenus(prev => {
+                const newExpanded = [...prev];
+                expandedSections.forEach(section => {
+                    if (!newExpanded.includes(section)) {
+                        newExpanded.push(section);
+                    }
+                });
+                return newExpanded;
+            });
+        }
+    }, [pathname]);
+
+    // Toggle menu expand/collapse
+    const toggleMenu = (href: string) => {
+        setExpandedMenus(prev =>
+            prev.includes(href)
+                ? prev.filter(h => h !== href)
+                : [...prev, href]
+        );
+    };
 
     return (
         <aside className="w-64 bg-white border-r h-screen sticky top-0 flex-col hidden md:flex">
@@ -138,66 +173,93 @@ export function Sidebar() {
                     }
 
                     const hasSubmenu = item.submenu && item.submenu.length > 0;
-                    const isActive = pathname === item.href || (hasSubmenu && item.submenu?.some(sub => pathname === sub.href));
+                    const isExpanded = expandedMenus.includes(item.href);
+                    const isActive = pathname === item.href ||
+                        (hasSubmenu && item.submenu?.some(sub => pathname === sub.href || pathname.startsWith(sub.href + '/')));
                     const Icon = item.icon;
 
                     return (
                         <div key={item.href}>
-                            {/* Main Menu Item - Always shows as Link */}
-                            <Link
-                                href={item.href}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative",
-                                    isActive
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                )}
-                            >
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="active-sidebar"
-                                        className="absolute left-0 w-1 h-2/3 bg-blue-600 rounded-r-full"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
+                            {/* Main Menu Item */}
+                            {hasSubmenu ? (
+                                // Collapsible menu item with chevron
+                                <button
+                                    onClick={() => toggleMenu(item.href)}
+                                    className={cn(
+                                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative w-full text-left",
+                                        isActive
+                                            ? "text-blue-600 bg-blue-50"
+                                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    )}
+                                >
+                                    <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
+                                    <span className="flex-1">{item.label}</span>
+                                    <ChevronDown
+                                        className={cn(
+                                            "w-4 h-4 transition-transform duration-200",
+                                            isExpanded ? "rotate-180" : ""
+                                        )}
                                     />
-                                )}
-                                <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
-                                {item.label}
-                            </Link>
-
-                            {/* Submenu - Always visible if exists */}
-                            {hasSubmenu && (
-                                <div className="ml-4 mt-1 space-y-1">
-                                    {item.submenu?.map((subItem) => {
-                                        const isSubActive = pathname === subItem.href;
-                                        const SubIcon = subItem.icon;
-
-                                        return (
-                                            <Link
-                                                key={subItem.href}
-                                                href={subItem.href}
-                                                className={cn(
-                                                    "flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors relative",
-                                                    isSubActive
-                                                        ? "text-blue-600 bg-blue-50 font-medium"
-                                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                                )}
-                                            >
-                                                {isSubActive && (
-                                                    <motion.div
-                                                        layoutId="active-sidebar"
-                                                        className="absolute left-0 w-1 h-2/3 bg-blue-600 rounded-r-full"
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                    />
-                                                )}
-                                                <SubIcon className={cn("w-4 h-4", isSubActive ? "text-blue-600" : "text-gray-400")} />
-                                                {subItem.label}
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
+                                </button>
+                            ) : (
+                                // Simple link for items without submenu
+                                <Link
+                                    href={item.href}
+                                    className={cn(
+                                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative",
+                                        isActive
+                                            ? "text-blue-600 bg-blue-50"
+                                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    )}
+                                >
+                                    {isActive && (
+                                        <motion.div
+                                            layoutId="active-sidebar"
+                                            className="absolute left-0 w-1 h-2/3 bg-blue-600 rounded-r-full"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                        />
+                                    )}
+                                    <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
+                                    {item.label}
+                                </Link>
                             )}
+
+                            {/* Collapsible Submenu with animation */}
+                            <AnimatePresence initial={false}>
+                                {hasSubmenu && isExpanded && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                                        className="overflow-hidden"
+                                    >
+                                        <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-100 pl-2">
+                                            {item.submenu?.map((subItem) => {
+                                                const isSubActive = pathname === subItem.href;
+                                                const SubIcon = subItem.icon;
+
+                                                return (
+                                                    <Link
+                                                        key={subItem.href}
+                                                        href={subItem.href}
+                                                        className={cn(
+                                                            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors relative",
+                                                            isSubActive
+                                                                ? "text-blue-600 bg-blue-50 font-medium"
+                                                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                                        )}
+                                                    >
+                                                        <SubIcon className={cn("w-4 h-4", isSubActive ? "text-blue-600" : "text-gray-400")} />
+                                                        {subItem.label}
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     );
                 })}
