@@ -25,8 +25,24 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext'; // Import Auth
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
 
-const MENU_ITEMS = [
+// TypeScript interfaces for menu items
+interface SubMenuItem {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+}
+
+interface MenuItem {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+    permission?: string;
+    submenu?: SubMenuItem[];
+}
+
+const MENU_ITEMS: MenuItem[] = [
     { href: '/', label: 'Overview', icon: LayoutDashboard },
     {
         href: '/students',
