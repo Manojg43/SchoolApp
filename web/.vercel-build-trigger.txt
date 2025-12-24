@@ -1,0 +1,6 @@
+# Navigation Update Required
+
+This file forces Vercel to rebuild with latest Sidebar changes.
+Updated: 2025-12-24 14:32
+
+All sub-navigation items should be visible.
