@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, KeyRound } from 'lucide-react';
+import LoadingButton from '@/components/ui/LoadingButton';
+import { toast } from '@/lib/toast';
 import { createStaff, updateStaff, generateResetCode, type Staff, type StaffPayload } from '@/lib/api';
 
 const staffSchema = z.object({
@@ -246,13 +248,13 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
                             >
                                 Cancel
                             </button>
-                            <button
+                            <LoadingButton
                                 type="submit"
-                                disabled={loading}
-                                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
+                                loading={loading}
+                                className="px-4 py-2 text-sm font-medium shadow-sm"
                             >
-                                {loading ? 'Saving...' : 'Save Staff'}
-                            </button>
+                                Save Staff
+                            </LoadingButton>
                         </div>
 
                     </form>

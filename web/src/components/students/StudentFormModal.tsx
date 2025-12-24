@@ -261,13 +261,13 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
                         >
                             Cancel
                         </button>
-                        <button
+                        <LoadingButton
                             type="submit"
-                            disabled={loading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
+                            loading={loading}
+                            className="px-4 py-2 text-sm font-medium"
                         >
-                            {loading ? 'Saving...' : 'Save Student'}
-                        </button>
+                            Save Student
+                        </LoadingButton>
                     </div>
                 </form>
 
