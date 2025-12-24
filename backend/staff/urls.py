@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from views import StaffDashboardView, GenerateSchoolQR, ScanAttendanceView, StaffViewSet, StaffAttendanceReportView, UpdateAttendanceView, StaffDailyAttendanceView, StaffPasswordResetView, GenerateResetCodeView, CheckLocationView, ToggleStaffActiveView
+from .views import StaffDashboardView, GenerateSchoolQR, ScanAttendanceView, StaffViewSet, StaffAttendanceReportView, UpdateAttendanceView, StaffDailyAttendanceView, StaffPasswordResetView, GenerateResetCodeView, CheckLocationView, ToggleStaffActiveView
 from .views_leave import ApplyLeaveView, MyLeavesView, LeaveManagementView
 from .views_academic import TeacherTimetableView, HomeworkView
 from .views_communication import NoticeBoardView

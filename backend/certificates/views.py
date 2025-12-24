@@ -6,7 +6,7 @@ from django.http import FileResponse, Http404
 from django.template.loader import render_to_string
 from django.core.files.base import ContentFile
 from django.utils import timezone
-from weasyprint import HTML
+# from weasyprint import HTML  # TODO: Install GTK libraries on Windows - see WEASYPRINT_WINDOWS_ISSUE.md
 import qrcode
 from io import BytesIO
 import datetime
@@ -133,8 +133,17 @@ def generate_certificate_pdf(certificate, template, student, school, user):
         # Fallback to base template if specific template not found
         html_string = render_to_string('certificates/base_certificate.html', certificate_data)
     
-    # Generate PDF
-    pdf_file = HTML(string=html_string, base_url=None).write_pdf()
+    # Generate PDF using xhtml2pdf (fallback for Windows without GTK)
+    from xhtml2pdf import pisa
+    from io import BytesIO
+    
+    pdf_buffer = BytesIO()
+    pisa_status = pisa.CreatePDF(html_string, dest=pdf_buffer, encoding='utf-8')
+    
+    if pisa_status.err:
+        raise Exception(f"PDF generation failed: {pisa_status.err}")
+    
+    pdf_file = pdf_buffer.getvalue()
     
     # Save PDF
     certificate.pdf_file.save(
