@@ -27,8 +27,17 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 
 const MENU_ITEMS = [
-    { href: '/', label: 'Overview', icon: LayoutDashboard }, // Public / Basic
-    { href: '/students', label: 'Students', icon: GraduationCap, permission: 'can_access_student_records' },
+    { href: '/', label: 'Overview', icon: LayoutDashboard },
+    {
+        href: '/students',
+        label: 'Students',
+        icon: GraduationCap,
+        permission: 'can_access_student_records',
+        submenu: [
+            { href: '/students', label: 'Student Directory', icon: GraduationCap },
+            { href: '/students/attendance', label: 'Mark Attendance', icon: CalendarCheck },
+        ]
+    },
     { href: '/attendance', label: 'Attendance', icon: CalendarCheck, permission: 'can_access_attendance' },
     {
         href: '/fees',
@@ -37,18 +46,63 @@ const MENU_ITEMS = [
         permission: 'can_access_finance',
         submenu: [
             { href: '/fees', label: 'Fees & Invoices', icon: Receipt },
-            { href: '/finance/settlement', label: 'Settlement Dashboard', icon: TrendingUp },
-            { href: '/finance/settlement/yearend', label: 'Year-End Generator', icon: Award },
+            { href: '/finance/create', label: 'Create Invoice', icon: FileText },
+            { href: '/finance/payroll', label: 'Payroll Dashboard', icon: DollarSign },
             { href: '/finance/discounts', label: 'Discounts & Scholarships', icon: Gift },
-            { href: '/finance/certificates-fees', label: 'Certificate Fees', icon: DollarSign },
+            { href: '/finance/certificates-fees', label: 'Certificate Fees', icon: Award },
+            { href: '/finance/settlement', label: 'Year-End Settlement', icon: TrendingUp },
         ]
     },
-    { href: '/staff', label: 'Staff & Payroll', icon: Briefcase, permission: 'is_superuser' },
-    { href: '/staff/attendance', label: 'Staff Attendance', icon: Clock, permission: 'is_superuser' },
-    { href: '/staff/leaves', label: 'Leave Applications', icon: FileText, permission: 'can_manage_leaves' },
-    { href: '/transport', label: 'Transport', icon: Bus, permission: 'can_access_transport' },
-    { href: '/reports', label: 'Reports', icon: FileBarChart, permission: 'is_superuser' },
-    { href: '/settings', label: 'Settings', icon: Settings }, // Settings usually for all, can filter sub-pages
+    {
+        href: '/staff',
+        label: 'Staff & Payroll',
+        icon: Briefcase,
+        permission: 'is_superuser',
+        submenu: [
+            { href: '/staff', label: 'Staff Directory', icon: Briefcase },
+            { href: '/staff/attendance', label: 'Staff Attendance', icon: Clock },
+            { href: '/staff/leaves', label: 'Leave Applications', icon: FileText },
+        ]
+    },
+    {
+        href: '/transport',
+        label: 'Transport',
+        icon: Bus,
+        permission: 'can_access_transport',
+        submenu: [
+            { href: '/transport', label: 'Vehicle List', icon: Bus },
+            { href: '/transport/create', label: 'Add Vehicle', icon: FileText },
+        ]
+    },
+    {
+        href: '/academic',
+        label: 'Academic',
+        icon: GraduationCap,
+        permission: 'can_access_student_records',
+        submenu: [
+            { href: '/academic/homework', label: 'Homework', icon: FileText },
+        ]
+    },
+    {
+        href: '/communication',
+        label: 'Communication',
+        icon: FileText,
+        submenu: [
+            { href: '/communication/notices', label: 'Notices', icon: FileText },
+        ]
+    },
+    { href: '/certificates', label: 'Certificates', icon: Award, permission: 'can_access_finance' },
+    {
+        href: '/reports',
+        label: 'Reports',
+        icon: FileBarChart,
+        permission: 'is_superuser',
+        submenu: [
+            { href: '/reports', label: 'Reports Dashboard', icon: FileBarChart },
+            { href: '/reports/attendance', label: 'Attendance Reports', icon: CalendarCheck },
+        ]
+    },
+    { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar() {
