@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
     LayoutDashboard,
-    Users,
     CalendarCheck,
     Receipt,
     Bus,
@@ -15,16 +14,14 @@ import {
     GraduationCap,
     Clock,
     FileText,
-    ChevronDown,
     TrendingUp,
     Gift,
     Award,
     DollarSign
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
-import { useAuth } from '@/context/AuthContext'; // Import Auth
+import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 // TypeScript interfaces for menu items
