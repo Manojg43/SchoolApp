@@ -125,24 +125,6 @@ export function Sidebar() {
     const pathname = usePathname();
     const { t } = useLanguage();
     const { hasPermission } = useAuth(); // Use Auth Hook
-    // Expand all menu sections by default so sub-pages are visible
-    const [expandedMenus, setExpandedMenus] = useState<string[]>([
-        '/students',
-        '/fees',
-        '/staff',
-        '/transport',
-        '/academic',
-        '/communication',
-        '/reports'
-    ]);
-
-    const toggleMenu = (href: string) => {
-        setExpandedMenus(prev =>
-            prev.includes(href)
-                ? prev.filter(h => h !== href)
-                : [...prev, href]
-        );
-    };
 
     return (
         <aside className="w-64 bg-white border-r h-screen sticky top-0 flex-col hidden md:flex">
@@ -159,57 +141,35 @@ export function Sidebar() {
                     }
 
                     const hasSubmenu = item.submenu && item.submenu.length > 0;
-                    const isExpanded = expandedMenus.includes(item.href);
                     const isActive = pathname === item.href || (hasSubmenu && item.submenu?.some(sub => pathname === sub.href));
                     const Icon = item.icon;
 
                     return (
                         <div key={item.href}>
-                            {/* Main Menu Item */}
-                            {hasSubmenu ? (
-                                <button
-                                    onClick={() => toggleMenu(item.href)}
-                                    className={cn(
-                                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative w-full",
-                                        isActive
-                                            ? "text-blue-600 bg-blue-50"
-                                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                    )}
-                                >
-                                    <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
-                                    <span className="flex-1 text-left">{item.label}</span>
-                                    <ChevronDown
-                                        className={cn(
-                                            "w-4 h-4 transition-transform",
-                                            isExpanded ? "rotate-180" : ""
-                                        )}
+                            {/* Main Menu Item - Always shows as Link */}
+                            <Link
+                                href={item.href}
+                                className={cn(
+                                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative",
+                                    isActive
+                                        ? "text-blue-600 bg-blue-50"
+                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                )}
+                            >
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="active-sidebar"
+                                        className="absolute left-0 w-1 h-2/3 bg-blue-600 rounded-r-full"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
                                     />
-                                </button>
-                            ) : (
-                                <Link
-                                    href={item.href}
-                                    className={cn(
-                                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative",
-                                        isActive
-                                            ? "text-blue-600 bg-blue-50"
-                                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                    )}
-                                >
-                                    {isActive && (
-                                        <motion.div
-                                            layoutId="active-sidebar"
-                                            className="absolute left-0 w-1 h-2/3 bg-blue-600 rounded-r-full"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                        />
-                                    )}
-                                    <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
-                                    {item.label}
-                                </Link>
-                            )}
+                                )}
+                                <Icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
+                                {item.label}
+                            </Link>
 
-                            {/* Submenu */}
-                            {hasSubmenu && isExpanded && (
+                            {/* Submenu - Always visible if exists */}
+                            {hasSubmenu && (
                                 <div className="ml-4 mt-1 space-y-1">
                                     {item.submenu?.map((subItem) => {
                                         const isSubActive = pathname === subItem.href;
