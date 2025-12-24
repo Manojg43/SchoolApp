@@ -6,6 +6,7 @@ import { toast } from '@/lib/toast';
 import { createVehicle } from '@/lib/api';
 import { ArrowLeft, Plus, Trash2, Bus, User, MapPin, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import LoadingButton from '@/components/ui/LoadingButton';
 
 export default function CreateVehiclePage() {
     const router = useRouter();
