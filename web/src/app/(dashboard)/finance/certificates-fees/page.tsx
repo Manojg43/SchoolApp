@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCertificateFees, updateCertificateFee, createCertificateFee, type CertificateFee } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { DollarSign, Save, Plus } from 'lucide-react';
 
 const CERTIFICATE_TYPES = [
@@ -65,7 +66,7 @@ export default function CertificateFeesPage() {
             loadFees();
         } catch (error) {
             console.error('Failed to update certificate fee:', error);
-            alert('Failed to update fee');
+            toast.error('Failed to update fee', 'Please try again');
         }
     }
 
@@ -84,7 +85,7 @@ export default function CertificateFeesPage() {
             loadFees();
         } catch (error) {
             console.error('Failed to add missing types:', error);
-            alert('Failed to add certificate types');
+            toast.error('Failed to add certificate types', 'Please try again');
         }
     }
 

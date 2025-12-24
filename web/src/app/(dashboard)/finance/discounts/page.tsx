@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getFeeDiscounts, createFeeDiscount, deleteFeeDiscount, type FeeDiscount } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { Plus, Trash2, Search, Filter } from 'lucide-react';
 
 export default function DiscountsPage() {
@@ -65,20 +66,26 @@ export default function DiscountsPage() {
             loadDiscounts();
         } catch (error) {
             console.error('Failed to create discount:', error);
-            alert('Failed to create discount');
+            toast.error('Failed to create discount', 'Please try again');
         }
     }
 
     async function handleDelete(id: number) {
-        if (!confirm('Are you sure you want to delete this discount?')) return;
-
-        try {
-            await deleteFeeDiscount(id);
-            loadDiscounts();
-        } catch (error) {
-            console.error('Failed to delete discount:', error);
-            alert('Failed to delete discount');
-        }
+        toast.confirm({
+            title: 'Delete this discount?',
+            description: 'This action cannot be undone',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                try {
+                    await deleteFeeDiscount(id);
+                    loadDiscounts();
+                    toast.success('Discount deleted successfully');
+                } catch (error) {
+                    console.error('Failed to delete discount:', error);
+                    toast.error('Failed to delete discount', 'Please try again');
+                }
+            }
+        });
     }
 
     return (

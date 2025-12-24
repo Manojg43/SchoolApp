@@ -4,6 +4,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "@/lib/toast";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import KPICard from "@/components/ui/KPICard";
 import { getFees, createFee, deleteFee, getStudents, API_BASE_URL, type Fee, type Student } from "@/lib/api";
@@ -44,13 +45,23 @@ export default function FinancePage() {
     };
 
     const handleDeleteFee = async (fee: Fee) => {
-        if (!confirm("Delete this invoice?")) return;
-        try {
-            await deleteFee(fee.id);
-            load();
-        } catch (e) {
-            alert("Failed to delete fee.");
-        }
+        toast.confirm({
+            title: 'Delete this invoice?',
+            description: 'This action cannot be undone',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                const loadingToast = toast.loading('Deleting invoice...');
+                try {
+                    await deleteFee(fee.id);
+                    load();
+                    toast.success('Invoice deleted successfully');
+                } catch (e) {
+                    toast.error('Failed to delete invoice', 'Please try again');
+                } finally {
+                    toast.dismiss(loadingToast);
+                }
+            }
+        });
     };
 
     const columns: Column<Fee>[] = [

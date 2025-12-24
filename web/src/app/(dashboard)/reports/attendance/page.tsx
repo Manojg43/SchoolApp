@@ -3,6 +3,7 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import { Calendar, User, FileText, Download, Edit2, X, Save } from "lucide-react";
+import { toast } from "@/lib/toast";
 import {
     getStaff,
     getStaffAttendanceReport,
@@ -89,7 +90,7 @@ export default function AttendanceReportPage() {
             setEditingLog(null);
             fetchReport(); // Refresh data
         } catch (e) {
-            alert("Failed to update attendance");
+            toast.error('Failed to update attendance', 'Please try again');
             console.error(e);
         } finally {
             setSaving(false);

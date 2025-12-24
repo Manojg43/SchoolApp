@@ -8,6 +8,7 @@ import {
     type ClassItem, type SectionItem, type Student, type FeeCategory
 } from '@/lib/api';
 import { Loader2, Search, FileText, ArrowLeft, CheckCircle } from 'lucide-react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 
 export default function CreateInvoicePage() {
@@ -68,7 +69,7 @@ export default function CreateInvoicePage() {
             if (Array.isArray(catData)) setCategories(catData);
         } catch (e) {
             console.error("Failed to load initial data", e);
-            alert("Failed to load data. Please refresh.");
+            toast.error('Failed to load data', 'Please refresh the page');
         } finally {
             setLoadingInit(false);
         }
@@ -133,7 +134,7 @@ export default function CreateInvoicePage() {
                 fetchStructureAmount(student.current_class, Number(selectedCategory));
             }
         } else {
-            alert("Student with this Enrollment ID not found!");
+            toast.error('Student not found', 'Please check the Enrollment ID');
             setSelectedStudentId(null);
         }
     };
@@ -146,7 +147,7 @@ export default function CreateInvoicePage() {
 
         // If Detailed mode, ensure selected
         if (mode === 'detailed' && !selectedStudentId) {
-            alert("Please select a student.");
+            toast.error('Please select a student', 'Choose from the list or use Quick mode');
             return;
         }
 
@@ -154,7 +155,7 @@ export default function CreateInvoicePage() {
         if (mode === 'quick') {
             const student = allStudents.find(s => s.enrollment_number === quickEnrollment);
             if (!student) {
-                alert("Invalid Enrollment ID");
+                toast.error('Invalid Enrollment ID', 'Student not found');
                 return;
             }
             finalStudentId = student.id;
@@ -177,11 +178,11 @@ export default function CreateInvoicePage() {
                 setCreatedInvoiceId(res.id);
             } else {
                 // Fallback if API wrapper doesn't return full object
-                alert("Invoice Created (ID unknown, check list)");
+                toast.success('Invoice Created!', 'Check the finance list');
                 router.push('/finance');
             }
         } catch (e) {
-            alert("Failed to create Invoice.");
+            toast.error('Failed to create invoice', 'Please try again');
             console.error(e);
         } finally {
             setSubmitting(false);

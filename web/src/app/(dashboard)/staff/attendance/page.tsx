@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { getStaffDailyAttendance, updateAttendance, type StaffDailyLog } from "@/lib/api";
+import { toast } from "@/lib/toast";
 import { Search, Loader2, Calendar, Clock, AlertCircle } from "lucide-react";
 
 export default function StaffAttendancePage() {
@@ -30,7 +31,7 @@ export default function StaffAttendancePage() {
 
     const handleUpdateStatus = async (attId: number | null | undefined, staffId: number, newStatus: string) => {
         if (!hasPermission('core.can_mark_manual_attendance')) {
-            alert("No permission to modify attendance");
+            toast.error('No permission to modify attendance', 'Contact administrator');
             return;
         }
 
@@ -50,12 +51,12 @@ export default function StaffAttendancePage() {
                 // Assuming "updateAttendance" endpoint might be flexible or I need to handle creation.
                 // Actually `StaffAttendance` uses (staff, date) unique.
                 // Let's assume for now we only support changing if record exists (PRESENT/HALF/LEAVE) or we show alert.
-                alert("Cannot modify ABSENT record directly yet without check-in. Use Mobile App or Manual Mark.");
+                toast.info('Cannot modify ABSENT record', 'Use Mobile App or Manual Mark for check-in');
                 return;
             }
             loadData();
         } catch (e) {
-            alert("Failed to update status");
+            toast.error('Failed to update status', 'Please try again');
         }
     };
 
@@ -144,9 +145,9 @@ export default function StaffAttendancePage() {
                                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{log.name}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${log.status === 'PRESENT' ? 'bg-green-100 text-green-800' :
-                                                log.status === 'ABSENT' ? 'bg-red-100 text-red-800' :
-                                                    log.status === 'LEAVE' ? 'bg-yellow-100 text-yellow-800' :
-                                                        'bg-blue-100 text-blue-800'
+                                            log.status === 'ABSENT' ? 'bg-red-100 text-red-800' :
+                                                log.status === 'LEAVE' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-blue-100 text-blue-800'
                                             }`}>
                                             {log.status}
                                         </span>
