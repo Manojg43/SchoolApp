@@ -409,3 +409,396 @@ class CertificateFeeViewSet(ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(school=self.request.user.school)
+
+
+from .models import Receipt
+from .serializers import ReceiptSerializer, ReceiptCreateSerializer
+
+class ReceiptViewSet(ModelViewSet):
+    """
+    ViewSet for payment receipts - handling payment collection and history
+    
+    Filters:
+    - invoice: Filter by invoice ID
+    - student: Filter by student ID
+    - date_from: Filter payments from this date
+    - date_to: Filter payments until this date
+    - mode: Filter by payment mode (CASH, UPI, ONLINE, etc.)
+    - created_by: Filter by who created the receipt
+    """
+    queryset = Receipt.objects.all()
+    permission_classes = [StandardPermission]
+    pagination_class = StandardResultsPagination
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ReceiptCreateSerializer
+        return ReceiptSerializer
+    
+    def get_queryset(self):
+        queryset = Receipt.objects.select_related(
+            'school', 'invoice', 'invoice__student', 
+            'created_by', 'collected_by'
+        ).all()
+        school_id = get_current_school_id()
+        if school_id:
+            queryset = queryset.filter(school__school_id=school_id)
+        
+        # Filter by invoice
+        invoice_id = self.request.query_params.get('invoice')
+        if invoice_id:
+            queryset = queryset.filter(invoice_id=invoice_id)
+        
+        # Filter by student
+        student_id = self.request.query_params.get('student')
+        if student_id:
+            queryset = queryset.filter(invoice__student_id=student_id)
+        
+        # Filter by date range
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        
+        # Filter by payment mode
+        mode = self.request.query_params.get('mode')
+        if mode:
+            queryset = queryset.filter(mode=mode)
+        
+        # Filter by who created
+        created_by = self.request.query_params.get('created_by')
+        if created_by:
+            queryset = queryset.filter(created_by_id=created_by)
+        
+        return queryset.order_by('-created_at')
+
+
+class PendingReceivablesView(APIView):
+    """Get all pending receivables (unpaid invoices)"""
+    permission_classes = [IsAuthenticated, StandardPermission]
+    
+    def get(self, request):
+        """
+        Get pending receivables with filters
+        
+        Query params:
+        - class_id: Filter by class
+        - student_id: Filter by specific student
+        - status: PENDING, PARTIAL, OVERDUE (default: all pending)
+        """
+        from .serializers import InvoiceSerializer
+        
+        queryset = Invoice.objects.filter(
+            school=request.user.school
+        ).select_related(
+            'student', 'student__current_class', 'academic_year'
+        ).prefetch_related('receipts')
+        
+        # Filter by status (default to pending types)
+        status = request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        else:
+            queryset = queryset.filter(status__in=['PENDING', 'PARTIAL', 'OVERDUE'])
+        
+        # Filter by class
+        class_id = request.query_params.get('class_id')
+        if class_id:
+            queryset = queryset.filter(student__current_class_id=class_id)
+        
+        # Filter by student
+        student_id = request.query_params.get('student_id')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+        
+        # Order by due date
+        queryset = queryset.order_by('due_date')
+        
+        # Calculate totals
+        from django.db.models import Sum
+        totals = queryset.aggregate(
+            total_amount=Sum('total_amount'),
+            total_paid=Sum('paid_amount'),
+        )
+        
+        total_pending = (totals['total_amount'] or 0) - (totals['total_paid'] or 0)
+        
+        serializer = InvoiceSerializer(queryset, many=True)
+        
+        return Response({
+            'invoices': serializer.data,
+            'summary': {
+                'total_invoices': queryset.count(),
+                'total_amount': float(totals['total_amount'] or 0),
+                'total_paid': float(totals['total_paid'] or 0),
+                'total_pending': float(total_pending),
+            }
+        })
+
+
+class PaymentHistoryView(APIView):
+    """Get complete payment history with tracking details"""
+    permission_classes = [IsAuthenticated, StandardPermission]
+    
+    def get(self, request):
+        """
+        Get payment history with all tracking information
+        
+        Query params:
+        - date_from, date_to: Date range filter
+        - student_id: Filter by student
+        - mode: Filter by payment mode
+        """
+        queryset = Receipt.objects.filter(
+            school=request.user.school
+        ).select_related(
+            'invoice', 'invoice__student', 'created_by', 'collected_by'
+        ).order_by('-created_at')
+        
+        # Date filters
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        
+        # Student filter
+        student_id = request.query_params.get('student_id')
+        if student_id:
+            queryset = queryset.filter(invoice__student_id=student_id)
+        
+        # Payment mode filter
+        mode = request.query_params.get('mode')
+        if mode:
+            queryset = queryset.filter(mode=mode)
+        
+        serializer = ReceiptSerializer(queryset[:100], many=True)  # Limit to 100
+        
+        # Summary
+        from django.db.models import Sum
+        totals = queryset.aggregate(total=Sum('amount'))
+        
+        return Response({
+            'receipts': serializer.data,
+            'summary': {
+                'total_receipts': queryset.count(),
+                'total_collected': float(totals['total'] or 0),
+            }
+        })
+
+
+class StudentFeeView(APIView):
+    """
+    Get complete fee summary for a specific student
+    Shows all invoices (pending, paid, settled) with payment history
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, student_id):
+        """
+        Get student's fee summary including:
+        - All invoices with their status
+        - Total fees, paid, pending amounts
+        - Payment receipts history
+        """
+        from .serializers import InvoiceSerializer
+        from students.models import Student
+        from django.db.models import Sum
+        
+        try:
+            student = Student.objects.get(id=student_id, school=request.user.school)
+        except Student.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
+        
+        # Get all invoices for this student
+        invoices = Invoice.objects.filter(
+            student=student
+        ).select_related('academic_year').order_by('-created_at')
+        
+        # Get all receipts for this student
+        receipts = Receipt.objects.filter(
+            invoice__student=student
+        ).select_related(
+            'invoice', 'created_by', 'collected_by'
+        ).order_by('-created_at')
+        
+        # Calculate totals
+        pending_invoices = invoices.filter(status__in=['PENDING', 'PARTIAL', 'OVERDUE'])
+        totals = invoices.aggregate(
+            total_amount=Sum('total_amount'),
+            total_paid=Sum('paid_amount'),
+        )
+        
+        pending_totals = pending_invoices.aggregate(
+            pending_amount=Sum('total_amount'),
+            pending_paid=Sum('paid_amount'),
+        )
+        
+        total_pending = (pending_totals['pending_amount'] or 0) - (pending_totals['pending_paid'] or 0)
+        
+        invoice_serializer = InvoiceSerializer(invoices, many=True)
+        receipt_serializer = ReceiptSerializer(receipts, many=True)
+        
+        return Response({
+            'student': {
+                'id': student.id,
+                'name': student.get_full_name(),
+                'enrollment_number': student.enrollment_number,
+                'class_name': str(student.current_class) if student.current_class else None,
+                'section_name': str(student.section) if student.section else None,
+            },
+            'invoices': invoice_serializer.data,
+            'receipts': receipt_serializer.data,
+            'summary': {
+                'total_invoices': invoices.count(),
+                'pending_invoices': pending_invoices.count(),
+                'total_amount': float(totals['total_amount'] or 0),
+                'total_paid': float(totals['total_paid'] or 0),
+                'total_pending': float(total_pending),
+            }
+        })
+
+
+class SettleInvoiceView(APIView):
+    """
+    Settle/Waive pending amount on an invoice
+    This is used when the school decides to:
+    - Waive remaining balance
+    - Write off bad debt
+    - Apply special discount/concession
+    """
+    permission_classes = [IsAuthenticated, StandardPermission]
+    
+    def post(self, request, invoice_id):
+        """
+        Settle an invoice by marking it as settled
+        
+        Request body:
+        {
+            "settlement_note": "Waived due to financial hardship",
+            "waive_amount": 5000  // Amount to waive (optional, defaults to full balance)
+        }
+        """
+        from datetime import date
+        
+        try:
+            invoice = Invoice.objects.get(id=invoice_id, school=request.user.school)
+        except Invoice.DoesNotExist:
+            return Response({'error': 'Invoice not found'}, status=404)
+        
+        if invoice.status == 'PAID':
+            return Response({'error': 'Invoice is already fully paid'}, status=400)
+        
+        if invoice.is_settled:
+            return Response({'error': 'Invoice is already settled'}, status=400)
+        
+        settlement_note = request.data.get('settlement_note', '')
+        waive_amount = request.data.get('waive_amount')
+        
+        if not settlement_note:
+            return Response({'error': 'Settlement note is required'}, status=400)
+        
+        balance = invoice.balance_due
+        
+        if waive_amount:
+            waive_amount = float(waive_amount)
+            if waive_amount > balance:
+                return Response({'error': 'Waive amount cannot exceed balance due'}, status=400)
+            # Add to discount
+            invoice.discount_amount += waive_amount
+            invoice.discount_reason = f"{invoice.discount_reason}; Settlement: {settlement_note}" if invoice.discount_reason else f"Settlement: {settlement_note}"
+            invoice.paid_amount += waive_amount  # Mark as paid
+        else:
+            # Waive full balance
+            invoice.discount_amount += balance
+            invoice.discount_reason = f"{invoice.discount_reason}; Settlement: {settlement_note}" if invoice.discount_reason else f"Settlement: {settlement_note}"
+            invoice.paid_amount = invoice.total_amount  # Mark as fully paid
+        
+        invoice.is_settled = True
+        invoice.settled_date = date.today()
+        invoice.settlement_note = f"Settled by {request.user.get_full_name()} on {date.today()}: {settlement_note}"
+        invoice.save()
+        
+        return Response({
+            'success': True,
+            'message': 'Invoice settled successfully',
+            'invoice_id': invoice.invoice_id,
+            'new_status': invoice.status,
+            'waived_amount': float(waive_amount) if waive_amount else float(balance),
+            'settled_by': request.user.get_full_name(),
+            'settled_date': str(invoice.settled_date),
+        })
+
+
+class StudentFeeSummaryView(APIView):
+    """Get a quick summary of all students' pending fees (for dashboard/reports)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get summary of pending fees per student
+        
+        Query params:
+        - class_id: Filter by class
+        - min_pending: Minimum pending amount to show
+        """
+        from django.db.models import Sum, F, OuterRef, Subquery
+        from students.models import Student
+        
+        # Base query for students with pending invoices
+        students_with_pending = Student.objects.filter(
+            school=request.user.school,
+            is_active=True
+        ).annotate(
+            total_invoiced=Sum('invoice__total_amount'),
+            total_paid=Sum('invoice__paid_amount'),
+        ).annotate(
+            pending_amount=F('total_invoiced') - F('total_paid')
+        ).filter(
+            pending_amount__gt=0
+        ).order_by('-pending_amount')
+        
+        # Filter by class
+        class_id = request.query_params.get('class_id')
+        if class_id:
+            students_with_pending = students_with_pending.filter(current_class_id=class_id)
+        
+        # Filter by minimum pending
+        min_pending = request.query_params.get('min_pending')
+        if min_pending:
+            students_with_pending = students_with_pending.filter(pending_amount__gte=float(min_pending))
+        
+        # Limit to 100
+        students_with_pending = students_with_pending[:100]
+        
+        result = []
+        for student in students_with_pending:
+            result.append({
+                'id': student.id,
+                'name': student.get_full_name(),
+                'enrollment_number': student.enrollment_number,
+                'class_name': str(student.current_class) if student.current_class else None,
+                'total_invoiced': float(student.total_invoiced or 0),
+                'total_paid': float(student.total_paid or 0),
+                'pending_amount': float(student.pending_amount or 0),
+            })
+        
+        # Overall summary
+        totals = Invoice.objects.filter(
+            school=request.user.school,
+            status__in=['PENDING', 'PARTIAL', 'OVERDUE']
+        ).aggregate(
+            total=Sum('total_amount'),
+            paid=Sum('paid_amount'),
+        )
+        
+        return Response({
+            'students': result,
+            'summary': {
+                'students_with_pending': len(result),
+                'total_pending': float((totals['total'] or 0) - (totals['paid'] or 0)),
+            }
+        })

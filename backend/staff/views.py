@@ -572,36 +572,38 @@ class CheckLocationView(APIView):
         # Calculate distance
         distance = calculate_distance(lat, lng, school.gps_lat, school.gps_long)
         
-        # Determine status
-        if distance <= 20:
-            status = 'excellent'  # Green - Perfect location
+        # Determine status based on Configured Radius
+        max_dist = school.geofence_radius or 50 # Default to 50 if somehow null
+        
+        if distance <= (max_dist * 0.4): # Excellent = within 40% of radius
+            status = 'excellent'
             can_mark = True
             message = f"Perfect! You're at the school ({distance:.0f}m)"
-            color = '#10b981'  # Green
-        elif distance <= 35:
-            status = 'good'  # Light Green - Good location
+            color = '#10b981'
+        elif distance <= (max_dist * 0.7): # Good = within 70% of radius
+            status = 'good'
             can_mark = True
             message = f"Good location ({distance:.0f}m away)"
-            color = '#84cc16'  # Lime
-        elif distance <= 50:
-            status = 'acceptable'  # Yellow - Acceptable
+            color = '#84cc16'
+        elif distance <= max_dist: # Acceptable = within radius
+            status = 'acceptable'
             can_mark = True
             message = f"Acceptable ({distance:.0f}m away)"
-            color = '#eab308'  # Yellow
-        elif distance <= 70:
-            status = 'warning'  # Orange - Getting far
+            color = '#eab308'
+        elif distance <= (max_dist * 1.4): # Warning = slightly outside
+            status = 'warning'
             can_mark = False
             message = f"Too far! Move closer ({distance:.0f}m away)"
-            color = '#f97316'  # Orange
+            color = '#f97316'
         else:
-            status = 'error'  # Red - Outside fence
+            status = 'error' # Error = far outside
             can_mark = False
-            message = f"Outside geo-fence ({distance:.0f}m away, max: 50m)"
-            color = '#ef4444'  # Red
+            message = f"Outside geo-fence ({distance:.0f}m away, max: {max_dist}m)"
+            color = '#ef4444'
         
         return Response({
             'distance': round(distance, 1),
-            'max_distance': 50,
+            'max_distance': max_dist,
             'status': status,
             'can_mark': can_mark,
             'message': message,
@@ -697,7 +699,7 @@ class GenerateResetCodeView(APIView):
             
         try:
             User = get_user_model()
-            target_user = User.objects.get(pk=pk)
+            target_user = User.objects.get(pk=pk, school=request.user.school)
             
             # Generate 6 digit code
             code = str(random.randint(100000, 999999))

@@ -62,11 +62,22 @@ class ClassViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
+        user = self.request.user
         queryset = Class.objects.select_related('school').all()
+        
+        if user.is_superuser:
+            return queryset
+            
+        # Filter by user's school
+        if hasattr(user, 'school') and user.school:
+             return queryset.filter(school=user.school)
+             
+        # Fallback to header if user has no school (unlikely for staff)
         school_id = get_current_school_id()
         if school_id:
-            queryset = queryset.filter(school__school_id=school_id)
-        return queryset
+            return queryset.filter(school__school_id=school_id)
+            
+        return queryset.none()
 
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()
@@ -75,10 +86,20 @@ class SectionViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
+        user = self.request.user
         queryset = Section.objects.select_related('school', 'parent_class').all()
-        school_id = get_current_school_id()
-        if school_id:
-            queryset = queryset.filter(school__school_id=school_id)
+
+        if user.is_superuser:
+             pass # Return all, but still might filter by class below
+        elif hasattr(user, 'school') and user.school:
+             queryset = queryset.filter(school=user.school)
+        else:
+             # Fallback
+             school_id = get_current_school_id()
+             if school_id:
+                 queryset = queryset.filter(school__school_id=school_id)
+             else:
+                 return queryset.none()
         
         # Filter by class if provided
         class_id = self.request.query_params.get('parent_class')

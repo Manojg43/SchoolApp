@@ -131,6 +131,12 @@ class EnquiryViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return EnquiryCreateSerializer
         return EnquirySerializer
+
+    def perform_create(self, serializer):
+        serializer.save(
+            school=self.request.user.school,
+            filled_by=self.request.user
+        )
     
     @action(detail=True, methods=['post'])
     def advance_stage(self, request, pk=None):

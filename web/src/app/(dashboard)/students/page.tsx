@@ -1,25 +1,43 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { getStudents, deleteStudent, getClasses, toggleStudentActive, type Student, type ClassItem } from "@/lib/api";
-import { Download, Plus, Edit, Trash2, GraduationCap, Users, UserPlus, Power } from "lucide-react";
+import { getStudents, deleteStudent, getClasses, getSections, getAcademicYears, toggleStudentActive, type Student, type ClassItem } from "@/lib/api";
+import { Download, Plus, Edit, Trash2, GraduationCap, Users, UserPlus, Power, RefreshCw, Filter } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/lib/toast";
-import FilterBar from "@/components/ui/FilterBar";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import Card, { CardContent, CardHeader, CardTitle } from "@/components/ui/modern/Card";
 import Animate, { AnimatePage } from "@/components/ui/Animate";
 import StudentProfileDrawer from "@/components/students/StudentProfileDrawer";
+
+interface Section {
+    id: number;
+    name: string;
+    parent_class: number;
+}
+
+interface AcademicYear {
+    id: number;
+    name: string;
+    is_active: boolean;
+}
 
 export default function StudentList() {
     const { t } = useLanguage();
     const { hasPermission } = useAuth();
     const [students, setStudents] = useState<Student[]>([]);
     const [classes, setClasses] = useState<ClassItem[]>([]);
+    const [sections, setSections] = useState<Section[]>([]);
+    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Filters
     const [search, setSearch] = useState("");
     const [classFilter, setClassFilter] = useState("");
+    const [sectionFilter, setSectionFilter] = useState("");
+    const [yearFilter, setYearFilter] = useState("");
+    const [activeFilter, setActiveFilter] = useState("all"); // all, active, inactive
 
     // Drawer State
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -29,9 +47,16 @@ export default function StudentList() {
     async function loadData() {
         setLoading(true);
         try {
-            const [sData, cData] = await Promise.all([getStudents(), getClasses()]);
+            const [sData, cData, secData, yearData] = await Promise.all([
+                getStudents(),
+                getClasses(),
+                getSections(),
+                getAcademicYears()
+            ]);
             if (Array.isArray(sData)) setStudents(sData);
             if (Array.isArray(cData)) setClasses(cData);
+            if (Array.isArray(secData)) setSections(secData);
+            if (Array.isArray(yearData)) setAcademicYears(yearData);
         } catch (e: unknown) {
             console.error(e);
         } finally {
@@ -42,6 +67,16 @@ export default function StudentList() {
     useEffect(() => {
         loadData();
     }, []);
+
+    // Get filtered sections based on selected class
+    const filteredSections = classFilter
+        ? sections.filter(s => s.parent_class === Number(classFilter))
+        : sections;
+
+    // Clear section when class changes
+    useEffect(() => {
+        setSectionFilter("");
+    }, [classFilter]);
 
     // Handlers
     const handleAdd = () => {
@@ -98,7 +133,6 @@ export default function StudentList() {
         try {
             const result = await toggleStudentActive(student.id);
             if (result.success) {
-                // Update student in local state
                 setStudents(prev => prev.map(s =>
                     s.id === student.id ? { ...s, is_active: result.is_active } : s
                 ));
@@ -116,15 +150,39 @@ export default function StudentList() {
         }
     };
 
-    // Derived Data
-    const filtered = students.filter(s => {
-        const matchesSearch =
-            s.first_name.toLowerCase().includes(search.toLowerCase()) ||
-            s.last_name.toLowerCase().includes(search.toLowerCase()) ||
-            s.enrollment_number.includes(search);
+    const clearFilters = () => {
+        setSearch("");
+        setClassFilter("");
+        setSectionFilter("");
+        setYearFilter("");
+        setActiveFilter("all");
+    };
 
-        const matchesClass = classFilter ? String((s as any).current_class) === classFilter : true;
-        return matchesSearch && matchesClass;
+    const hasActiveFilters = search || classFilter || sectionFilter || yearFilter || activeFilter !== "all";
+
+    // Derived Data - Filter students
+    const filtered = students.filter(s => {
+        // Search filter
+        const matchesSearch = search === "" ||
+            s.first_name?.toLowerCase().includes(search.toLowerCase()) ||
+            s.last_name?.toLowerCase().includes(search.toLowerCase()) ||
+            s.enrollment_number?.includes(search);
+
+        // Class filter
+        const matchesClass = !classFilter || String((s as any).current_class) === classFilter;
+
+        // Section filter
+        const matchesSection = !sectionFilter || String((s as any).section) === sectionFilter;
+
+        // Year filter
+        const matchesYear = !yearFilter || String((s as any).academic_year) === yearFilter;
+
+        // Active filter
+        const matchesActive = activeFilter === "all" ||
+            (activeFilter === "active" && s.is_active) ||
+            (activeFilter === "inactive" && !s.is_active);
+
+        return matchesSearch && matchesClass && matchesSection && matchesYear && matchesActive;
     });
 
     const columns: Column<Student>[] = [
@@ -146,7 +204,8 @@ export default function StudentList() {
                 </div>
             )
         },
-        { header: "Class", accessorKey: "class_name", className: "w-32" },
+        { header: "Class", accessorKey: "class_name", className: "w-24" },
+        { header: "Section", accessorKey: "section_name", className: "w-20" },
         {
             header: "Status",
             accessorKey: (row) => (
@@ -222,9 +281,9 @@ export default function StudentList() {
                     />
                     <StatCard
                         index={2}
-                        title="New Admissions"
-                        value={5}
-                        icon={<UserPlus className="h-6 w-6 text-secondary" />}
+                        title="Filtered Results"
+                        value={filtered.length}
+                        icon={<Filter className="h-6 w-6 text-secondary" />}
                         colorClass="bg-secondary/10"
                     />
                 </div>
@@ -232,18 +291,113 @@ export default function StudentList() {
                 {/* Main Content */}
                 <Animate animation="fade" delay={0.2}>
                     <Card className="overflow-hidden border-border">
+                        {/* Filter Bar */}
                         <div className="px-6 py-4 border-b border-border bg-surface/50">
-                            <FilterBar
-                                onSearch={setSearch}
-                                onFilterChange={(key, val) => setClassFilter(val)}
-                                filters={[
-                                    {
-                                        key: 'class',
-                                        label: 'All Classes',
-                                        options: classes.map(c => ({ label: c.name, value: String(c.id) }))
-                                    }
-                                ]}
-                            />
+                            <div className="flex flex-col lg:flex-row gap-4">
+                                {/* Search */}
+                                <div className="flex-1">
+                                    <input
+                                        type="text"
+                                        placeholder="Search by name or enrollment ID..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                    />
+                                </div>
+
+                                {/* Class Filter */}
+                                <select
+                                    value={classFilter}
+                                    onChange={(e) => setClassFilter(e.target.value)}
+                                    className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-w-[140px]"
+                                >
+                                    <option value="">All Classes</option>
+                                    {classes.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+
+                                {/* Section Filter */}
+                                <select
+                                    value={sectionFilter}
+                                    onChange={(e) => setSectionFilter(e.target.value)}
+                                    className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-w-[130px]"
+                                    disabled={!classFilter}
+                                >
+                                    <option value="">All Sections</option>
+                                    {filteredSections.map(s => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                </select>
+
+                                {/* Academic Year Filter */}
+                                <select
+                                    value={yearFilter}
+                                    onChange={(e) => setYearFilter(e.target.value)}
+                                    className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-w-[150px]"
+                                >
+                                    <option value="">All Years</option>
+                                    {academicYears.map(y => (
+                                        <option key={y.id} value={y.id}>
+                                            {y.name} {y.is_active ? '(Current)' : ''}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {/* Status Filter */}
+                                <select
+                                    value={activeFilter}
+                                    onChange={(e) => setActiveFilter(e.target.value)}
+                                    className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-w-[120px]"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+
+                                {/* Clear Filters */}
+                                {hasActiveFilters && (
+                                    <button
+                                        onClick={clearFilters}
+                                        className="flex items-center gap-2 px-4 py-2 text-text-muted hover:text-text-main hover:bg-surface rounded-lg transition-colors"
+                                    >
+                                        <RefreshCw className="w-4 h-4" />
+                                        Clear
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Active Filters Display */}
+                            {hasActiveFilters && (
+                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                                    <span className="text-sm text-text-muted">Active filters:</span>
+                                    {classFilter && (
+                                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                            Class: {classes.find(c => c.id === Number(classFilter))?.name}
+                                        </span>
+                                    )}
+                                    {sectionFilter && (
+                                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                            Section: {sections.find(s => s.id === Number(sectionFilter))?.name}
+                                        </span>
+                                    )}
+                                    {yearFilter && (
+                                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                            Year: {academicYears.find(y => y.id === Number(yearFilter))?.name}
+                                        </span>
+                                    )}
+                                    {activeFilter !== "all" && (
+                                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                            Status: {activeFilter}
+                                        </span>
+                                    )}
+                                    {search && (
+                                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                            Search: "{search}"
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <DataTable

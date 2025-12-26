@@ -1,0 +1,51 @@
+﻿
+> web@0.1.0 build
+> next build
+
+Proxying API requests to: https://schoolapp-6vwg.onrender.com
+   Γû▓ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local
+
+Proxying API requests to: https://schoolapp-6vwg.onrender.com
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 4.1s
+   Running TypeScript ...
+   Collecting page data using 7 workers ...
+   Generating static pages using 7 workers (0/28) ...
+   Generating static pages using 7 workers (7/28) 
+   Generating static pages using 7 workers (14/28) 
+   Generating static pages using 7 workers (21/28) 
+ Γ£ô Generating static pages using 7 workers (28/28) in 1056.5ms
+   Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /academic/homework
+Γö£ Γùï /attendance
+Γö£ Γùï /certificates
+Γö£ Γùï /communication/notices
+Γö£ Γùï /dashboard
+Γö£ Γùï /fees
+Γö£ Γùï /finance
+Γö£ Γùï /finance/certificates-fees
+Γö£ Γùï /finance/create
+Γö£ Γùï /finance/discounts
+Γö£ Γùï /finance/payroll
+Γö£ Γùï /finance/settlement
+Γö£ Γùï /finance/settlement/yearend
+Γö£ Γùï /login
+Γö£ Γùï /reports
+Γö£ Γùï /reports/attendance
+Γö£ Γùï /settings
+Γö£ Γùï /staff
+Γö£ Γùï /staff/attendance
+Γö£ Γùï /staff/leaves
+Γö£ Γùï /students
+Γö£ Γùï /students/attendance
+Γö£ Γùï /transport
+Γöö Γùï /transport/create
+
+
+Γùï  (Static)  prerendered as static content
+

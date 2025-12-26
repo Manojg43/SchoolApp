@@ -1,0 +1,526 @@
+﻿
+> web@0.1.0 build
+> next build
+
+Proxying API requests to: https://schoolapp-6vwg.onrender.com
+   Γû▓ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local
+
+Proxying API requests to: https://schoolapp-6vwg.onrender.com
+   Creating an optimized production build ...
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], R 
+   emoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+> Build error occurred
+Error: Turbopack build failed with 10 errors:
+./src/app/(dashboard)/admissions/[id]/page.tsx:8:1
+Export default doesn't exist in target module
+[0m [90m  6 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36minterface[39m 
+[33mEnquiryDetail[39m {[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-client] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/admissions/[id]/page.tsx [Client 
+Component Browser]
+    ./src/app/(dashboard)/admissions/[id]/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/admissions/[id]/page.tsx [Client 
+Component SSR]
+    ./src/app/(dashboard)/admissions/[id]/page.tsx [Server 
+Component]
+
+
+./src/app/(dashboard)/admissions/[id]/page.tsx:8:1
+Export default doesn't exist in target module
+[0m [90m  6 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36minterface[39m 
+[33mEnquiryDetail[39m {[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-ssr] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/admissions/[id]/page.tsx [Client 
+Component Browser]
+    ./src/app/(dashboard)/admissions/[id]/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/admissions/[id]/page.tsx [Client 
+Component SSR]
+    ./src/app/(dashboard)/admissions/[id]/page.tsx [Server 
+Component]
+
+
+./src/app/(dashboard)/admissions/create/page.tsx:8:1
+Export default doesn't exist in target module
+[0m [90m  6 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36minterface[39m [33mClassOption[39m 
+{[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-client] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/admissions/create/page.tsx 
+[Client Component Browser]
+    ./src/app/(dashboard)/admissions/create/page.tsx 
+[Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/admissions/create/page.tsx 
+[Client Component SSR]
+    ./src/app/(dashboard)/admissions/create/page.tsx 
+[Server Component]
+
+
+./src/app/(dashboard)/admissions/create/page.tsx:8:1
+Export default doesn't exist in target module
+[0m [90m  6 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36minterface[39m [33mClassOption[39m 
+{[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-ssr] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/admissions/create/page.tsx 
+[Client Component Browser]
+    ./src/app/(dashboard)/admissions/create/page.tsx 
+[Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/admissions/create/page.tsx 
+[Client Component SSR]
+    ./src/app/(dashboard)/admissions/create/page.tsx 
+[Server Component]
+
+
+./src/app/(dashboard)/admissions/page.tsx:8:1
+Export default doesn't exist in target module
+[0m [90m  6 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36minterface[39m [33mEnquiry[39m {[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-client] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/admissions/page.tsx [Client 
+Component Browser]
+    ./src/app/(dashboard)/admissions/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/admissions/page.tsx [Client 
+Component SSR]
+    ./src/app/(dashboard)/admissions/page.tsx [Server 
+Component]
+
+
+./src/app/(dashboard)/admissions/page.tsx:8:1
+Export default doesn't exist in target module
+[0m [90m  6 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36minterface[39m [33mEnquiry[39m {[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-ssr] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/admissions/page.tsx [Client 
+Component Browser]
+    ./src/app/(dashboard)/admissions/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/admissions/page.tsx [Client 
+Component SSR]
+    ./src/app/(dashboard)/admissions/page.tsx [Server 
+Component]
+
+
+./src/app/(dashboard)/admissions/workflow/page.tsx:7:1
+Export default doesn't exist in target module
+[0m [90m  5 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  6 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m  9 |[39m
+ [90m 10 |[39m [36minterface[39m [33mStage[39m {[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-client] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/admissions/workflow/page.tsx 
+[Client Component Browser]
+    ./src/app/(dashboard)/admissions/workflow/page.tsx 
+[Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/admissions/workflow/page.tsx 
+[Client Component SSR]
+    ./src/app/(dashboard)/admissions/workflow/page.tsx 
+[Server Component]
+
+
+./src/app/(dashboard)/admissions/workflow/page.tsx:7:1
+Export default doesn't exist in target module
+[0m [90m  5 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  6 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m  9 |[39m
+ [90m 10 |[39m [36minterface[39m [33mStage[39m {[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-ssr] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/admissions/workflow/page.tsx 
+[Client Component Browser]
+    ./src/app/(dashboard)/admissions/workflow/page.tsx 
+[Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/admissions/workflow/page.tsx 
+[Client Component SSR]
+    ./src/app/(dashboard)/admissions/workflow/page.tsx 
+[Server Component]
+
+
+./src/app/(dashboard)/students/[id]/page.tsx:8:1
+Export default doesn't exist in target module
+[0m [90m  6 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36minterface[39m [33mStudent[39m {[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-client] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/students/[id]/page.tsx [Client 
+Component Browser]
+    ./src/app/(dashboard)/students/[id]/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/students/[id]/page.tsx [Client 
+Component SSR]
+    ./src/app/(dashboard)/students/[id]/page.tsx [Server 
+Component]
+
+
+./src/app/(dashboard)/students/[id]/page.tsx:8:1
+Export default doesn't exist in target module
+[0m [90m  6 |[39m [36mimport[39m { 
+[33mAnimatePage[39m } [36mfrom[39m 
+[32m'@/components/ui/Animate'[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m [33mCard[39m[33m,[39m 
+{ [33mCardContent[39m[33m,[39m 
+[33mCardHeader[39m[33m,[39m [33mCardTitle[39m } 
+[36mfrom[39m 
+[32m'@/components/ui/modern/Card'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m api 
+[36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { toast } [36mfrom[39m 
+[32m'@/lib/toast'[39m[33m;[39m
+ [90m 10 |[39m
+ [90m 11 |[39m [36minterface[39m [33mStudent[39m {[0m
+
+The export default was not found in module 
+[project]/src/lib/api.ts [app-ssr] (ecmascript).
+Did you mean to import deleteFee?
+All exports of the module are statically known (It doesn't 
+have dynamic exports). So it's known statically that the 
+requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/students/[id]/page.tsx [Client 
+Component Browser]
+    ./src/app/(dashboard)/students/[id]/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/students/[id]/page.tsx [Client 
+Component SSR]
+    ./src/app/(dashboard)/students/[id]/page.tsx [Server 
+Component]
+
+
+    at <unknown> 
+(./src/app/(dashboard)/admissions/[id]/page.tsx:8:1)
+    at <unknown> 
+(./src/app/(dashboard)/admissions/[id]/page.tsx:8:1)
+    at <unknown> 
+(./src/app/(dashboard)/admissions/create/page.tsx:8:1)
+    at <unknown> 
+(./src/app/(dashboard)/admissions/create/page.tsx:8:1)
+    at <unknown> 
+(./src/app/(dashboard)/admissions/page.tsx:8:1)
+    at <unknown> 
+(./src/app/(dashboard)/admissions/page.tsx:8:1)
+    at <unknown> 
+(./src/app/(dashboard)/admissions/workflow/page.tsx:7:1)
+    at <unknown> 
+(./src/app/(dashboard)/admissions/workflow/page.tsx:7:1)
+    at <unknown> 
+(./src/app/(dashboard)/students/[id]/page.tsx:8:1)
+    at <unknown> 
+(./src/app/(dashboard)/students/[id]/page.tsx:8:1)

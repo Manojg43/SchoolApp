@@ -2,18 +2,16 @@ from django.urls import path
 from .views import CalculateSalaryView, DownloadInvoiceView
 from .pdf_views import GeneratePayslipPDF, GenerateReceiptPDF
 from .views_payroll import SalaryStructureView, GeneratePayrollView, PayrollDashboardView, MarkPaidView
-from .views_payroll import SalaryStructureView, GeneratePayrollView, PayrollDashboardView, MarkPaidView
 from .views_pdf import DownloadPayslipView, GetPayslipLinkView
 
 urlpatterns = [
-    path('salary/calculate/', GeneratePayrollView.as_view(), name='calculate-salary'), # Replaced with new logic
+    path('salary/calculate/', GeneratePayrollView.as_view(), name='calculate-salary'),
     path('salary/payslip/<str:salary_id>/', GeneratePayslipPDF.as_view(), name='payslip-pdf'),
     path('receipt/<str:receipt_no>/', GenerateReceiptPDF.as_view(), name='receipt-pdf'),
     path('invoice/<int:invoice_id>/pdf/', DownloadInvoiceView.as_view(), name='invoice-pdf'),
     
-    # New Payroll Endpoints
+    # Payroll Endpoints
     path('payroll/structure/<int:staff_id>/', SalaryStructureView.as_view(), name='payroll-structure'),
-    path('payroll/dashboard/', PayrollDashboardView.as_view(), name='payroll-dashboard'),
     path('payroll/dashboard/', PayrollDashboardView.as_view(), name='payroll-dashboard'),
     path('payroll/mark-paid/<int:salary_id>/', MarkPaidView.as_view(), name='payroll-mark-paid'),
     path('salary/<int:pk>/download/', DownloadPayslipView.as_view(), name='download-payslip-pdf'),
@@ -23,22 +21,26 @@ urlpatterns = [
 from rest_framework.routers import DefaultRouter
 from .views import (
     FeeCategoryViewSet, FeeStructureViewSet,
-    # Fee Settlement ViewSets (Phase 2)
+    # Fee Settlement ViewSets
     FeeInstallmentViewSet, FeeDiscountViewSet, CertificateFeeViewSet,
-    # Fee Settlement Views
+    # Receipt ViewSet
+    ReceiptViewSet,
+    # Views
     BulkFeeGenerationView, YearSettlementView, SettlementSummaryView,
-    StudentPromotionView, CertificateFeeCheckView
+    StudentPromotionView, CertificateFeeCheckView,
+    PendingReceivablesView, PaymentHistoryView,
+    # Student Fee Views
+    StudentFeeView, SettleInvoiceView, StudentFeeSummaryView
 )
 
 router = DefaultRouter()
 router.register(r'categories', FeeCategoryViewSet)
 router.register(r'structure', FeeStructureViewSet)
-# Fee Settlement ViewSets
 router.register(r'installments', FeeInstallmentViewSet)
 router.register(r'discounts', FeeDiscountViewSet)
 router.register(r'certificate-fees', CertificateFeeViewSet)
+router.register(r'receipts', ReceiptViewSet)  # Payment receipts
 
-# Add settlement endpoints to urlpatterns
 urlpatterns += [
     # Bulk operations
     path('settlement/generate/', BulkFeeGenerationView.as_view(), name='bulk-fee-generation'),
@@ -50,6 +52,17 @@ urlpatterns += [
     
     # Certificate fee check
     path('certificate-fee/<str:cert_type>/', CertificateFeeCheckView.as_view(), name='certificate-fee-check'),
+    
+    # Payment tracking
+    path('receivables/', PendingReceivablesView.as_view(), name='pending-receivables'),
+    path('payment-history/', PaymentHistoryView.as_view(), name='payment-history'),
+    
+    # Student-specific fee management
+    path('students/<int:student_id>/fees/', StudentFeeView.as_view(), name='student-fee-view'),
+    path('students-pending/', StudentFeeSummaryView.as_view(), name='students-with-pending'),
+    
+    # Invoice settlement (waive/write-off)
+    path('invoices/<int:invoice_id>/settle/', SettleInvoiceView.as_view(), name='settle-invoice'),
 ]
 
 urlpatterns += router.urls

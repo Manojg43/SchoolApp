@@ -168,19 +168,55 @@ class Receipt(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='receipts')
     amount = models.DecimalField(_("Amount Paid"), max_digits=10, decimal_places=2)
     date = models.DateField(_("Payment Date"), auto_now_add=True)
-    mode = models.CharField(_("Payment Mode"), max_length=50, choices=[('CASH', 'Cash'), ('ONLINE', 'Online'), ('CHEQUE', 'Cheque')])
+    mode = models.CharField(_("Payment Mode"), max_length=50, choices=[
+        ('CASH', 'Cash'), 
+        ('ONLINE', 'Online'), 
+        ('CHEQUE', 'Cheque'),
+        ('UPI', 'UPI'),
+        ('NEFT', 'NEFT/RTGS'),
+        ('CARD', 'Debit/Credit Card'),
+    ])
     transaction_id = models.CharField(max_length=100, blank=True)
     
-    created_by = models.ForeignKey(CoreUser, on_delete=models.SET_NULL, null=True) # Accountant
+    # Payment tracking - who created and when
+    created_by = models.ForeignKey(CoreUser, on_delete=models.SET_NULL, null=True, related_name='receipts_created')
+    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp with IST
+    
+    # Who collected the payment (may be different from created_by)
+    collected_by = models.ForeignKey(
+        CoreUser, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='receipts_collected',
+        help_text="Staff who physically collected the payment"
+    )
+    
+    remarks = models.TextField(blank=True, help_text="Any notes about this payment")
 
     def save(self, *args, **kwargs):
         if not self.receipt_no:
             self.receipt_no = generate_business_id('RCP')
+        
+        # Set collected_by to created_by if not specified
+        if not self.collected_by:
+            self.collected_by = self.created_by
+            
         super().save(*args, **kwargs)
         
-        # Update Invoice
+        # Update Invoice paid amount
         self.invoice.paid_amount += self.amount
         self.invoice.save()
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['school', 'date'], name='receipt_school_date_idx'),
+            models.Index(fields=['invoice'], name='receipt_invoice_idx'),
+            models.Index(fields=['created_at'], name='receipt_created_at_idx'),
+        ]
+    
+    def __str__(self):
+        return f"{self.receipt_no} - ₹{self.amount}"
 
 class Holiday(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)

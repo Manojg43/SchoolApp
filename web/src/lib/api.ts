@@ -635,6 +635,19 @@ export async function getSections(schoolId?: string, classId?: number): Promise<
     return fetchWithSchool(`/sections/${query}`, schoolId);
 }
 
+// Academic Years
+export interface AcademicYear {
+    id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
+    is_active: boolean;
+}
+
+export async function getAcademicYears(schoolId?: string): Promise<AcademicYear[]> {
+    return fetchWithSchool('/academic-years/', schoolId);
+}
+
 // Student CRUD
 export type StudentPayload = Omit<Student, 'id' | 'is_active' | 'language' | 'mother_name' | 'address' | 'section'> & {
     language?: string;
@@ -934,6 +947,7 @@ export interface SchoolSettings {
     language: string;
     gps_lat: string | number;
     gps_long: string | number;
+    geofence_radius?: number;
     logo_url: string; // Base64 or URL
     signature_url: string; // Base64 or URL
     watermark_url: string; // Base64 or URL
@@ -1283,6 +1297,109 @@ export async function getStudentCertificates(
     schoolId?: string
 ): Promise<Certificate[]> {
     return fetchWithSchool(`/students/${studentId}/certificates/`, schoolId);
+}
+
+// ============================================
+// ENQUIRY DOCUMENTS
+// ============================================
+
+export interface EnquiryDocument {
+    id: number;
+    document_type: string;
+    file: string;
+    remarks?: string;
+    uploaded_at: string;
+    is_verified: boolean;
+    verification_remarks?: string;
+}
+
+export async function getEnquiryDocuments(enquiryId: number, schoolId?: string): Promise<EnquiryDocument[]> {
+    return fetchWithSchool(`/admissions/documents/?enquiry=${enquiryId}`, schoolId);
+}
+
+export async function uploadEnquiryDocument(
+    enquiryId: number,
+    data: { document_type: string, file: File, remarks?: string },
+    schoolId?: string
+): Promise<EnquiryDocument> {
+    const formData = new FormData();
+    formData.append('enquiry', enquiryId.toString());
+    formData.append('document_type', data.document_type);
+    formData.append('file', data.file);
+    if (data.remarks) formData.append('remarks', data.remarks);
+
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/admissions/documents/`, {
+        method: 'POST',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: formData
+    });
+
+    if (!res.ok) throw new Error(`Failed to upload document: ${res.statusText}`);
+    return res.json();
+}
+
+// ============================================
+// TRANSPORT SUBSCRIPTIONS
+// ============================================
+
+export interface TransportSubscription {
+    id: number;
+    student: number;
+    route: number;
+    route_details?: {
+        name: string;
+        vehicle_number: string;
+        driver_name: string;
+    };
+    pickup_point?: string;
+    drop_point?: string;
+    start_date: string;
+    end_date?: string;
+    status: 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+    monthly_fee: string;
+}
+
+export async function getStudentSubscriptions(studentId: number, schoolId?: string): Promise<TransportSubscription[]> {
+    const res = await fetchWithSchool('/transport/subscriptions/', schoolId);
+    // Filter client-side if backend doesn't support filtering by student in list view (it usually does but safety check)
+    // The viewset filters by school, let's assume we might receive all or filtered. 
+    // Wait, the TransportSubscriptionViewSet doesn't seem to support ?student=ID filtering in get_queryset (it selects all for school). 
+    // We might need to filter client side or update backend.
+    // For now, let's assume we get list and filter.
+    if (Array.isArray(res)) {
+        return res.filter((sub: any) => sub.student === Number(studentId));
+    }
+    return [];
+}
+
+export async function createTransportSubscription(data: Partial<TransportSubscription>, schoolId?: string): Promise<TransportSubscription> {
+    return api.post('/transport/subscriptions/', data).then(r => r.data);
+}
+
+// ============================================
+// STUDENT REPORTS
+// ============================================
+
+export async function downloadReportCard(studentId: number, schoolId?: string): Promise<Blob> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/students/${studentId}/report-card/`, {
+        method: 'GET',
+        headers: {
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to download report card: ${res.statusText}`);
+    return res.blob();
 }
 
 // Default export for backward compatibility with: import api from '@/lib/api'

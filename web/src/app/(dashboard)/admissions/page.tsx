@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Plus, Search, Filter, Eye, CheckCircle, XCircle, ArrowRight, Phone, Calendar, Clock } from 'lucide-react';
+import { FileText, Plus, Search, Filter, Eye, CheckCircle, XCircle, ArrowRight, Phone, Calendar, Clock, RefreshCw } from 'lucide-react';
 import { AnimatePage } from '@/components/ui/Animate';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/modern/Card';
-import api from '@/lib/api';
+import api, { getClasses, ClassItem } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
 interface Enquiry {
@@ -15,6 +15,7 @@ interface Enquiry {
     first_name: string;
     last_name: string;
     class_name: string;
+    class_applied: number;
     parent_mobile: string;
     status: string;
     priority: string;
@@ -57,21 +58,51 @@ export default function AdmissionsPage() {
     const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [classes, setClasses] = useState<ClassItem[]>([]);
+
+    // Filters
     const [statusFilter, setStatusFilter] = useState('');
+    const [classFilter, setClassFilter] = useState('');
+    const [priorityFilter, setPriorityFilter] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
+        loadClasses();
+    }, []);
+
+    useEffect(() => {
         loadData();
-    }, [statusFilter]);
+    }, [statusFilter, classFilter, priorityFilter]);
+
+    const loadClasses = async () => {
+        try {
+            const data = await getClasses();
+            setClasses(data);
+        } catch (error) {
+            console.error('Failed to load classes', error);
+        }
+    };
 
     const loadData = async () => {
+        setLoading(true);
         try {
+            // Build query params
+            const params = new URLSearchParams();
+            if (statusFilter) params.append('status', statusFilter);
+            if (classFilter) params.append('class_applied', classFilter);
+            if (priorityFilter) params.append('priority', priorityFilter);
+
+            const queryString = params.toString() ? `?${params.toString()}` : '';
+
             const [enquiriesRes, statsRes] = await Promise.all([
-                api.get(`/admissions/enquiries/${statusFilter ? `?status=${statusFilter}` : ''}`),
+                api.get(`/admissions/enquiries/${queryString}`),
                 api.get('/admissions/stats/')
             ]);
-            setEnquiries(enquiriesRes.data.results || enquiriesRes.data);
-            setStats(statsRes.data);
+            // Handle both {data: ...} format and direct format
+            const enquiriesData = enquiriesRes?.data ?? enquiriesRes;
+            const statsData = statsRes?.data ?? statsRes;
+            setEnquiries(Array.isArray(enquiriesData) ? enquiriesData : (enquiriesData?.results || []));
+            setStats(statsData);
         } catch (error) {
             console.error('Failed to load enquiries', error);
             toast.error('Failed to load data');
@@ -80,11 +111,18 @@ export default function AdmissionsPage() {
         }
     };
 
+    const clearFilters = () => {
+        setStatusFilter('');
+        setClassFilter('');
+        setPriorityFilter('');
+        setSearchQuery('');
+    };
+
     const filteredEnquiries = enquiries.filter(e =>
         searchQuery === '' ||
-        e.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.enquiry_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.parent_mobile.includes(searchQuery)
+        e.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.enquiry_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.parent_mobile?.includes(searchQuery)
     );
 
     const formatDate = (dateStr: string) => {
@@ -94,6 +132,8 @@ export default function AdmissionsPage() {
             year: 'numeric'
         });
     };
+
+    const hasActiveFilters = statusFilter || classFilter || priorityFilter;
 
     return (
         <AnimatePage>
@@ -116,37 +156,37 @@ export default function AdmissionsPage() {
                 {/* Stats Cards */}
                 {stats && (
                     <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setStatusFilter('')}>
+                        <Card className={`cursor-pointer hover:shadow-lg transition-shadow ${!statusFilter ? 'ring-2 ring-primary' : ''}`} onClick={() => setStatusFilter('')}>
                             <CardContent className="p-4 text-center">
                                 <p className="text-3xl font-bold text-primary">{stats.total}</p>
                                 <p className="text-sm text-text-muted">Total</p>
                             </CardContent>
                         </Card>
-                        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setStatusFilter('PENDING')}>
+                        <Card className={`cursor-pointer hover:shadow-lg transition-shadow ${statusFilter === 'PENDING' ? 'ring-2 ring-yellow-500' : ''}`} onClick={() => setStatusFilter('PENDING')}>
                             <CardContent className="p-4 text-center">
                                 <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
                                 <p className="text-sm text-text-muted">Pending</p>
                             </CardContent>
                         </Card>
-                        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setStatusFilter('IN_PROGRESS')}>
+                        <Card className={`cursor-pointer hover:shadow-lg transition-shadow ${statusFilter === 'IN_PROGRESS' ? 'ring-2 ring-blue-500' : ''}`} onClick={() => setStatusFilter('IN_PROGRESS')}>
                             <CardContent className="p-4 text-center">
                                 <p className="text-3xl font-bold text-blue-600">{stats.in_progress}</p>
                                 <p className="text-sm text-text-muted">In Progress</p>
                             </CardContent>
                         </Card>
-                        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setStatusFilter('APPROVED')}>
+                        <Card className={`cursor-pointer hover:shadow-lg transition-shadow ${statusFilter === 'APPROVED' ? 'ring-2 ring-green-500' : ''}`} onClick={() => setStatusFilter('APPROVED')}>
                             <CardContent className="p-4 text-center">
                                 <p className="text-3xl font-bold text-green-600">{stats.approved}</p>
                                 <p className="text-sm text-text-muted">Approved</p>
                             </CardContent>
                         </Card>
-                        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setStatusFilter('REJECTED')}>
+                        <Card className={`cursor-pointer hover:shadow-lg transition-shadow ${statusFilter === 'REJECTED' ? 'ring-2 ring-red-500' : ''}`} onClick={() => setStatusFilter('REJECTED')}>
                             <CardContent className="p-4 text-center">
                                 <p className="text-3xl font-bold text-red-600">{stats.rejected}</p>
                                 <p className="text-sm text-text-muted">Rejected</p>
                             </CardContent>
                         </Card>
-                        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setStatusFilter('CONVERTED')}>
+                        <Card className={`cursor-pointer hover:shadow-lg transition-shadow ${statusFilter === 'CONVERTED' ? 'ring-2 ring-purple-500' : ''}`} onClick={() => setStatusFilter('CONVERTED')}>
                             <CardContent className="p-4 text-center">
                                 <p className="text-3xl font-bold text-purple-600">{stats.converted}</p>
                                 <p className="text-sm text-text-muted">Admitted</p>
@@ -159,6 +199,7 @@ export default function AdmissionsPage() {
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex flex-col md:flex-row gap-4">
+                            {/* Search */}
                             <div className="flex-1 relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                                 <input
@@ -169,19 +210,80 @@ export default function AdmissionsPage() {
                                     className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                                 />
                             </div>
+
+                            {/* Status Filter */}
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-w-[140px]"
                             >
                                 <option value="">All Status</option>
                                 <option value="PENDING">Pending</option>
                                 <option value="IN_PROGRESS">In Progress</option>
+                                <option value="ON_HOLD">On Hold</option>
                                 <option value="APPROVED">Approved</option>
                                 <option value="REJECTED">Rejected</option>
                                 <option value="CONVERTED">Converted</option>
                             </select>
+
+                            {/* Class Filter */}
+                            <select
+                                value={classFilter}
+                                onChange={(e) => setClassFilter(e.target.value)}
+                                className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-w-[140px]"
+                            >
+                                <option value="">All Classes</option>
+                                {classes.map(cls => (
+                                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                ))}
+                            </select>
+
+                            {/* Priority Filter */}
+                            <select
+                                value={priorityFilter}
+                                onChange={(e) => setPriorityFilter(e.target.value)}
+                                className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-w-[120px]"
+                            >
+                                <option value="">All Priority</option>
+                                <option value="LOW">Low</option>
+                                <option value="NORMAL">Normal</option>
+                                <option value="HIGH">High</option>
+                                <option value="URGENT">Urgent</option>
+                            </select>
+
+                            {/* Clear Filters */}
+                            {hasActiveFilters && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="flex items-center gap-2 px-4 py-2 text-text-muted hover:text-text-main hover:bg-surface rounded-lg transition-colors"
+                                >
+                                    <RefreshCw className="w-4 h-4" />
+                                    Clear
+                                </button>
+                            )}
                         </div>
+
+                        {/* Active Filters Display */}
+                        {hasActiveFilters && (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                                <span className="text-sm text-text-muted">Active filters:</span>
+                                {statusFilter && (
+                                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                        Status: {statusFilter.replace('_', ' ')}
+                                    </span>
+                                )}
+                                {classFilter && (
+                                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                        Class: {classes.find(c => c.id === Number(classFilter))?.name}
+                                    </span>
+                                )}
+                                {priorityFilter && (
+                                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                        Priority: {priorityFilter}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -196,6 +298,14 @@ export default function AdmissionsPage() {
                             <div className="text-center py-20 text-text-muted">
                                 <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
                                 <p>No enquiries found</p>
+                                {hasActiveFilters && (
+                                    <button
+                                        onClick={clearFilters}
+                                        className="mt-2 text-primary hover:underline"
+                                    >
+                                        Clear filters
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="divide-y divide-border">

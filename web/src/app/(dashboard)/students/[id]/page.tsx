@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, GraduationCap, Calendar, Award, TrendingUp, TrendingDown, FileText, User } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Calendar, Award, TrendingUp, TrendingDown, FileText, User, Bus } from 'lucide-react';
 import { AnimatePage } from '@/components/ui/Animate';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/modern/Card';
-import { fetchWithSchool, API_BASE_URL } from '@/lib/api';
+import { fetchWithSchool, API_BASE_URL, downloadReportCard, getStudentSubscriptions, TransportSubscription } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
 interface Student {
@@ -71,6 +71,7 @@ export default function StudentHistoryPage() {
 
     const [student, setStudent] = useState<Student | null>(null);
     const [history, setHistory] = useState<HistoryRecord[]>([]);
+    const [subscriptions, setSubscriptions] = useState<TransportSubscription[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -79,17 +80,35 @@ export default function StudentHistoryPage() {
 
     const loadData = async () => {
         try {
-            const [studentData, historyData] = await Promise.all([
+            const [studentData, historyData, subData] = await Promise.all([
                 fetchWithSchool(`/students/${studentId}/`),
-                fetchWithSchool(`/student-history/?student=${studentId}`)
+                fetchWithSchool(`/student-history/?student=${studentId}`),
+                getStudentSubscriptions(Number(studentId))
             ]);
             setStudent(studentData);
             setHistory(Array.isArray(historyData) ? historyData : (historyData?.results || []));
+            setSubscriptions(subData);
         } catch (error) {
             console.error('Failed to load data', error);
             toast.error('Failed to load student data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDownloadReportCard = async () => {
+        try {
+            const blob = await downloadReportCard(Number(studentId));
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report_card_${studentId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            toast.error('Failed to download report card');
         }
     };
 
@@ -136,11 +155,44 @@ export default function StudentHistoryPage() {
                     </div>
                 </div>
 
+                {/* Transport Section */}
+                {subscriptions.length > 0 && (
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle className="flex items-center gap-2">
+                                <Bus className="w-5 h-5 text-primary" />
+                                Transport Subscriptions
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {subscriptions.map(sub => (
+                                    <div key={sub.id} className="p-4 border border-border rounded-lg bg-surface/50">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 className="font-semibold">{sub.route_details?.name || `Route #${sub.route}`}</h4>
+                                                <p className="text-sm text-text-muted">{sub.route_details?.vehicle_number}</p>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${sub.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                {sub.status}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm space-y-1">
+                                            <p><span className="text-text-muted">Pickup:</span> {sub.pickup_point || 'N/A'}</p>
+                                            <p><span className="text-text-muted">Fee:</span> ₹{sub.monthly_fee}/month</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* History Title */}
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-text-main">Academic History</h2>
                     <button
-                        onClick={() => window.open(`${API_BASE_URL}/students/${studentId}/report-card/`, '_blank')}
+                        onClick={handleDownloadReportCard}
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
                     >
                         <FileText className="w-4 h-4" />

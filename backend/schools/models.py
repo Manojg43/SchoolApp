@@ -18,6 +18,7 @@ class School(models.Model):
     # Geo-Fencing (Center Point)
     gps_lat = models.DecimalField(_("Geo Latitude"), max_digits=9, decimal_places=6, null=True, blank=True)
     gps_long = models.DecimalField(_("Geo Longitude"), max_digits=9, decimal_places=6, null=True, blank=True)
+    geofence_radius = models.PositiveIntegerField(_("Geofence Radius (Meters)"), default=50, help_text="Radius in meters for attendance marking validation")
     
     # Supabase Storage / Base64 DB Storage
     # Changed to TextField to allow storing Base64 strings directly in DB as per user request

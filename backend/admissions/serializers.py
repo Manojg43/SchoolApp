@@ -27,19 +27,59 @@ class WorkflowStageSerializer(serializers.ModelSerializer):
         ]
 
 
+class WorkflowStageWritableSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating stages within a workflow"""
+    class Meta:
+        model = WorkflowStage
+        fields = [
+            'name', 'order', 'is_required', 
+            'requires_documents', 'requires_payment', 'requires_assessment',
+            'required_approver_role', 'auto_advance'
+        ]
+
+
 class WorkflowTemplateSerializer(serializers.ModelSerializer):
     stages = WorkflowStageSerializer(many=True, read_only=True)
     stages_count = serializers.SerializerMethodField()
+    
+    # For write operations - accept stages as nested array
+    stages_data = WorkflowStageWritableSerializer(many=True, write_only=True, required=False, source='stages')
     
     class Meta:
         model = WorkflowTemplate
         fields = [
             'id', 'name', 'workflow_type', 'description', 
-            'is_active', 'is_default', 'stages', 'stages_count'
+            'is_active', 'is_default', 'stages', 'stages_count', 'stages_data'
         ]
     
     def get_stages_count(self, obj):
         return obj.stages.count()
+    
+    def create(self, validated_data):
+        stages_data = validated_data.pop('stages', [])
+        workflow = WorkflowTemplate.objects.create(**validated_data)
+        
+        # Create stages
+        for stage_data in stages_data:
+            WorkflowStage.objects.create(template=workflow, **stage_data)
+        
+        return workflow
+    
+    def update(self, instance, validated_data):
+        stages_data = validated_data.pop('stages', None)
+        
+        # Update workflow fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # If stages provided, replace existing stages
+        if stages_data is not None:
+            instance.stages.all().delete()
+            for stage_data in stages_data:
+                WorkflowStage.objects.create(template=instance, **stage_data)
+        
+        return instance
 
 
 class WorkflowTemplateListSerializer(serializers.ModelSerializer):

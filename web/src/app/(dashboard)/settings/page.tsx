@@ -294,6 +294,19 @@ export default function SettingsPage() {
                                                 />
                                             </div>
                                             <div className="col-span-2">
+                                                <label className="block text-sm font-semibold text-text-main mb-1.5">Geofence Radius (Meters)</label>
+                                                <input
+                                                    type="number"
+                                                    value={settings.geofence_radius || 50}
+                                                    onChange={e => setSettings({ ...settings, geofence_radius: parseInt(e.target.value) })}
+                                                    className="w-full p-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                                    placeholder="50"
+                                                />
+                                                <p className="text-xs text-text-muted mt-1">
+                                                    Maximum distance allowed for staff to mark attendance (Default: 50m)
+                                                </p>
+                                            </div>
+                                            <div className="col-span-2">
                                                 <div className="bg-secondary/10 text-secondary text-xs p-3 rounded-lg flex items-center gap-2">
                                                     <MapPin size={14} />
                                                     Tip: Use Google Maps to verify these coordinates precisely.

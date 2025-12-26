@@ -107,18 +107,51 @@ class CertificateFeeSerializer(serializers.ModelSerializer):
 
 
 class ReceiptSerializer(serializers.ModelSerializer):
-    """Serializer for payment receipts"""
+    """Serializer for payment receipts with full tracking"""
     invoice_number = serializers.CharField(source='invoice.invoice_id', read_only=True)
     student_name = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
+    collected_by_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Receipt
         fields = [
             'id', 'receipt_no', 'invoice', 'invoice_number',
             'student_name', 'amount', 'date', 'mode',
-            'transaction_id', 'created_by'
+            'transaction_id', 
+            'created_by', 'created_by_name', 'created_at',
+            'collected_by', 'collected_by_name',
+            'remarks'
         ]
-        read_only_fields = ['receipt_no', 'date']
+        read_only_fields = ['receipt_no', 'date', 'created_at']
     
     def get_student_name(self, obj):
         return obj.invoice.student.get_full_name()
+    
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name()
+        return None
+    
+    def get_collected_by_name(self, obj):
+        if obj.collected_by:
+            return obj.collected_by.get_full_name()
+        return None
+
+
+class ReceiptCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating new receipts (collecting payment)"""
+    
+    class Meta:
+        model = Receipt
+        fields = [
+            'invoice', 'amount', 'mode', 
+            'transaction_id', 'collected_by', 'remarks'
+        ]
+    
+    def create(self, validated_data):
+        request = self.context.get('request')
+        validated_data['school'] = request.user.school
+        validated_data['created_by'] = request.user
+        return super().create(validated_data)
+

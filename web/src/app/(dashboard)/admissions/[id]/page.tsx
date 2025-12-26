@@ -1,11 +1,9 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, CheckCircle, XCircle, ArrowRight, Phone, Mail, MapPin, Calendar, FileText, User, Clock, Building } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, ArrowRight, Phone, Mail, MapPin, Calendar, FileText, User, Clock, Building, Upload, ExternalLink } from 'lucide-react';
 import { AnimatePage } from '@/components/ui/Animate';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/modern/Card';
-import api from '@/lib/api';
+import api, { uploadEnquiryDocument } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
 interface EnquiryDetail {
@@ -63,6 +61,12 @@ export default function EnquiryDetailPage() {
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
 
+    // Document Upload State
+    const [uploadFile, setUploadFile] = useState<File | null>(null);
+    const [docType, setDocType] = useState('');
+    const [docRemarks, setDocRemarks] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+
     useEffect(() => {
         loadEnquiry();
     }, [enquiryId]);
@@ -119,6 +123,29 @@ export default function EnquiryDetailPage() {
             toast.error(error.response?.data?.error || 'Failed to convert');
         } finally {
             setActionLoading(false);
+        }
+    };
+
+    const handleUpload = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!uploadFile || !docType || !enquiry) return;
+
+        setIsUploading(true);
+        try {
+            await uploadEnquiryDocument(enquiry.id, {
+                document_type: docType,
+                file: uploadFile,
+                remarks: docRemarks
+            });
+            toast.success('Document uploaded');
+            setUploadFile(null);
+            setDocType('');
+            setDocRemarks('');
+            loadEnquiry(); // Reload to show new doc
+        } catch (error) {
+            toast.error('Failed to upload document');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -223,6 +250,87 @@ export default function EnquiryDetailPage() {
                                 <div>
                                     <p className="text-sm text-text-muted">Class Applied</p>
                                     <p className="font-medium">{enquiry.class_name || 'Not specified'}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Documents */}
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle>Documents</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {/* Document List */}
+                                <div className="space-y-3 mb-6">
+                                    {(enquiry.documents || []).length === 0 ? (
+                                        <p className="text-text-muted text-sm italic">No documents uploaded</p>
+                                    ) : (
+                                        (enquiry.documents || []).map((doc: any) => (
+                                            <div key={doc.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center">
+                                                        <FileText className="w-5 h-5 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium">{doc.document_type}</p>
+                                                        <p className="text-xs text-text-muted">{formatDate(doc.uploaded_at)}</p>
+                                                    </div>
+                                                </div>
+                                                <a
+                                                    href={doc.file}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="p-2 hover:bg-surface rounded-full text-primary"
+                                                >
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </a>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Upload Form */}
+                                <div className="bg-surface/50 p-4 rounded-lg border border-border">
+                                    <h4 className="text-sm font-semibold mb-3">Upload Document</h4>
+                                    <form onSubmit={handleUpload} className="space-y-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <input
+                                                type="text"
+                                                placeholder="Document Type (e.g. Birth Certificate)"
+                                                value={docType}
+                                                onChange={(e) => setDocType(e.target.value)}
+                                                className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
+                                                required
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Remarks (Optional)"
+                                                value={docRemarks}
+                                                onChange={(e) => setDocRemarks(e.target.value)}
+                                                className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="file"
+                                                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                                                className="flex-1 text-sm text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                                required
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={isUploading}
+                                                className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark disabled:opacity-50 flex items-center gap-2"
+                                            >
+                                                {isUploading ? (
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                ) : (
+                                                    <Upload className="w-4 h-4" />
+                                                )}
+                                                Upload
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </CardContent>
                         </Card>
