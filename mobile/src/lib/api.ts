@@ -118,4 +118,16 @@ export const mobileApi = {
     // Timetable
     getTimetable: (day?: string) =>
         apiRequest(`/staff/timetable/${day ? `?day=${day}` : ''}`, 'GET'),
+
+    // Enquiries (Admission)
+    getClasses: () => apiRequest('/classes/', 'GET'),
+
+    createEnquiry: (data: any) =>
+        apiRequest('/admissions/enquiries/', 'POST', data),
+
+    getMyEnquiries: () =>
+        apiRequest('/admissions/enquiries/?filled_by=me', 'GET'),
+
+    getEnquiryDetail: (id: number) =>
+        apiRequest(`/admissions/enquiries/${id}/`, 'GET'),
 };

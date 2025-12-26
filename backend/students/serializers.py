@@ -33,12 +33,54 @@ class StudentSerializer(serializers.ModelSerializer):
         return attrs
 
 class StudentHistorySerializer(serializers.ModelSerializer):
+    # Read-only display fields
     class_name = serializers.CharField(source='class_enrolled.name', read_only=True)
+    section_name = serializers.CharField(source='section_enrolled.name', read_only=True)
     year_name = serializers.CharField(source='academic_year.name', read_only=True)
-
+    promoted_to_class_name = serializers.CharField(source='promoted_to_class.name', read_only=True)
+    recorded_by_name = serializers.CharField(source='recorded_by.get_full_name', read_only=True)
+    student_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = StudentHistory
-        fields = '__all__'
+        fields = [
+            'id', 'school', 'student', 'student_name', 'academic_year', 'year_name',
+            'class_enrolled', 'class_name', 'section_enrolled', 'section_name',
+            # Academic Performance
+            'total_marks', 'max_marks', 'percentage', 'grade', 'class_rank', 'section_rank',
+            # Attendance Summary
+            'total_working_days', 'days_present', 'attendance_percentage',
+            # Promotion
+            'promotion_status', 'promoted_to_class', 'promoted_to_class_name',
+            # Conduct
+            'conduct', 'result', 'remarks', 'detention_reason',
+            # Audit
+            'recorded_by', 'recorded_by_name', 'recorded_at', 'updated_at'
+        ]
+        read_only_fields = ['school', 'recorded_by', 'recorded_at', 'updated_at']
+    
+    def get_student_name(self, obj):
+        return obj.student.get_full_name() if obj.student else ''
+
+
+class StudentHistoryCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating student history records"""
+    
+    class Meta:
+        model = StudentHistory
+        fields = [
+            'student', 'academic_year', 'class_enrolled', 'section_enrolled',
+            'total_marks', 'max_marks', 'percentage', 'grade', 'class_rank', 'section_rank',
+            'total_working_days', 'days_present', 'attendance_percentage',
+            'promotion_status', 'promoted_to_class', 'conduct', 'result',
+            'remarks', 'detention_reason'
+        ]
+    
+    def create(self, validated_data):
+        request = self.context.get('request')
+        validated_data['school'] = request.user.school
+        validated_data['recorded_by'] = request.user
+        return super().create(validated_data)
 
 class AttendanceSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.first_name', read_only=True)

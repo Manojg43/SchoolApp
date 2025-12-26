@@ -126,17 +126,198 @@ class Student(models.Model):
         return f"{self.first_name} {self.last_name} ({self.student_id})"
 
 class StudentHistory(models.Model):
-    # History doesn't typically need a business ID unless requested, but strict "Every table" might imply it.
-    # The prompt explicitly lists: Student, Teacher, Staff, Academic Year, Attendance, Fee Invoice, Receipt, Certificate, Vehicle, Driver, Salary Record.
-    # It does NOT list StudentHistory explicitly as needing a business ID, but strict isolation requires school_id.
+    """
+    Enhanced academic history for students.
+    Records yearly performance including marks, grades, rank, and promotion status.
+    """
     
-    school = models.ForeignKey(School, on_delete=models.CASCADE) # Direct isolation
+    PROMOTION_STATUS_CHOICES = [
+        ('PROMOTED', 'Promoted'),
+        ('DETAINED', 'Detained'),
+        ('GRADUATED', 'Graduated'),
+        ('TRANSFERRED', 'Transferred'),
+        ('WITHDRAWN', 'Withdrawn'),
+    ]
+    
+    GRADE_CHOICES = [
+        ('A+', 'A+ (Outstanding)'),
+        ('A', 'A (Excellent)'),
+        ('B+', 'B+ (Very Good)'),
+        ('B', 'B (Good)'),
+        ('C+', 'C+ (Above Average)'),
+        ('C', 'C (Average)'),
+        ('D', 'D (Below Average)'),
+        ('E', 'E (Marginal)'),
+        ('F', 'F (Fail)'),
+    ]
+    
+    CONDUCT_CHOICES = [
+        ('EXCELLENT', 'Excellent'),
+        ('GOOD', 'Good'),
+        ('SATISFACTORY', 'Satisfactory'),
+        ('NEEDS_IMPROVEMENT', 'Needs Improvement'),
+        ('UNSATISFACTORY', 'Unsatisfactory'),
+    ]
+    
+    # Core Fields
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='history')
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     class_enrolled = models.ForeignKey(Class, on_delete=models.CASCADE)
     section_enrolled = models.ForeignKey(Section, on_delete=models.CASCADE, null=True)
+    
+    # Academic Performance
+    total_marks = models.DecimalField(
+        _("Total Marks Obtained"),
+        max_digits=7, decimal_places=2,
+        null=True, blank=True,
+        help_text="Total marks obtained in all subjects"
+    )
+    max_marks = models.DecimalField(
+        _("Maximum Marks"),
+        max_digits=7, decimal_places=2,
+        null=True, blank=True,
+        help_text="Maximum possible marks"
+    )
+    percentage = models.DecimalField(
+        _("Percentage"),
+        max_digits=5, decimal_places=2,
+        null=True, blank=True,
+        help_text="Overall percentage obtained"
+    )
+    grade = models.CharField(
+        _("Grade"),
+        max_length=5,
+        choices=GRADE_CHOICES,
+        blank=True,
+        help_text="Overall grade for the year"
+    )
+    class_rank = models.PositiveIntegerField(
+        _("Class Rank"),
+        null=True, blank=True,
+        help_text="Rank in class"
+    )
+    section_rank = models.PositiveIntegerField(
+        _("Section Rank"),
+        null=True, blank=True,
+        help_text="Rank in section"
+    )
+    
+    # Attendance Summary (for year-end record)
+    total_working_days = models.PositiveIntegerField(
+        _("Total Working Days"),
+        null=True, blank=True
+    )
+    days_present = models.PositiveIntegerField(
+        _("Days Present"),
+        null=True, blank=True
+    )
+    attendance_percentage = models.DecimalField(
+        _("Attendance %"),
+        max_digits=5, decimal_places=2,
+        null=True, blank=True
+    )
+    
+    # Promotion Status
+    promotion_status = models.CharField(
+        _("Promotion Status"),
+        max_length=20,
+        choices=PROMOTION_STATUS_CHOICES,
+        default='PROMOTED'
+    )
+    promoted_to_class = models.ForeignKey(
+        Class,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='promoted_histories',
+        help_text="Class promoted to (null if detained/graduated)"
+    )
+    
+    # Conduct & Behavior
+    conduct = models.CharField(
+        _("Conduct"),
+        max_length=20,
+        choices=CONDUCT_CHOICES,
+        default='GOOD'
+    )
+    
+    # Legacy result field (kept for backward compatibility)
     result = models.CharField(max_length=50, blank=True)
+    
+    # Additional Notes
+    remarks = models.TextField(
+        _("Remarks"),
+        blank=True,
+        help_text="Teacher/Principal remarks"
+    )
+    detention_reason = models.TextField(
+        _("Detention Reason"),
+        blank=True,
+        help_text="Reason if student was detained"
+    )
+    
+    # Audit Fields
+    recorded_by = models.ForeignKey(
+        'core.CoreUser',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='recorded_histories'
+    )
     recorded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Student History")
+        verbose_name_plural = _("Student Histories")
+        unique_together = ('student', 'academic_year')
+        ordering = ['-academic_year__start_date']
+        indexes = [
+            models.Index(fields=['school', 'academic_year'], name='shistory_school_year_idx'),
+            models.Index(fields=['student', 'academic_year'], name='shistory_student_year_idx'),
+            models.Index(fields=['promotion_status'], name='shistory_promotion_idx'),
+        ]
+    
+    def calculate_percentage(self):
+        """Calculate percentage from marks"""
+        if self.total_marks and self.max_marks and self.max_marks > 0:
+            self.percentage = (self.total_marks / self.max_marks) * 100
+            self.assign_grade()
+            return self.percentage
+        return None
+    
+    def assign_grade(self):
+        """Auto-assign grade based on percentage"""
+        if self.percentage is None:
+            return
+        if self.percentage >= 90:
+            self.grade = 'A+'
+        elif self.percentage >= 80:
+            self.grade = 'A'
+        elif self.percentage >= 70:
+            self.grade = 'B+'
+        elif self.percentage >= 60:
+            self.grade = 'B'
+        elif self.percentage >= 50:
+            self.grade = 'C+'
+        elif self.percentage >= 40:
+            self.grade = 'C'
+        elif self.percentage >= 33:
+            self.grade = 'D'
+        elif self.percentage >= 25:
+            self.grade = 'E'
+        else:
+            self.grade = 'F'
+    
+    def save(self, *args, **kwargs):
+        # Auto-calculate percentage if marks provided
+        if self.total_marks and self.max_marks and not self.percentage:
+            self.calculate_percentage()
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.student} - {self.academic_year} ({self.promotion_status})"
+
+
 
 class Attendance(models.Model):
     id = models.AutoField(primary_key=True)

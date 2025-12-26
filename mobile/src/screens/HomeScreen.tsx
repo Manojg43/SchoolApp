@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { mobileApi } from '../lib/api';
-import { QrCode, LogOut, User, Menu, Calendar, IndianRupee, CalendarCheck, Bell, BookOpen } from 'lucide-react-native';
+import { QrCode, LogOut, User, Menu, Calendar, IndianRupee, CalendarCheck, Bell, BookOpen, FileText } from 'lucide-react-native';
 import { theme } from '../constants/theme';
 import { Card } from '../components/ui/Card';
 
@@ -154,6 +154,12 @@ export default function HomeScreen() {
                             <Card style={styles.gridItem}>
                                 <BookOpen color={theme.colors.primary} size={28} />
                                 <Text style={styles.gridLabel}>Homework</Text>
+                            </Card>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('EnquiryList')}>
+                            <Card style={styles.gridItem}>
+                                <FileText color={theme.colors.secondary} size={28} />
+                                <Text style={styles.gridLabel}>Enquiries</Text>
                             </Card>
                         </TouchableOpacity>
                     </View>

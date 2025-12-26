@@ -12,6 +12,8 @@ import TimetableScreen from '../screens/TimetableScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import NoticeBoardScreen from '../screens/NoticeBoardScreen';
 import HomeworkScreen from '../screens/HomeworkScreen';
+import EnquiryFormScreen from '../screens/EnquiryFormScreen';
+import EnquiryListScreen from '../screens/EnquiryListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,7 +31,10 @@ export default function AppNavigator() {
                 <Stack.Screen name="Profile" component={ProfileScreen} />
                 <Stack.Screen name="Notices" component={NoticeBoardScreen} />
                 <Stack.Screen name="Homework" component={HomeworkScreen} />
+                <Stack.Screen name="EnquiryForm" component={EnquiryFormScreen} />
+                <Stack.Screen name="EnquiryList" component={EnquiryListScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
 }
+

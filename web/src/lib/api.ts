@@ -1133,7 +1133,7 @@ export async function applyForLeave(start_date: string, end_date: string, reason
 // Generic API wrapper for new components
 export const api = {
     get: (endpoint: string) => fetchWithSchool(endpoint),
-    post: async (endpoint: string, data: any) => {
+    post: async (endpoint: string, data?: any) => {
         const schoolId = typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined;
         const headers: any = { 'Content-Type': 'application/json' };
         if (schoolId) headers['X-School-ID'] = schoolId;
@@ -1143,7 +1143,7 @@ export const api = {
         const res = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
             headers,
-            body: JSON.stringify(data)
+            body: data ? JSON.stringify(data) : undefined
         });
         if (!res.ok) throw new Error(res.statusText);
         return { data: await res.json() };
@@ -1284,3 +1284,6 @@ export async function getStudentCertificates(
 ): Promise<Certificate[]> {
     return fetchWithSchool(`/students/${studentId}/certificates/`, schoolId);
 }
+
+// Default export for backward compatibility with: import api from '@/lib/api'
+export default api;

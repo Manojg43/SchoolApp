@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from schools.views import SchoolViewSet, AchievementViewSet, AcademicYearViewSet, ClassViewSet, SectionViewSet, NoticeViewSet, HomeworkViewSet
-from students.views import StudentViewSet, AttendanceViewSet, FeeViewSet
+from students.views import StudentViewSet, AttendanceViewSet, FeeViewSet, StudentHistoryViewSet
 from django.http import JsonResponse
 
 router = DefaultRouter()
@@ -12,6 +12,7 @@ router.register(r'years', AcademicYearViewSet)
 router.register(r'classes', ClassViewSet)
 router.register(r'sections', SectionViewSet)
 router.register(r'students', StudentViewSet)
+router.register(r'student-history', StudentHistoryViewSet, basename='student-history')
 router.register(r'attendance', AttendanceViewSet)
 router.register(r'fees', FeeViewSet)
 router.register(r'achievements', AchievementViewSet)
@@ -38,6 +39,8 @@ urlpatterns = [
     path('api/certificates/', include('certificates.urls')),
     path('api/reports/', include('reports.urls')),
     path('api/staff/', include('staff.urls')),
+    path('api/admissions/', include('admissions.urls')),
+    path('api/students/', include('students.urls')),  # Student-specific endpoints (report-card, promote, etc.)
     path('api/login/', LoginApiView.as_view(), name='login'),
     path('api/debug/headers/', HeaderDebugView.as_view(), name='debug-headers'),
     path('api/', include(router.urls)),

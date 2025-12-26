@@ -6,34 +6,159 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import {
     LayoutDashboard, Users, BookOpen, Calculator, Bus, Award,
-    Megaphone, Settings, LogOut, Menu, Bell, Search, GraduationCap
+    Megaphone, Settings, LogOut, Menu, Bell, Search, GraduationCap,
+    CalendarCheck, FileText, DollarSign, Gift, TrendingUp, Clock, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Menu item types
+interface SubMenuItem {
+    href: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+}
+
+interface MenuItem {
+    href: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    permission?: string;
+    submenu?: SubMenuItem[];
+}
+
+// Navigation with collapsible submenus
+const MENU_ITEMS: MenuItem[] = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    {
+        href: '/students',
+        label: 'Students',
+        icon: GraduationCap,
+        permission: 'can_access_student_records',
+        submenu: [
+            { href: '/students', label: 'Student Directory', icon: GraduationCap },
+            { href: '/students/attendance', label: 'Mark Attendance', icon: CalendarCheck },
+        ]
+    },
+    {
+        href: '/admissions',
+        label: 'Admissions',
+        icon: FileText,
+        permission: 'can_access_student_records',
+        submenu: [
+            { href: '/admissions', label: 'All Enquiries', icon: FileText },
+            { href: '/admissions/create', label: 'New Enquiry', icon: FileText },
+            { href: '/admissions/workflow', label: 'Workflow Settings', icon: Settings },
+        ]
+    },
+    { href: '/attendance', label: 'Attendance', icon: CalendarCheck, permission: 'can_access_attendance' },
+    {
+        href: '/finance',
+        label: 'Finance',
+        icon: Calculator,
+        permission: 'can_access_finance',
+        submenu: [
+            { href: '/fees', label: 'Fees & Invoices', icon: Calculator },
+            { href: '/finance/create', label: 'Create Invoice', icon: FileText },
+            { href: '/finance/payroll', label: 'Payroll Dashboard', icon: DollarSign },
+            { href: '/finance/discounts', label: 'Discounts & Scholarships', icon: Gift },
+            { href: '/finance/certificates-fees', label: 'Certificate Fees', icon: Award },
+            { href: '/finance/settlement', label: 'Year-End Settlement', icon: TrendingUp },
+        ]
+    },
+    {
+        href: '/staff',
+        label: 'Staff & Payroll',
+        icon: Users,
+        permission: 'is_superuser',
+        submenu: [
+            { href: '/staff', label: 'Staff Directory', icon: Users },
+            { href: '/staff/attendance', label: 'Staff Attendance', icon: Clock },
+            { href: '/staff/leaves', label: 'Leave Applications', icon: FileText },
+        ]
+    },
+    {
+        href: '/transport',
+        label: 'Transport',
+        icon: Bus,
+        permission: 'can_access_transport',
+        submenu: [
+            { href: '/transport', label: 'Vehicle List', icon: Bus },
+            { href: '/transport/create', label: 'Add Vehicle', icon: FileText },
+        ]
+    },
+    {
+        href: '/academic',
+        label: 'Academic',
+        icon: BookOpen,
+        permission: 'can_access_student_records',
+        submenu: [
+            { href: '/academic/homework', label: 'Homework', icon: FileText },
+        ]
+    },
+    {
+        href: '/communication',
+        label: 'Communication',
+        icon: Megaphone,
+        submenu: [
+            { href: '/communication/notices', label: 'Notices', icon: FileText },
+        ]
+    },
+    { href: '/certificates', label: 'Certificates', icon: Award, permission: 'can_access_finance' },
+    {
+        href: '/reports',
+        label: 'Reports',
+        icon: FileText,
+        permission: 'is_superuser',
+        submenu: [
+            { href: '/reports', label: 'Reports Dashboard', icon: FileText },
+            { href: '/reports/attendance', label: 'Attendance Reports', icon: CalendarCheck },
+        ]
+    },
+    { href: '/settings', label: 'Settings', icon: Settings },
+];
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const { user, logout } = useAuth();
+    const { user, logout, hasPermission } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isProfileOpen, setProfileOpen] = useState(false);
+    const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
     // Close profile dropdown when route changes
     useEffect(() => {
         setProfileOpen(false);
     }, [pathname]);
 
-    const navigation = [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Students', href: '/students', icon: GraduationCap },
-        { name: 'Staff', href: '/staff', icon: Users },
-        { name: 'Academic', href: '/academic/homework', icon: BookOpen },
-        { name: 'Finance', href: '/finance', icon: Calculator },
-        { name: 'Transport', href: '/transport', icon: Bus },
-        { name: 'Certificates', href: '/certificates', icon: Award },
-        { name: 'Communication', href: '/communication/notices', icon: Megaphone },
-        { name: 'Reports', href: '/reports', icon: Award },
-        { name: 'Settings', href: '/settings', icon: Settings },
-    ];
+    // Auto-expand menu if user is on a subpage
+    useEffect(() => {
+        const expandedSections: string[] = [];
+        MENU_ITEMS.forEach(item => {
+            if (item.submenu?.some(sub => pathname === sub.href || pathname.startsWith(sub.href + '/'))) {
+                expandedSections.push(item.href);
+            }
+        });
+        if (expandedSections.length > 0) {
+            setExpandedMenus(prev => {
+                const newExpanded = [...prev];
+                expandedSections.forEach(section => {
+                    if (!newExpanded.includes(section)) {
+                        newExpanded.push(section);
+                    }
+                });
+                return newExpanded;
+            });
+        }
+    }, [pathname]);
+
+    // Toggle menu expand/collapse
+    const toggleMenu = (href: string) => {
+        setExpandedMenus(prev =>
+            prev.includes(href)
+                ? prev.filter(h => h !== href)
+                : [...prev, href]
+        );
+    };
 
     const handleLogout = () => {
         logout();
@@ -45,7 +170,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Sidebar */}
             <aside
                 className={`
-                    fixed inset-y-0 left-0 z-50 w-64 bg-surface shadow-2xl transition-all duration-300 ease-in-out
+                    fixed inset-y-0 left-0 z-50 w-72 bg-surface shadow-2xl transition-all duration-300 ease-in-out
                     border-r border-border
                     bg-gradient-to-b from-surface via-surface to-slate-50
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
@@ -53,7 +178,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 `}
             >
                 {/* Brand */}
-                <div className="h-20 flex items-center px-8 border-b border-border/50 bg-surface/50 backdrop-blur-sm">
+                <div className="h-20 flex items-center px-6 border-b border-border/50 bg-surface/50 backdrop-blur-sm">
                     <div className="flex items-center gap-3 text-primary group cursor-pointer" onClick={() => router.push('/dashboard')}>
                         <div className="bg-gradient-to-br from-primary to-primary-dark text-white p-2.5 rounded-xl shadow-lg shadow-primary/30 transform group-hover:scale-105 transition-transform duration-300">
                             <BookOpen className="w-5 h-5 text-white" />
@@ -65,27 +190,96 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="p-4 space-y-1.5 overflow-y-auto h-[calc(100vh-5rem)] custom-scrollbar">
-                    {navigation.map((item) => {
-                        const isActive = pathname.startsWith(item.href);
+                {/* Navigation with Collapsible Menus */}
+                <nav className="p-3 space-y-1 overflow-y-auto h-[calc(100vh-5rem)] custom-scrollbar">
+                    {MENU_ITEMS.map((item) => {
+                        // Permission Check
+                        if (item.permission && !hasPermission(item.permission)) {
+                            return null;
+                        }
+
+                        const hasSubmenu = item.submenu && item.submenu.length > 0;
+                        const isExpanded = expandedMenus.includes(item.href);
+                        const isActive = pathname === item.href ||
+                            (hasSubmenu && item.submenu?.some(sub => pathname === sub.href || pathname.startsWith(sub.href + '/')));
+                        const Icon = item.icon;
+
                         return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`
-                                    flex items-center px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden
-                                    ${isActive
-                                        ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/30 translate-x-1'
-                                        : 'text-text-secondary hover:bg-white hover:text-primary hover:pl-5 hover:shadow-sm'
-                                    }
-                                `}
-                            >
-                                <item.icon className={`mr-3 h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-text-muted group-hover:text-primary'}`} />
-                                <span className="relative z-10">{item.name}</span>
-                                {!isActive && <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>}
-                            </Link>
-                        )
+                            <div key={item.href}>
+                                {/* Main Menu Item */}
+                                {hasSubmenu ? (
+                                    // Collapsible menu item with chevron
+                                    <button
+                                        onClick={() => toggleMenu(item.href)}
+                                        className={`
+                                            flex items-center w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 group relative
+                                            ${isActive
+                                                ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary'
+                                                : 'text-text-secondary hover:bg-white hover:text-primary hover:shadow-sm'
+                                            }
+                                        `}
+                                    >
+                                        <Icon className={`mr-3 h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? 'text-primary' : 'text-text-muted group-hover:text-primary'}`} />
+                                        <span className="flex-1 text-left">{item.label}</span>
+                                        <ChevronDown
+                                            className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                                        />
+                                    </button>
+                                ) : (
+                                    // Simple link for items without submenu
+                                    <Link
+                                        href={item.href}
+                                        className={`
+                                            flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden
+                                            ${isActive
+                                                ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/30'
+                                                : 'text-text-secondary hover:bg-white hover:text-primary hover:shadow-sm'
+                                            }
+                                        `}
+                                    >
+                                        <Icon className={`mr-3 h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-text-muted group-hover:text-primary'}`} />
+                                        <span className="relative z-10">{item.label}</span>
+                                    </Link>
+                                )}
+
+                                {/* Collapsible Submenu with animation */}
+                                <AnimatePresence initial={false}>
+                                    {hasSubmenu && isExpanded && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary/20 pl-3">
+                                                {item.submenu?.map((subItem) => {
+                                                    const isSubActive = pathname === subItem.href;
+                                                    const SubIcon = subItem.icon;
+
+                                                    return (
+                                                        <Link
+                                                            key={subItem.href}
+                                                            href={subItem.href}
+                                                            className={`
+                                                                flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 relative
+                                                                ${isSubActive
+                                                                    ? 'text-primary bg-primary/10 font-medium'
+                                                                    : 'text-text-secondary hover:text-primary hover:bg-white'
+                                                                }
+                                                            `}
+                                                        >
+                                                            <SubIcon className={`w-4 h-4 ${isSubActive ? 'text-primary' : 'text-text-muted'}`} />
+                                                            {subItem.label}
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        );
                     })}
                 </nav>
             </aside>

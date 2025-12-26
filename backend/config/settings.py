@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'transport',
     'certificates',
     'reports',
+    'admissions',
 ]
 
 MIDDLEWARE = [
