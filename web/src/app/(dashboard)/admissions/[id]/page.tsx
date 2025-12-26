@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, XCircle, ArrowRight, Phone, Mail, MapPin, Calendar, FileText, User, Clock, Building, Upload, ExternalLink } from 'lucide-react';
