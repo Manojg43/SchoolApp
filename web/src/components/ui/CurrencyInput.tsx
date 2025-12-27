@@ -1,6 +1,6 @@
 'use client';
 
-import { DollarSign } from 'lucide-react';
+import { IndianRupee } from 'lucide-react';
 
 interface CurrencyInputProps {
     value: number | string;

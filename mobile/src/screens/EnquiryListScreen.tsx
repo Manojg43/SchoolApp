@@ -12,6 +12,7 @@ interface Enquiry {
     class_name: string;
     parent_mobile: string;
     status: string;
+    current_stage_name: string; // Added for workflow stage display
     created_at: string;
 }
 
@@ -81,6 +82,14 @@ export default function EnquiryListScreen() {
                 </View>
 
                 <Text style={styles.studentName}>{item.full_name}</Text>
+
+                {/* Workflow Stage Display */}
+                {item.current_stage_name && (
+                    <View style={styles.stageRow}>
+                        <Text style={styles.stageLabel}>Stage:</Text>
+                        <Text style={styles.stageValue}>{item.current_stage_name}</Text>
+                    </View>
+                )}
 
                 <View style={styles.cardFooter}>
                     <View style={styles.footerInfo}>
@@ -230,6 +239,21 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: theme.colors.text.main,
         marginBottom: 8,
+    },
+    stageRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    stageLabel: {
+        fontSize: 12,
+        color: theme.colors.text.muted,
+    },
+    stageValue: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: theme.colors.primary,
+        marginLeft: 6,
     },
     cardFooter: {
         flexDirection: 'row',

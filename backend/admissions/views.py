@@ -40,7 +40,21 @@ class WorkflowTemplateViewSet(viewsets.ModelViewSet):
         return WorkflowTemplateSerializer
     
     def perform_create(self, serializer):
-        serializer.save(school=self.request.user.school)
+        school = self.request.user.school
+        workflow_type = serializer.validated_data.get('workflow_type', 'ADMISSION')
+        
+        # Check if any default exists for this type
+        has_default = WorkflowTemplate.objects.filter(
+            school=school,
+            workflow_type=workflow_type,
+            is_default=True
+        ).exists()
+        
+        # Auto-set as default if no default exists (first workflow of this type)
+        if not has_default:
+            serializer.save(school=school, is_default=True)
+        else:
+            serializer.save(school=school)
     
     @action(detail=True, methods=['post'])
     def set_default(self, request, pk=None):

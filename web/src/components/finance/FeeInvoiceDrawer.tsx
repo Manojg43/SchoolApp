@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, Save, DollarSign, Calendar, User } from 'lucide-react';
+import { X, Save, IndianRupee, Calendar, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createFee, getStudents, type Student, type FeePayload } from '@/lib/api';
 import { toast } from '@/lib/toast';
@@ -110,7 +110,7 @@ export default function FeeInvoiceDrawer({ isOpen, onClose, onSuccess }: FeeInvo
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-text-muted uppercase">Amount</label>
                                     <div className="relative">
-                                        <DollarSign className="absolute left-3 top-2.5 text-text-muted w-5 h-5" />
+                                        <IndianRupee className="absolute left-3 top-2.5 text-text-muted w-5 h-5" />
                                         <input type="number" {...register('amount')} className="w-full pl-10 p-2.5 bg-background border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20" />
                                     </div>
                                     {errors.amount && <p className="text-error text-xs">{errors.amount.message}</p>}

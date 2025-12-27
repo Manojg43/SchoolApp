@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { getFees, deleteFee, type Fee } from "@/lib/api";
 import { toast } from "@/lib/toast";
-import { Loader2, DollarSign, Download, Plus, Trash2, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, IndianRupee, Download, Plus, Trash2, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import Card, { CardContent } from "@/components/ui/modern/Card";
 import Animate, { AnimatePage } from "@/components/ui/Animate";
 import DataTable, { Column } from "@/components/ui/DataTable";
@@ -146,7 +146,7 @@ export default function FeesPage() {
                         index={1}
                         title="Pending (Receivables)"
                         value={`$${pendingAmount.toLocaleString()}`}
-                        icon={<DollarSign className="h-6 w-6 text-warning" />}
+                        icon={<IndianRupee className="h-6 w-6 text-warning" />}
                         colorClass="bg-warning/10"
                     />
                     <StatCard

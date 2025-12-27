@@ -47,7 +47,8 @@ class StaffDashboardView(APIView):
             "school_gps": {
                 "lat": float(user.school.gps_lat) if user.school and user.school.gps_lat else None,
                 "long": float(user.school.gps_long) if user.school and user.school.gps_long else None,
-            }
+            },
+            "geofence_radius": user.school.geofence_radius if user.school else 50,  # Dynamic radius from school settings
         }
         
         # Add designation if exists

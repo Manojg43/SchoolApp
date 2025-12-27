@@ -17,7 +17,7 @@ import {
     TrendingUp,
     Gift,
     Award,
-    DollarSign,
+    IndianRupee,
     ChevronDown
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -62,7 +62,7 @@ const MENU_ITEMS: MenuItem[] = [
         submenu: [
             { href: '/fees', label: 'Fees & Invoices', icon: Receipt },
             { href: '/finance/create', label: 'Create Invoice', icon: FileText },
-            { href: '/finance/payroll', label: 'Payroll Dashboard', icon: DollarSign },
+            { href: '/finance/payroll', label: 'Payroll Dashboard', icon: IndianRupee },
             { href: '/finance/discounts', label: 'Discounts & Scholarships', icon: Gift },
             { href: '/finance/certificates-fees', label: 'Certificate Fees', icon: Award },
             { href: '/finance/settlement', label: 'Year-End Settlement', icon: TrendingUp },

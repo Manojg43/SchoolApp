@@ -30,6 +30,7 @@ export default function ScanScreen() {
     // Manual GPS State
     const [canManual, setCanManual] = useState(false);
     const [schoolGPS, setSchoolGPS] = useState<{ lat: number, long: number } | null>(null);
+    const [geofenceRadius, setGeofenceRadius] = useState<number>(50); // Default 50m, will be updated from backend
     const [distance, setDistance] = useState<number | null>(null);
     const [loadingManual, setLoadingManual] = useState(false);
 
@@ -45,6 +46,10 @@ export default function ScanScreen() {
                 if (profile?.user?.can_mark_manual_attendance) {
                     setCanManual(true);
                     setSchoolGPS(profile.user.school_gps);
+                    // Get dynamic geofence radius from backend (default 50 if not set)
+                    if (profile.user.geofence_radius) {
+                        setGeofenceRadius(profile.user.geofence_radius);
+                    }
                 }
             } catch (e) {
                 console.log("Failed to load profile settings", e);
@@ -139,7 +144,9 @@ export default function ScanScreen() {
     if (hasPermission === null) return <Text style={styles.msg}>Requesting camera permission...</Text>;
     if (hasPermission === false) return <Text style={styles.msg}>No access to camera</Text>;
 
-    const isInRange = distance !== null && distance <= 55; // 50m tolerance + 5m buffer
+    // Use dynamic geofence radius + 5m GPS buffer
+    const radiusWithBuffer = geofenceRadius + 5;
+    const isInRange = distance !== null && distance <= radiusWithBuffer;
 
     return (
         <View style={styles.container}>
@@ -192,7 +199,7 @@ export default function ScanScreen() {
                             <Text style={styles.manualButtonText}>
                                 {loadingManual ? "Marking..." :
                                     isInRange ? "📍 Mark Attendance (GPS)" :
-                                        `Too Far (${distance?.toFixed(0)}m > 50m)`}
+                                        `Too Far (${distance?.toFixed(0)}m > ${geofenceRadius}m)`}
                             </Text>
                         </TouchableOpacity>
                     </View>

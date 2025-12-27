@@ -1,7 +1,7 @@
 'use client';
 
 import { useLanguage } from "@/context/LanguageContext";
-import { FileBarChart, Users, DollarSign, TrendingUp, TrendingDown, Clock, Activity, PieChart } from "lucide-react";
+import { FileBarChart, Users, IndianRupee, TrendingUp, TrendingDown, Clock, Activity, PieChart } from "lucide-react";
 import { getAttendanceAnalytics, getFinanceAnalytics, AttendanceAnalytics, FinanceAnalytics } from "@/lib/api";
 import Card, { CardContent } from "@/components/ui/modern/Card";
 import Animate, { AnimatePage } from "@/components/ui/Animate";
@@ -79,7 +79,7 @@ export default function ReportsPage() {
                         title="Fees Collected"
                         value={`₹${finData?.overview.total_collected.toLocaleString()}`}
                         subtext={`${collectionRate}% of Invoiced Amount`}
-                        icon={<DollarSign className="w-6 h-6 text-success" />}
+                        icon={<IndianRupee className="w-6 h-6 text-success" />}
                         colorClass="bg-success/10"
                         delay={0.3}
                     />
@@ -140,7 +140,7 @@ export default function ReportsPage() {
                                         <p className="text-xs text-success uppercase font-semibold">Collected Revenue</p>
                                         <p className="text-xl font-bold text-success mt-1">₹{finData?.overview.total_collected.toLocaleString()}</p>
                                     </div>
-                                    <div className="p-2 bg-white rounded-lg text-success"><DollarSign size={20} /></div>
+                                    <div className="p-2 bg-white rounded-lg text-success"><IndianRupee size={20} /></div>
                                 </div>
                                 <div className="flex items-center justify-between p-4 bg-error/5 rounded-xl border border-error/20">
                                     <div>

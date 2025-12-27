@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -14,13 +16,48 @@ import NoticeBoardScreen from '../screens/NoticeBoardScreen';
 import HomeworkScreen from '../screens/HomeworkScreen';
 import EnquiryFormScreen from '../screens/EnquiryFormScreen';
 import EnquiryListScreen from '../screens/EnquiryListScreen';
+import EnquiryDetailScreen from '../screens/EnquiryDetailScreen';
+import { theme } from '../constants/theme';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        // Check for existing auth token on app startup
+        const checkAuth = async () => {
+            try {
+                const token = await AsyncStorage.getItem('auth_token');
+                if (token) {
+                    setIsLoggedIn(true);
+                }
+            } catch (error) {
+                console.log('Error checking auth token:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkAuth();
+    }, []);
+
+    // Show loading screen while checking auth
+    if (isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+        );
+    }
+
     return (
         <NavigationContainer>
-            <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+            <Stack.Navigator
+                initialRouteName={isLoggedIn ? "Home" : "Login"}
+                screenOptions={{ headerShown: false }}
+            >
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="Scan" component={ScanScreen} />
@@ -33,8 +70,17 @@ export default function AppNavigator() {
                 <Stack.Screen name="Homework" component={HomeworkScreen} />
                 <Stack.Screen name="EnquiryForm" component={EnquiryFormScreen} />
                 <Stack.Screen name="EnquiryList" component={EnquiryListScreen} />
+                <Stack.Screen name="EnquiryDetail" component={EnquiryDetailScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
 }
 
+const styles = StyleSheet.create({
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.colors.background,
+    },
+});

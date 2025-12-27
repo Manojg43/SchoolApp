@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCertificateFees, updateCertificateFee, createCertificateFee, type CertificateFee } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import { DollarSign, Save, Plus } from 'lucide-react';
+import { IndianRupee, Save, Plus } from 'lucide-react';
 
 const CERTIFICATE_TYPES = [
     { value: 'BONAFIDE', label: 'Bonafide Certificate' },
@@ -133,7 +133,7 @@ export default function CertificateFeesPage() {
                         <div className="p-8 text-center text-gray-500">Loading...</div>
                     ) : fees.length === 0 ? (
                         <div className="p-8 text-center">
-                            <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                            <IndianRupee className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                             <p className="text-gray-600 mb-4">No certificate fees configured yet</p>
                             <button
                                 onClick={handleAddMissingTypes}

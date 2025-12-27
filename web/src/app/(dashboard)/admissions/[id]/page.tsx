@@ -69,17 +69,22 @@ export default function EnquiryDetailPage() {
     const [docRemarks, setDocRemarks] = useState('');
     const [isUploading, setIsUploading] = useState(false);
 
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         loadEnquiry();
     }, [enquiryId]);
 
     const loadEnquiry = async () => {
+        setError(null);
         try {
             const res = await api.get(`/admissions/enquiries/${enquiryId}/`);
             setEnquiry(res.data);
-        } catch (error) {
-            console.error('Failed to load enquiry', error);
-            toast.error('Failed to load enquiry');
+        } catch (err: any) {
+            console.error('Failed to load enquiry', err);
+            const message = err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to load enquiry';
+            setError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -169,8 +174,11 @@ export default function EnquiryDetailPage() {
 
     if (!enquiry) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-text-muted">Enquiry not found</p>
+            <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+                <p className="text-text-muted">{error || 'Enquiry not found'}</p>
+                <button onClick={() => router.back()} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
+                    Go Back
+                </button>
             </div>
         );
     }

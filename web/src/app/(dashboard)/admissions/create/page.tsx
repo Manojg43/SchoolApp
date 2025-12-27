@@ -43,8 +43,9 @@ export default function CreateEnquiryPage() {
 
     const loadClasses = async () => {
         try {
-            const res = await api.get('/classes/');
-            setClasses(res.data.results || res.data);
+            const data = await api.get('/classes/');
+            // api.get uses fetchWithSchool which returns unwrapped data directly
+            setClasses(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to load classes', error);
         }

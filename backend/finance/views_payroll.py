@@ -6,6 +6,7 @@ from core.models import CoreUser
 from staff.models import StaffAttendance
 from schools.models import School
 from django.utils import timezone
+from decimal import Decimal
 import datetime
 import calendar
 
@@ -105,7 +106,7 @@ class GeneratePayrollView(APIView):
             # 1. Get Base Salary
             try:
                 struct = staff.salary_structure
-                base_salary = struct.base_salary
+                base_salary = struct.base_salary  # This is Decimal
             except StaffSalaryStructure.DoesNotExist:
                 # Skip if no salary structure defined? Or assume 0?
                 # Let's Skip to avoid junk data
@@ -119,21 +120,24 @@ class GeneratePayrollView(APIView):
             p_count = StaffAttendance.objects.filter(staff=staff, date__gte=start_date, date__lte=end_date, status='PRESENT').count()
             h_count = StaffAttendance.objects.filter(staff=staff, date__gte=start_date, date__lte=end_date, status='HALF_DAY').count()
             
-            total_present = p_count + (h_count * 0.5)
+            total_present = Decimal(str(p_count)) + (Decimal(str(h_count)) * Decimal('0.5'))
             
             # Additional: Paid Leaves check? (For now assume separate LEAVE model if we track paid leaves)
             # Simple version: Pay for presence.
             
-            # 3. Calculate Amount
+            # 3. Calculate Amount (using Decimal for precision)
             # Daily Rate = Base / Num Days in Month (Actual)
-            daily_rate = float(base_salary) / float(num_days)
-            payable = daily_rate * float(total_present)
+            daily_rate = base_salary / Decimal(str(num_days))
+            payable = daily_rate * total_present
             
             # Cap at Base Salary (Precision handling)
-            if payable > float(base_salary):
-                 payable = float(base_salary)
+            if payable > base_salary:
+                 payable = base_salary
+            
+            # Calculate deductions (all Decimal)
+            deductions = base_salary - payable
                  
-            # 4. Create/Update Salary Record
+            # 4. Create/Update Salary Record - all values are Decimal now
             salary_obj, created = Salary.objects.update_or_create(
                 school=school,
                 staff=staff,
@@ -142,9 +146,9 @@ class GeneratePayrollView(APIView):
                     'total_working_days': num_days,
                     'present_days': total_present,
                     'amount': base_salary,
-                    'deductions': float(base_salary) - payable, # Deduct for absent days
+                    'deductions': deductions,
                     'net_salary': payable,
-                    'bonus': 0 
+                    'bonus': Decimal('0')
                 }
             )
             generated_count += 1

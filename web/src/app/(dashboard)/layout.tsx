@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
     LayoutDashboard, Users, BookOpen, Calculator, Bus, Award,
     Megaphone, Settings, LogOut, Menu, Bell, Search, GraduationCap,
-    CalendarCheck, FileText, DollarSign, Gift, TrendingUp, Clock, ChevronDown
+    CalendarCheck, FileText, IndianRupee, Gift, TrendingUp, Clock, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -59,7 +59,7 @@ const MENU_ITEMS: MenuItem[] = [
         submenu: [
             { href: '/fees', label: 'Fees & Invoices', icon: Calculator },
             { href: '/finance/create', label: 'Create Invoice', icon: FileText },
-            { href: '/finance/payroll', label: 'Payroll Dashboard', icon: DollarSign },
+            { href: '/finance/payroll', label: 'Payroll Dashboard', icon: IndianRupee },
             { href: '/finance/discounts', label: 'Discounts & Scholarships', icon: Gift },
             { href: '/finance/certificates-fees', label: 'Certificate Fees', icon: Award },
             { href: '/finance/settlement', label: 'Year-End Settlement', icon: TrendingUp },
