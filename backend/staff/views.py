@@ -659,7 +659,7 @@ class StaffPasswordResetView(APIView):
 
         except Exception as e:
             print(f"Reset Error: {e}")
-            return Response(serializer.errors, status=400)
+            return Response({'error': str(e)}, status=400)
 
 
 # Toggle Staff Active Status
