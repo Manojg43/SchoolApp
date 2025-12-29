@@ -32,8 +32,8 @@ class GeneratePayslipPDF(APIView):
             p.drawString(100, y, f"Present: {salary.present_days}"); y -= 20
             p.drawString(100, y, f"Paid Leaves: {salary.paid_leaves}"); y -= 40
             
-            p.drawString(100, y, f"Base Salary: {salary.amount}"); y -= 20
-            p.drawString(100, y, f"Net Salary: {salary.net_salary}"); y -= 40
+            p.drawString(100, y, f"Base Salary: Rs. {salary.amount}"); y -= 20
+            p.drawString(100, y, f"Net Salary: Rs. {salary.net_salary}"); y -= 40
             
             p.showPage()
             p.save()
@@ -59,7 +59,7 @@ class GenerateReceiptPDF(APIView):
             y = height - 150
             p.drawString(100, y, f"Receipt No: {receipt.receipt_no}"); y -= 20
             p.drawString(100, y, f"Date: {receipt.date}"); y -= 20
-            p.drawString(100, y, f"Amount: {receipt.amount}"); y -= 20
+            p.drawString(100, y, f"Amount: Rs. {receipt.amount}"); y -= 20
              
             p.showPage()
             p.save()

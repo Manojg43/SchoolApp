@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { getFees, deleteFee, type Fee } from "@/lib/api";
 import { toast } from "@/lib/toast";
+import { formatINR } from "@/lib/formatters";
 import { Loader2, IndianRupee, Download, Plus, Trash2, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import Card, { CardContent } from "@/components/ui/modern/Card";
 import Animate, { AnimatePage } from "@/components/ui/Animate";
@@ -66,7 +67,7 @@ export default function FeesPage() {
                 </div>
             )
         },
-        { header: "Amount", accessorKey: (row) => <span className="font-mono font-bold text-text-main">${row.amount}</span>, className: "w-32" },
+        { header: "Amount", accessorKey: (row) => <span className="font-mono font-bold text-text-main">{formatINR(row.amount)}</span>, className: "w-32" },
         { header: "Due Date", accessorKey: "due_date", className: "w-32" },
         {
             header: "Status",
@@ -138,14 +139,14 @@ export default function FeesPage() {
                     <StatCard
                         index={0}
                         title="Total Collected"
-                        value={`$${totalCollected.toLocaleString()}`}
+                        value={formatINR(totalCollected)}
                         icon={<CheckCircle className="h-6 w-6 text-success" />}
                         colorClass="bg-success/10"
                     />
                     <StatCard
                         index={1}
                         title="Pending (Receivables)"
-                        value={`$${pendingAmount.toLocaleString()}`}
+                        value={formatINR(pendingAmount)}
                         icon={<IndianRupee className="h-6 w-6 text-warning" />}
                         colorClass="bg-warning/10"
                     />
