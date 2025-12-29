@@ -13,5 +13,5 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHON_VERSION
-        value: 3.9.0
+        value: 3.11.0
 # Frontend can stay on Vercel, or move here. Keeping it simple (Backend only).

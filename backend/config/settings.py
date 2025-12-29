@@ -21,21 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t=cmf(bv7x!%xc+&l_d-#pnlj*l@=3tgg$feqn7zn92zd(b%&t'
-
-# SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-for-demo-only-change-in-prod')
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-t=cmf(bv7x!%xc+&l_d-#pnlj*l@=3tgg$feqn7zn92zd(b%&t')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',')
 
 # Render/Gunicorn requires this to know it's behind a proxy terminating HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True # Redirect HTTP to HTTPS
-
-
-
+SECURE_SSL_REDIRECT = not DEBUG # Redirect HTTP to HTTPS in production only
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 # Application definition
 
@@ -50,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'drf_spectacular',  # OpenAPI Documentation
     'core',
     'schools',
     'students',
@@ -123,6 +122,7 @@ CACHES = {
             'SOCKET_TIMEOUT': 5,
             'COMPRESSION': True,  # Compress cached data
             'PARSER_CLASS': 'redis.connection.DefaultParser',
+            'IGNORE_EXCEPTIONS': True, # Prevent Redis down from checking site
         },
         'KEY_PREFIX': 'schoolapp',
         'TIMEOUT': 300,  # 5 minutes default cache timeout
@@ -173,26 +173,15 @@ LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False # DISABLED FOR SECURITY
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://web-c8w3hh5xu-manojg43s-projects.vercel.app",
-    "https://schoolapp-web.vercel.app",
-    "https://web-kappa-bice-45.vercel.app",
-]
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://web-kappa-bice-45.vercel.app",
-    "https://schoolapp-web.vercel.app",
-    "https://school-ohhgarwt9-manojg43s-projects.vercel.app",
-    "https://school-aswe436hi-manojg43s-projects.vercel.app",
-    "https://web-c8w3hh5xu-manojg43s-projects.vercel.app", 
-    "https://*.vercel.app",
-    "https://schoolapp-6vwg.onrender.com",
-]
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 
+    "http://localhost:3000,http://127.0.0.1:3000,https://web-c8w3hh5xu-manojg43s-projects.vercel.app,https://schoolapp-web.vercel.app,https://web-kappa-bice-45.vercel.app"
+).split(',')
+
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 
+    "http://localhost:3000,http://127.0.0.1:3000,https://web-kappa-bice-45.vercel.app,https://schoolapp-web.vercel.app,https://school-ohhgarwt9-manojg43s-projects.vercel.app,https://school-aswe436hi-manojg43s-projects.vercel.app,https://web-c8w3hh5xu-manojg43s-projects.vercel.app,https://*.vercel.app,https://schoolapp-6vwg.onrender.com"
+).split(',')
 
 from corsheaders.defaults import default_headers
 
@@ -222,6 +211,25 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardResultsPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# OpenAPI Documentation Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SchoolApp API',
+    'DESCRIPTION': 'Multi-tenant School Management System API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'Login and token management'},
+        {'name': 'Students', 'description': 'Student CRUD operations'},
+        {'name': 'Staff', 'description': 'Staff management and attendance'},
+        {'name': 'Finance', 'description': 'Invoices, receipts, and salary'},
+        {'name': 'Transport', 'description': 'Vehicles, routes, and subscriptions'},
+        {'name': 'Certificates', 'description': 'Certificate generation and verification'},
+        {'name': 'Admissions', 'description': 'Enquiry workflow management'},
+    ],
 }
 
 # Default primary key field type

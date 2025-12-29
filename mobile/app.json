@@ -27,7 +27,7 @@
       },
       "package": "com.schoolapp.staff",
       "edgeToEdgeEnabled": true,
-      "usesCleartextTraffic": true,
+      "usesCleartextTraffic": false,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",

@@ -20,15 +20,15 @@ class VehicleViewSet(viewsets.ModelViewSet):
         serializer.save(school=self.request.user.school)
 
 class RouteViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [StandardPermission]  # Fixed: Was IsAuthenticated only
     serializer_class = RouteSerializer
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
-            return Route.objects.select_related('school').all()
-        return Route.objects.select_related('school').filter(school=user.school)
+            return Route.objects.select_related('school', 'vehicle').prefetch_related('stops').all()
+        return Route.objects.select_related('school', 'vehicle').prefetch_related('stops').filter(school=user.school)
         
     def perform_create(self, serializer):
         serializer.save(school=self.request.user.school)
@@ -41,12 +41,21 @@ class TransportSubscriptionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
-            return TransportSubscription.objects.select_related(
-                'school', 'student', 'route'
+            queryset = TransportSubscription.objects.select_related(
+                'school', 'student', 'vehicle', 'stop', 'stop__route'
             ).all()
-        return TransportSubscription.objects.select_related(
-            'school', 'student', 'route'
-        ).filter(school=user.school)
+        else:
+            queryset = TransportSubscription.objects.select_related(
+                'school', 'student', 'vehicle', 'stop', 'stop__route'
+            ).filter(school=user.school)
+        
+        # Filter by student if provided - FIX: Added missing filter
+        student_id = self.request.query_params.get('student')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+        
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(school=self.request.user.school)
+

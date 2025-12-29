@@ -2,7 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     PromoteStudentsView, StudentHistoryView, ToggleStudentActiveView,
-    StudentViewSet, AttendanceViewSet, FeeViewSet, StudentHistoryViewSet
+    StudentViewSet, AttendanceViewSet, FeeViewSet, StudentHistoryViewSet,
+    StudentCertificatesView
 )
 from .pdf_views import ReportCardPDFView
 
@@ -17,6 +18,7 @@ urlpatterns = [
     path('history/<int:student_id>/', StudentHistoryView.as_view(), name='student-history'),
     path('<int:student_id>/toggle-active/', ToggleStudentActiveView.as_view(), name='toggle-student-active'),
     path('<int:student_id>/report-card/', ReportCardPDFView.as_view(), name='student-report-card'),
+    path('<int:student_id>/certificates/', StudentCertificatesView.as_view(), name='student-certificates'),
     path('', include(router.urls)),
 ]
 

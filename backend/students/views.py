@@ -313,3 +313,30 @@ class ToggleStudentActiveView(APIView):
             })
         except Student.DoesNotExist:
             return Response({'error': 'Student not found'}, status=404)
+
+
+# Student Certificates View - Returns all certificates for a student
+class StudentCertificatesView(APIView):
+    """Get all certificates issued to a student"""
+    permission_classes = [IsAuthenticated, StandardPermission]
+    
+    def get(self, request, student_id):
+        try:
+            from certificates.models import Certificate
+            from certificates.serializers import CertificateSerializer
+            
+            # Verify student belongs to user's school
+            student = Student.objects.get(id=student_id, school=request.user.school)
+            
+            certificates = Certificate.objects.filter(
+                student=student,
+                school=request.user.school
+            ).select_related('template', 'issued_by').order_by('-issued_date')
+            
+            serializer = CertificateSerializer(certificates, many=True)
+            return Response(serializer.data)
+        except Student.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+

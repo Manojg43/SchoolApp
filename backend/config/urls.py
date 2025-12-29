@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 from schools.views import SchoolViewSet, AchievementViewSet, AcademicYearViewSet, ClassViewSet, SectionViewSet, NoticeViewSet, HomeworkViewSet
 from students.views import StudentViewSet, AttendanceViewSet, FeeViewSet, StudentHistoryViewSet
 from django.http import JsonResponse
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 router = DefaultRouter()
 router.register(r'schools', SchoolViewSet, basename='school')
@@ -28,12 +29,18 @@ def api_root(request):
     return JsonResponse({
         "message": "Welcome to SchoolApp Backend API",
         "status": "running",
-        "docs": "/admin/"
+        "docs": "/api/docs/"
     })
 
 urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')), # Required for Admin language switcher
     path('admin/', admin.site.urls),
+    
+    # API Documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    
     path('api/transport/', include('transport.urls')),
     path('api/finance/', include('finance.urls')),
     path('api/certificates/', include('certificates.urls')),
