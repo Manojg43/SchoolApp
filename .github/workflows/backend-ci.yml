@@ -26,17 +26,27 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: "3.11"
-                  cache: "pip"
-                  cache-dependency-path: "backend/requirements.txt"
+                  # cache: "pip" - Disabled to ensure clean build
+                  # cache-dependency-path: "backend/requirements.txt"
 
             - name: Install system dependencies
               run: |
                   sudo apt-get update
                   sudo apt-get install -y libcairo2-dev libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info libgirepository1.0-dev pkg-config python3-dev
+                  # Verify cairo files
+                  dpkg -L libcairo2-dev | grep pkgconfig
+                  # Verify cairo installation via pkg-config
+                  export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+                  pkg-config --cflags --libs cairo
 
             - name: Install dependencies
               run: |
-                  python -m pip install --upgrade pip
+                  export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+                  python -m pip install --upgrade pip setuptools wheel
+                  # Force install binary wheel for pycairo to avoid source build
+                  # If this fails, the source build should now succeed with PKG_CONFIG_PATH
+                  pip install "pycairo>=1.20" --only-binary=:all: || pip install "pycairo>=1.20"
+                  # Install rest of requirements
                   pip install --prefer-binary -r requirements.txt
                   pip install flake8
 
