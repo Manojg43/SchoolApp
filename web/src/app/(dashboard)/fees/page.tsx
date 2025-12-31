@@ -3,7 +3,7 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { getFees, deleteFee, type Fee } from "@/lib/api";
+import { getFees, deleteFee, type Fee, API_BASE_URL } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { formatINR } from "@/lib/formatters";
 import { Loader2, IndianRupee, Download, Plus, Trash2, FileText, CheckCircle, AlertCircle } from "lucide-react";
@@ -56,6 +56,12 @@ export default function FeesPage() {
         });
     };
 
+    const handleDownload = (id: number) => {
+        const token = localStorage.getItem('school_token');
+        const url = `${API_BASE_URL}/finance/invoice/${id}/pdf/?token=${token}`;
+        window.open(url, '_blank');
+    };
+
     const columns: Column<Fee>[] = [
         { header: "ID", accessorKey: "id", className: "w-16 font-mono text-xs text-text-muted" },
         {
@@ -84,7 +90,11 @@ export default function FeesPage() {
             header: "Actions",
             accessorKey: (row) => (
                 <div className="flex gap-2">
-                    <button className="p-1 hover:bg-surface rounded text-primary transition-colors" title="Download Receipt">
+                    <button
+                        onClick={() => handleDownload(row.id)}
+                        className="p-1 hover:bg-surface rounded text-primary transition-colors"
+                        title="Download Invoice"
+                    >
                         <Download size={16} />
                     </button>
                     {hasPermission(['is_superuser', 'can_access_finance']) && (

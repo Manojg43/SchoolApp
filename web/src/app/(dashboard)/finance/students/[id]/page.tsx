@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { AnimatePage } from '@/components/ui/Animate';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/modern/Card';
-import api from '@/lib/api';
+import api, { API_BASE_URL } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { formatINR, formatDateIST, formatDateTimeIST } from '@/lib/formatters';
 
@@ -224,6 +224,18 @@ export default function StudentFeePage() {
         }
     };
 
+    const handleDownloadInvoice = (id: number) => {
+        const token = localStorage.getItem('school_token');
+        const url = `${API_BASE_URL}/finance/invoice/${id}/pdf/?token=${token}`;
+        window.open(url, '_blank');
+    };
+
+    const handleDownloadReceipt = (receiptNo: string) => {
+        const token = localStorage.getItem('school_token');
+        const url = `${API_BASE_URL}/finance/receipt/${receiptNo}/?token=${token}`;
+        window.open(url, '_blank');
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -294,8 +306,8 @@ export default function StudentFeePage() {
                     <button
                         onClick={() => setTab('invoices')}
                         className={`px-4 py-2 font-medium border-b-2 transition-colors ${tab === 'invoices'
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-text-muted hover:text-text-main'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-text-muted hover:text-text-main'
                             }`}
                     >
                         <FileText className="w-4 h-4 inline-block mr-2" />
@@ -304,8 +316,8 @@ export default function StudentFeePage() {
                     <button
                         onClick={() => setTab('receipts')}
                         className={`px-4 py-2 font-medium border-b-2 transition-colors ${tab === 'receipts'
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-text-muted hover:text-text-main'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-text-muted hover:text-text-main'
                             }`}
                     >
                         <Receipt className="w-4 h-4 inline-block mr-2" />
@@ -371,6 +383,14 @@ export default function StudentFeePage() {
                                                     <p className="text-sm text-text-muted">Total: {formatINR(invoice.total_amount)}</p>
                                                     <p className="text-sm text-green-600">Paid: {formatINR(invoice.paid_amount)}</p>
                                                     <p className="text-xl font-bold text-red-600">{formatINR(invoice.balance_due)}</p>
+
+                                                    <button
+                                                        onClick={() => handleDownloadInvoice(invoice.id)}
+                                                        className="mt-2 text-primary hover:text-primary-dark text-sm flex items-center justify-end gap-1 ml-auto"
+                                                    >
+                                                        <FileText className="w-3 h-3" />
+                                                        Download PDF
+                                                    </button>
 
                                                     {invoice.balance_due > 0 && !invoice.is_settled && (
                                                         <div className="flex gap-2 mt-3 justify-end">
@@ -439,7 +459,18 @@ export default function StudentFeePage() {
                                                     <td className="px-4 py-3 text-sm text-text-muted">
                                                         {formatDateTimeIST(receipt.created_at)}
                                                     </td>
-                                                    <td className="px-4 py-3 text-sm">{receipt.collected_by_name}</td>
+                                                    <td className="px-4 py-3 text-sm">
+                                                        <div className="flex items-center justify-between">
+                                                            <span>{receipt.collected_by_name}</span>
+                                                            <button
+                                                                onClick={() => handleDownloadReceipt(receipt.receipt_no)}
+                                                                title="Download Receipt"
+                                                                className="text-primary hover:bg-primary/10 p-1.5 rounded-lg transition-colors"
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
