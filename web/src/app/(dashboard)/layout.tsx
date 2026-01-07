@@ -170,9 +170,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Sidebar */}
             <aside
                 className={`
-                    fixed inset-y-0 left-0 z-50 w-72 bg-surface shadow-2xl transition-all duration-300 ease-in-out
-                    border-r border-border
-                    bg-gradient-to-b from-surface via-surface to-slate-50
+                    fixed inset-y-0 left-0 z-50 w-72 glass shadow-2xl transition-all duration-300 ease-in-out
+                    border-r border-border-glass
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
                     lg:relative lg:translate-x-0
                 `}
@@ -190,95 +189,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                 </div>
 
-                {/* Navigation with Collapsible Menus */}
-                <nav className="p-3 space-y-1 overflow-y-auto h-[calc(100vh-5rem)] custom-scrollbar">
+                {/* Navigation with Flat Structure (Tabs moved to Pages) */}
+                <nav className="p-3 space-y-2 overflow-y-auto h-[calc(100vh-5rem)] custom-scrollbar">
                     {MENU_ITEMS.map((item) => {
                         // Permission Check
                         if (item.permission && !hasPermission(item.permission)) {
                             return null;
                         }
 
-                        const hasSubmenu = item.submenu && item.submenu.length > 0;
-                        const isExpanded = expandedMenus.includes(item.href);
-                        const isActive = pathname === item.href ||
-                            (hasSubmenu && item.submenu?.some(sub => pathname === sub.href || pathname.startsWith(sub.href + '/')));
+                        const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                         const Icon = item.icon;
 
                         return (
-                            <div key={item.href}>
-                                {/* Main Menu Item */}
-                                {hasSubmenu ? (
-                                    // Collapsible menu item with chevron
-                                    <button
-                                        onClick={() => toggleMenu(item.href)}
-                                        className={`
-                                            flex items-center w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 group relative
-                                            ${isActive
-                                                ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary'
-                                                : 'text-text-secondary hover:bg-white hover:text-primary hover:shadow-sm'
-                                            }
-                                        `}
-                                    >
-                                        <Icon className={`mr-3 h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? 'text-primary' : 'text-text-muted group-hover:text-primary'}`} />
-                                        <span className="flex-1 text-left">{item.label}</span>
-                                        <ChevronDown
-                                            className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                                        />
-                                    </button>
-                                ) : (
-                                    // Simple link for items without submenu
-                                    <Link
-                                        href={item.href}
-                                        className={`
-                                            flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden
-                                            ${isActive
-                                                ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/30'
-                                                : 'text-text-secondary hover:bg-white hover:text-primary hover:shadow-sm'
-                                            }
-                                        `}
-                                    >
-                                        <Icon className={`mr-3 h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-text-muted group-hover:text-primary'}`} />
-                                        <span className="relative z-10">{item.label}</span>
-                                    </Link>
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`
+                                    flex items-center px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-300 group relative overflow-hidden
+                                    ${isActive
+                                        ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/25 translate-x-1'
+                                        : 'text-text-secondary hover:bg-white/60 hover:text-primary hover:shadow-sm hover:translate-x-1'
+                                    }
+                                `}
+                            >
+                                {isActive && (
+                                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-20" />
                                 )}
-
-                                {/* Collapsible Submenu with animation */}
-                                <AnimatePresence initial={false}>
-                                    {hasSubmenu && isExpanded && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.2, ease: "easeInOut" }}
-                                            className="overflow-hidden"
-                                        >
-                                            <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary/20 pl-3">
-                                                {item.submenu?.map((subItem) => {
-                                                    const isSubActive = pathname === subItem.href;
-                                                    const SubIcon = subItem.icon;
-
-                                                    return (
-                                                        <Link
-                                                            key={subItem.href}
-                                                            href={subItem.href}
-                                                            className={`
-                                                                flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 relative
-                                                                ${isSubActive
-                                                                    ? 'text-primary bg-primary/10 font-medium'
-                                                                    : 'text-text-secondary hover:text-primary hover:bg-white'
-                                                                }
-                                                            `}
-                                                        >
-                                                            <SubIcon className={`w-4 h-4 ${isSubActive ? 'text-primary' : 'text-text-muted'}`} />
-                                                            {subItem.label}
-                                                        </Link>
-                                                    );
-                                                })}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
+                                <Icon className={`mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-white' : 'text-text-muted group-hover:text-primary'}`} />
+                                <span className="relative z-10">{item.label}</span>
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="sidebar-active"
+                                        className="absolute right-2 w-1.5 h-1.5 rounded-full bg-white shadow-sm"
+                                    />
+                                )}
+                            </Link>
                         );
                     })}
                 </nav>
@@ -288,7 +233,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
 
                 {/* Header */}
-                <header className="h-20 bg-surface/80 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-6 sticky top-0 z-40">
+                <header className="h-20 glass border-b border-border-glass flex items-center justify-between px-6 sticky top-0 z-40">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(!isSidebarOpen)}

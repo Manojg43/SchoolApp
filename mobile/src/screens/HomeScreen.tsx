@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,6 +7,7 @@ import { mobileApi } from '../lib/api';
 import { QrCode, LogOut, User, Menu, Calendar, IndianRupee, CalendarCheck, Bell, BookOpen, FileText } from 'lucide-react-native';
 import { theme } from '../constants/theme';
 import { Card } from '../components/ui/Card';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -34,6 +35,7 @@ export default function HomeScreen() {
     };
 
     const handleLogout = async () => {
+        // Just clear token to logout
         await AsyncStorage.removeItem('auth_token');
         navigation.replace('Login');
     };
@@ -107,15 +109,22 @@ export default function HomeScreen() {
 
                     {/* Primary Action */}
                     <TouchableOpacity
-                        style={styles.scanButton}
+                        style={styles.scanButtonWrapper}
                         onPress={() => navigation.navigate('Scan')}
                         activeOpacity={0.9}
                     >
-                        <QrCode color="white" size={32} />
-                        <View style={styles.scanTextContainer}>
-                            <Text style={styles.scanButtonText}>Scan Attendance</Text>
-                            <Text style={styles.scanButtonSubText}>Scan School QR to Mark Check-In</Text>
-                        </View>
+                        <LinearGradient
+                            colors={[theme.colors.linearGradientStart, theme.colors.linearGradientEnd]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.scanButton}
+                        >
+                            <QrCode color="white" size={32} />
+                            <View style={styles.scanTextContainer}>
+                                <Text style={styles.scanButtonText}>Scan Attendance</Text>
+                                <Text style={styles.scanButtonSubText}>Scan School QR to Mark Check-In</Text>
+                            </View>
+                        </LinearGradient>
                     </TouchableOpacity>
 
                     {/* Other Actions */}
@@ -181,8 +190,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
+        // Removed border for cleaner look
     },
     schoolName: {
         fontSize: 14,
@@ -247,7 +255,7 @@ const styles = StyleSheet.create({
     },
     iconContainer: {
         padding: 8,
-        backgroundColor: 'rgba(79, 70, 229, 0.1)', // Primary alpha
+        backgroundColor: 'rgba(37, 99, 235, 0.1)', // Primary Alpha
         borderRadius: 8,
     },
     salaryTitle: {
@@ -292,18 +300,16 @@ const styles = StyleSheet.create({
     textPending: {
         color: theme.colors.warning,
     },
+    scanButtonWrapper: {
+        marginBottom: 32,
+        borderRadius: theme.borderRadius.l,
+        ...theme.shadows.glass,
+    },
     scanButton: {
-        backgroundColor: theme.colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
         padding: 24,
         borderRadius: theme.borderRadius.l,
-        marginBottom: 32,
-        shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
-        elevation: 10,
     },
     scanTextContainer: {
         marginLeft: 16,
@@ -314,7 +320,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     scanButtonSubText: {
-        color: 'rgba(255, 255, 255, 0.8)',
+        color: 'rgba(255, 255, 255, 0.9)',
         fontSize: 13,
     },
     grid: {

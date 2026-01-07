@@ -7,24 +7,32 @@ import { Plus } from "lucide-react";
 import { toast } from "@/lib/toast";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import KPICard from "@/components/ui/KPICard";
-import { getFees, createFee, deleteFee, getStudents, API_BASE_URL, type Fee, type Student } from "@/lib/api";
+import { getFees, deleteFee, API_BASE_URL, type Fee } from "@/lib/api";
 
 import { useRouter } from 'next/navigation';
 
+import Animate, { AnimatePage } from "@/components/ui/Animate";
+import { PageTabs } from "@/components/ui/PageTabs";
+
 export default function FinancePage() {
-    const { t } = useLanguage();
     const router = useRouter();
     const { user, hasPermission } = useAuth();
     const [fees, setFees] = useState<Fee[]>([]);
-    const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const tabs = [
+        { label: 'Invoices', href: '/finance' },
+        { label: 'Create Invoice', href: '/finance/create' },
+        { label: 'Payroll', href: '/finance/payroll' },
+        { label: 'Discounts', href: '/finance/discounts' },
+        { label: 'Certificates', href: '/finance/certificates-fees' },
+    ];
 
     async function load() {
         setLoading(true);
         try {
-            const [fData, sData] = await Promise.all([getFees(), getStudents()]);
+            const fData = await getFees();
             setFees(fData);
-            setStudents(sData);
         } catch (e) {
             console.error(e);
         } finally {
@@ -40,10 +48,6 @@ export default function FinancePage() {
         }
     }, [user, hasPermission]);
 
-    const handleSuccess = () => {
-        load();
-    };
-
     const handleDeleteFee = async (fee: Fee) => {
         toast.confirm({
             title: 'Delete this invoice?',
@@ -55,7 +59,7 @@ export default function FinancePage() {
                     await deleteFee(fee.id);
                     load();
                     toast.success('Invoice deleted successfully');
-                } catch (e) {
+                } catch {
                     toast.error('Failed to delete invoice', 'Please try again');
                 } finally {
                     toast.dismiss(loadingToast);
@@ -100,42 +104,48 @@ export default function FinancePage() {
     const totalCollected = fees.filter(f => f.status === 'PAID').reduce((acc, curr) => acc + Number(curr.amount), 0);
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8 font-[family-name:var(--font-geist-sans)]">
-            <header className="mb-8 flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Finance & Fees</h1>
-                    <p className="text-gray-500">Track Fee Collection and Invoices</p>
+        <AnimatePage>
+            <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-dark tracking-tight">Finance & Fees</h1>
+                        <p className="text-text-muted mt-1">Track Fee Collection and Invoices</p>
+                    </div>
+                    {hasPermission('students.add_fee') && (
+                        <button
+                            className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 flex items-center gap-2 font-medium transition-all duration-300 transform hover:-translate-y-0.5"
+                            onClick={() => router.push('/finance/create')}
+                        >
+                            <Plus className="w-4 h-4" /> Create Invoice
+                        </button>
+                    )}
                 </div>
-                {hasPermission('students.add_fee') && (
-                    <button
-                        className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-700 flex items-center gap-2"
-                        onClick={() => router.push('/finance/create')}
-                    >
-                        <Plus className="w-4 h-4" /> Create Invoice
-                    </button>
-                )}
-            </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <KPICard label="Pending Collection" value={`₹${totalPending}`} color="error" />
-                <KPICard label="Total Collected" value={`₹${totalCollected}`} color="success" />
-            </div>
+                <PageTabs tabs={tabs} />
 
-            <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-medium text-gray-900">Recent Invoices</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <KPICard label="Pending Collection" value={`₹${totalPending}`} color="error" />
+                    <KPICard label="Total Collected" value={`₹${totalCollected}`} color="success" />
                 </div>
-                {hasPermission('students.view_fee') ? (
-                    <DataTable
-                        columns={columns}
-                        data={fees}
-                        isLoading={loading}
-                        onDelete={hasPermission('students.delete_fee') ? handleDeleteFee : undefined}
-                    />
-                ) : (
-                    <div className="p-8 text-center text-gray-500">Access Denied</div>
-                )}
+
+                <Animate animation="fade" delay={0.2}>
+                    <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-xl border border-white/50 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-white/50">
+                            <h2 className="text-lg font-bold text-gray-800">Recent Invoices</h2>
+                        </div>
+                        {hasPermission('students.view_fee') ? (
+                            <DataTable
+                                columns={columns}
+                                data={fees}
+                                isLoading={loading}
+                                onDelete={hasPermission('students.delete_fee') ? handleDeleteFee : undefined}
+                            />
+                        ) : (
+                            <div className="p-8 text-center text-gray-500">Access Denied</div>
+                        )}
+                    </div>
+                </Animate>
             </div>
-        </div>
+        </AnimatePage>
     );
 }

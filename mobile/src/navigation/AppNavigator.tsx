@@ -30,12 +30,17 @@ export default function AppNavigator() {
         const checkAuth = async () => {
             try {
                 const token = await AsyncStorage.getItem('auth_token');
+                // Optional: Validate token with backend here if needed
                 if (token) {
                     setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
                 }
             } catch (error) {
                 console.log('Error checking auth token:', error);
+                setIsLoggedIn(false);
             } finally {
+                // Add a small delay for splash effect integration if desired
                 setIsLoading(false);
             }
         };
@@ -43,7 +48,6 @@ export default function AppNavigator() {
         checkAuth();
     }, []);
 
-    // Show loading screen while checking auth
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>

@@ -1,30 +1,18 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { getStudents, deleteStudent, getClasses, getSections, getAcademicYears, toggleStudentActive, type Student, type ClassItem } from "@/lib/api";
-import { Download, Plus, Edit, Trash2, GraduationCap, Users, UserPlus, Power, RefreshCw, Filter } from "lucide-react";
+import { getStudents, deleteStudent, getClasses, getSections, getAcademicYears, toggleStudentActive, type Student, type ClassItem, type SectionItem as Section, type AcademicYear } from "@/lib/api";
+import { GraduationCap, Users, UserPlus, Power, RefreshCw, Filter } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/lib/toast";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import Card, { CardContent, CardHeader, CardTitle } from "@/components/ui/modern/Card";
 import Animate, { AnimatePage } from "@/components/ui/Animate";
+import { PageTabs } from "@/components/ui/PageTabs";
 import StudentProfileDrawer from "@/components/students/StudentProfileDrawer";
 
-interface Section {
-    id: number;
-    name: string;
-    parent_class: number;
-}
-
-interface AcademicYear {
-    id: number;
-    name: string;
-    is_active: boolean;
-}
-
 export default function StudentList() {
-    const { t } = useLanguage();
     const { hasPermission } = useAuth();
     const [students, setStudents] = useState<Student[]>([]);
     const [classes, setClasses] = useState<ClassItem[]>([]);
@@ -43,6 +31,11 @@ export default function StudentList() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
     const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('create');
+
+    const tabs = [
+        { label: 'Directory', href: '/students' },
+        { label: 'Attendance', href: '/students/attendance' },
+    ];
 
     async function loadData() {
         setLoading(true);
@@ -250,18 +243,24 @@ export default function StudentList() {
     return (
         <AnimatePage>
             <div className="space-y-6 max-w-[1600px] mx-auto p-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-text-main tracking-tight">Students Directory</h1>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-dark tracking-tight">Students</h1>
                         <p className="text-text-muted mt-1">Manage admissions, profiles, and academic records.</p>
                     </div>
                     <button
                         onClick={handleAdd}
-                        className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl hover:bg-primary-dark font-medium shadow-lg shadow-primary/20 transition-all"
+                        className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary-dark text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-primary/25 font-medium transition-all duration-300 transform hover:-translate-y-0.5"
                     >
                         <UserPlus size={18} /> Add New Student
                     </button>
                 </div>
+
+                <PageTabs tabs={tabs} />
+
+                {/* KPI Cards */}
+
+                <PageTabs tabs={tabs} />
 
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

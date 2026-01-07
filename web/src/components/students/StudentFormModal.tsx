@@ -41,6 +41,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
 
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<StudentFormValues>({
         // Cast resolver to any to bypass strict type mismatch between Zod input/output and RHF
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(studentSchema) as any,
         defaultValues: {
             gender: 'M',
@@ -61,14 +62,14 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
     useEffect(() => {
         async function loadMeta() {
             try {
-                // console.log("Fetching Classes and Sections...");
+
                 const [c, s] = await Promise.all([getClasses(), getSections()]);
-                // console.log("Fetched Data:", c, s);
+
                 setClasses(c);
                 setSections(s);
 
             } catch (err) {
-                console.error("Failed to load metadata:", err);
+
                 const msg = err instanceof Error ? err.message : 'Unknown Error';
                 toast.error('Failed to load class data', msg);
             }
@@ -141,7 +142,7 @@ export default function StudentFormModal({ isOpen, onClose, onSuccess, studentTo
             onSuccess();
             onClose();
         } catch (error: unknown) {
-            console.error("Failed to save student", error);
+
             const msg = error instanceof Error ? error.message : 'Unknown Error';
             toast.error('Failed to save student', msg);
         } finally {

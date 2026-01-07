@@ -62,7 +62,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
     }, [staffToEdit, isOpen, reset, setValue]);
 
     const onInvalid = (errors: Record<string, unknown>) => {
-        console.error("Validation Errors:", errors);
+
         const firstError = Object.values(errors)[0] as { message?: string };
         setError(firstError?.message || "Please check the form for errors.");
     };
@@ -72,8 +72,9 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
         try {
             const res = await generateResetCode(staffToEdit.id);
             setResetCode(res.code);
-        } catch (err: any) {
-            setError(err.message || "Failed to generate code");
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to generate code";
+            setError(message);
         }
     };
 
@@ -81,7 +82,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
         setLoading(true);
         setError(null);
         const payload: StaffPayload = { ...data };
-        console.log("Submitting Payload:", payload);
+
 
         try {
             if (staffToEdit) {
@@ -97,7 +98,7 @@ export default function StaffFormModal({ isOpen, onClose, onSuccess, staffToEdit
             }, 2000);
         } catch (err: unknown) {
             // Error type is unknown, but commonly Error object or API response
-            console.error("Failed to save staff", err);
+
             const message = err instanceof Error ? err.message : "Failed to save staff. Please try again.";
             setError(message);
         } finally {

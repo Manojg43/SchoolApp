@@ -8,15 +8,25 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
     className?: string;
     onClick?: () => void;
     hoverEffect?: boolean;
+    variant?: 'default' | 'glass' | 'outline';
 }
 
-export default function Card({ children, className, onClick, hoverEffect = false, ...props }: CardProps) {
+export default function Card({
+    children,
+    className,
+    onClick,
+    hoverEffect = false,
+    variant = 'glass',
+    ...props
+}: CardProps) {
     return (
         <div
             onClick={onClick}
             className={cn(
-                'bg-surface border border-border rounded-xl shadow-sm p-5',
-                hoverEffect && 'transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer',
+                variant === 'glass'
+                    ? 'glass-card rounded-xl p-5'
+                    : 'bg-surface border border-border rounded-xl shadow-sm p-5',
+                hoverEffect && 'cursor-pointer', // hover effects handled by glass-card class or utility
                 className
             )}
             {...props}

@@ -2,12 +2,11 @@ from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
 from django.db.utils import OperationalError, ProgrammingError
-from django.dispatch import receiver
-from django.forms.models import model_to_dict
 from .models import AuditLog
 from .middleware import get_current_user
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+
 
 # Ignore specific models to avoid noise/recursion
 IGNORED_MODELS = ['AuditLog', 'Session', 'LogEntry']

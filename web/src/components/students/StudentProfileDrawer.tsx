@@ -223,14 +223,14 @@ export default function StudentProfileDrawer({ isOpen, onClose, onSuccess, stude
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col"
+                        className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-surface/90 backdrop-blur-xl border-l border-white/20 shadow-2xl flex flex-col"
                     >
                         {/* Drawer Header */}
-                        <div className="flex items-center justify-between p-5 border-b border-border bg-surface">
+                        <div className="flex items-center justify-between p-5 border-b border-border/50 bg-white/40">
                             <h2 className="text-xl font-bold text-text-main">
                                 {activeMode === 'create' ? 'Add New Student' : (activeMode === 'edit' ? 'Edit Profile' : 'Student Profile')}
                             </h2>
-                            <button onClick={onClose} className="p-2 hover:bg-background rounded-full transition-colors text-text-muted hover:text-text-main">
+                            <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full transition-colors text-text-muted hover:text-text-main">
                                 <X size={24} />
                             </button>
                         </div>

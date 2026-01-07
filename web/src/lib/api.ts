@@ -645,7 +645,7 @@ export interface AcademicYear {
 }
 
 export async function getAcademicYears(schoolId?: string): Promise<AcademicYear[]> {
-    return fetchWithSchool('/academic-years/', schoolId);
+    return fetchWithSchool('/years/', schoolId);
 }
 
 // Student CRUD

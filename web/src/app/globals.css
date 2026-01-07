@@ -1,39 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  /* VIBRANT THEME: Sapphire & Teal */
-  /* Purpose: High contrast, professional yet energetic, premium feel */
+  /* VIBRANT GRADIENT THEME */
 
-  /* Primary: Vibrant Royal Blue */
-  --color-primary: #2563eb;
-  /* Blue 600 */
-  --color-primary-light: #60a5fa;
-  /* Blue 400 */
-  --color-primary-dark: #1e40af;
-  /* Blue 800 */
+  /* Primary Gradients */
+  --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  /* Indigo to Violet */
+  --gradient-secondary: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  /* Cyan to Blue */
+  --gradient-accent: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  /* Amber to Red */
 
-  /* Secondary: Teal/Cyan (Fresh accents) */
-  --color-secondary: #06b6d4;
-  /* Cyan 500 */
-  --color-secondary-light: #67e8f9;
-  /* Cyan 300 */
+  /* Solid Fallbacks (for text/borders) */
+  --color-primary: #6366f1;
+  /* Indigo 500 */
+  --color-primary-dark: #4338ca;
+  /* Indigo 700 */
+  --color-secondary: #0ea5e9;
+  /* Sky 500 */
 
   /* Backgrounds */
-  --color-background: #f0f4f8;
-  /* Cool, light blue-grey */
+  --color-background: #f8fafc;
+  /* Slate 50 */
   --color-surface: #ffffff;
-  --color-surface-glass: rgba(255, 255, 255, 0.7);
-  /* For Backdrop Blur */
+  --color-surface-glass: rgba(255, 255, 255, 0.65);
 
-  /* State Colors */
+  /* Semantics */
   --color-success: #10b981;
-  /* Emerald 500 */
   --color-warning: #f59e0b;
-  /* Amber 500 */
   --color-error: #ef4444;
-  /* Red 500 */
   --color-info: #3b82f6;
-  /* Blue 500 */
 
   /* Text */
   --color-text-main: #0f172a;
@@ -45,25 +41,20 @@
 
   /* Borders */
   --color-border: #e2e8f0;
-  /* Slate 200 */
-  --color-border-glass: rgba(255, 255, 255, 0.5);
+  --color-border-glass: rgba(255, 255, 255, 0.4);
 }
 
 @theme inline {
   --color-primary: var(--color-primary);
-  --color-primary-light: var(--color-primary-light);
   --color-primary-dark: var(--color-primary-dark);
-
   --color-secondary: var(--color-secondary);
-  --color-secondary-light: var(--color-secondary-light);
 
   --color-background: var(--color-background);
   --color-surface: var(--color-surface);
-  --color-surface-glass: var(--color-surface-glass);
 
+  --color-error: var(--color-error);
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
-  --color-error: var(--color-error);
 
   --color-text-main: var(--color-text-main);
   --color-text-secondary: var(--color-text-secondary);
@@ -73,9 +64,9 @@
 
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-  /* Animations for smooth entrances - fixing flicker by avoiding layout shifts */
-  --animate-fade-in: fade-in 0.4s ease-out forwards;
-  --animate-scale-in: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* Smoother Animations */
+  --animate-fade-in: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-scale-in: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
   @keyframes fade-in {
@@ -91,7 +82,7 @@
   @keyframes scale-in {
     from {
       opacity: 0;
-      transform: scale(0.95);
+      transform: scale(0.96);
     }
 
     to {
@@ -103,7 +94,7 @@
   @keyframes slide-up {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(15px);
     }
 
     to {
@@ -118,28 +109,52 @@ body {
   color: var(--color-text-main);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
-/* Glassmorphism Utilities */
+/* Glassmorphism System */
 .glass {
   background: var(--color-surface-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--color-border-glass);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 10px 15px -3px rgba(0, 0, 0, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
-  border-color: var(--color-primary-light);
+  transform: translateY(-4px);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.01),
+    0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-bg {
+  background: var(--gradient-primary);
+  color: white;
 }
 
 /* Custom Scrollbar */
@@ -154,7 +169,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

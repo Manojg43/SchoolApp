@@ -53,7 +53,7 @@ export default function CreateInvoicePage() {
     const fetchInitialData = async () => {
         setLoadingInit(true);
         try {
-            console.log("Fetching Initial Data for Invoice...");
+
             const [cData, secData, sData, catData] = await Promise.all([
                 getClasses(),
                 getSections(),
@@ -61,7 +61,7 @@ export default function CreateInvoicePage() {
                 getFeeCategories()
             ]);
 
-            console.log("Data Received:", { c: cData?.length, s: sData?.length, sec: secData?.length });
+
 
             if (Array.isArray(cData)) setClasses(cData);
             if (Array.isArray(secData)) setSections(secData);
@@ -108,7 +108,7 @@ export default function CreateInvoicePage() {
             const cat = categories.find(c => c.id === Number(selectedCategory));
             if (cat) setTitle(`${cat.name} Fee`);
         }
-    }, [selectedCategory, selectedClass]);
+    }, [selectedCategory, selectedClass, categories]);
 
     // Reset section when class changes
     useEffect(() => {
@@ -199,7 +199,15 @@ export default function CreateInvoicePage() {
     };
 
     if (!hasPermission('students.add_fee')) {
-        return <div className="p-8 text-center">Access Denied</div>;
+        return <div className="p-8 text-center bg-gray-50 text-gray-600">Access Denied</div>;
+    }
+
+    if (loadingInit) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
     if (createdInvoiceId) {
