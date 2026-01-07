@@ -127,6 +127,8 @@ export interface FeeCategory {
     id: number;
     name: string;
     description?: string;
+    gst_rate: string; // Decimal as string from API
+    is_tax_inclusive: boolean;
 }
 
 export interface FeeStructure {
@@ -135,6 +137,9 @@ export interface FeeStructure {
     class_assigned: number;
     category: number;
     amount: string;
+    section?: number;
+    gst_rate: string;
+    is_tax_inclusive: boolean;
 }
 
 // Helper to fetch categories
@@ -142,18 +147,35 @@ export async function getFeeCategories(schoolId?: string): Promise<FeeCategory[]
     return fetchWithSchool('/finance/categories/', schoolId);
 }
 
-// Helper to fetch structure amount
-export async function getFeeStructureAmount(classId: number, categoryId: number, schoolId?: string): Promise<string> {
+// Helper to fetch structure amount (Supports Section Override)
+export async function getFeeStructureAmount(classId: number, categoryId: number, sectionId?: number, schoolId?: string): Promise<{ amount: string, gst_rate: string, is_tax_inclusive: boolean } | null> {
     try {
-        // Assuming backend filter by class and category
-        const res = await fetchWithSchool(`/finance/structure/?class_assigned=${classId}&category=${categoryId}`, schoolId);
+        let url = `/finance/structure/?class_assigned=${classId}&category=${categoryId}`;
+        if (sectionId) url += `&section=${sectionId}`;
+
+        const res = await fetchWithSchool(url, schoolId);
+
+        // Logic: 
+        // If multiple structures return (e.g. Class Generic + Section Specific), 
+        // Backend should probably filter or we filter here.
+        // Ideally backend logic: `filter(section=sectionId)` should return the specific ONE if exists, 
+        // else we might get the generic one? 
+        // Actually, if we pass sectionId to backend, default Django Filter might filter EXACT match.
+        // So we should try fetching specific first.
+
         if (Array.isArray(res) && res.length > 0) {
-            return res[0].amount;
+            // If multiple, ideally find exact match for section, else fallback
+            const match = res.find((r: FeeStructure) => r.section === sectionId) || res[0];
+            return {
+                amount: match.amount,
+                gst_rate: match.gst_rate,
+                is_tax_inclusive: match.is_tax_inclusive
+            };
         }
-        return "0";
+        return null;
     } catch (e) {
         console.error("Error fetching fee structure", e);
-        return "0";
+        return null;
     }
 }
 
@@ -480,7 +502,74 @@ export interface FeePayload {
     status: string;
 }
 
-// Fees
+// Smart Payment Collection Interfaces
+export interface StudentFeeBreakup {
+    id: number;
+    head: number;
+    head_name: string;
+    amount: string;
+    base_amount: string;
+    tax_amount: string;
+    paid_amount: string;
+    balance: string;
+    gst_rate: string;
+    is_tax_inclusive: boolean;
+}
+
+export interface Invoice {
+    id: number;
+    invoice_id: string;
+    student: number;
+    student_name: string;
+    class_name: string | null;
+    title: string;
+    total_amount: string;
+    paid_amount: string;
+    balance_due: string;
+    round_off_amount: string;
+    due_date: string;
+    status: 'PENDING' | 'PARTIAL' | 'PAID' | 'OVERDUE';
+    is_overdue: boolean;
+    breakups: StudentFeeBreakup[];
+}
+
+export interface ReceiptCreatePayload {
+    invoice: number;
+    amount: number;
+    mode: string;
+    transaction_id?: string;
+    remarks?: string;
+    custom_allocations?: { [head_id: number]: number }; // or array of objects
+}
+
+export async function getStudentInvoices(studentId: number, status?: string, schoolId?: string): Promise<Invoice[]> {
+    let url = `/finance/invoices/?student=${studentId}`;
+    if (status) url += `&status=${status}`;
+    return fetchWithSchool(url, schoolId);
+}
+
+export async function collectPayment(data: ReceiptCreatePayload, schoolId?: string) {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/finance/receipts/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || `Payment failed: ${res.statusText}`);
+    }
+    return res.json();
+}
+
+// Legacy Fee Interface (to be phased out or mapped)
 export interface Fee {
     id: number;
     student: number;
@@ -493,14 +582,14 @@ export interface Fee {
 }
 
 export async function getFees(schoolId?: string): Promise<Fee[]> {
-    return fetchWithSchool('/fees/', schoolId);
+    return fetchWithSchool('/finance/invoices/', schoolId);
 }
 
 export async function createFee(data: FeePayload, schoolId?: string): Promise<Fee> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
-    const res = await fetch(`${API_BASE_URL}/fees/`, {
+    const res = await fetch(`${API_BASE_URL}/finance/invoices/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -518,7 +607,7 @@ export async function deleteFee(id: number, schoolId?: string): Promise<void> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
-    const res = await fetch(`${API_BASE_URL}/fees/${id}/`, {
+    const res = await fetch(`${API_BASE_URL}/finance/invoices/${id}/`, {
         method: 'DELETE',
         headers: {
             'X-School-ID': effectiveSchoolId,

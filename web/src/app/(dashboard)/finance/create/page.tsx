@@ -98,27 +98,42 @@ export default function CreateInvoicePage() {
         }
     }, [selectedClass, selectedSection, studentSearch, allStudents, mode]);
 
+    const [gstDetails, setGstDetails] = useState<{ rate: string; inclusive: boolean } | null>(null);
+
     // Auto-fetch Fee Structure Logic
     useEffect(() => {
         if (selectedCategory && selectedClass) {
-            fetchStructureAmount(Number(selectedClass), Number(selectedCategory));
+            // Include Section ID if selected
+            fetchStructureAmount(Number(selectedClass), Number(selectedCategory), selectedSection ? Number(selectedSection) : undefined);
+        } else {
+            setAmount('');
+            setGstDetails(null);
         }
+
         // Update Title automatic
         if (selectedCategory) {
             const cat = categories.find(c => c.id === Number(selectedCategory));
             if (cat) setTitle(`${cat.name} Fee`);
         }
-    }, [selectedCategory, selectedClass, categories]);
+    }, [selectedCategory, selectedClass, selectedSection, categories]);
 
-    // Reset section when class changes
+    // Reset section when class changes (Handled, but we need to ensure structure re-fetches or clears)
     useEffect(() => {
-        setSelectedSection('');
+        if (!selectedClass) {
+            setSelectedSection('');
+            setAmount('');
+            setGstDetails(null);
+        }
     }, [selectedClass]);
 
-    const fetchStructureAmount = async (clsId: number, catId: number) => {
-        const amt = await getFeeStructureAmount(clsId, catId);
-        if (amt && amt !== "0") {
-            setAmount(amt);
+    const fetchStructureAmount = async (clsId: number, catId: number, secId?: number) => {
+        const data = await getFeeStructureAmount(clsId, catId, secId);
+        if (data) {
+            setAmount(data.amount);
+            setGstDetails({ rate: data.gst_rate, inclusive: data.is_tax_inclusive });
+        } else {
+            setAmount('');
+            setGstDetails(null);
         }
     };
 
@@ -429,6 +444,18 @@ export default function CreateInvoicePage() {
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
                                     {(selectedClass && selectedCategory) ? "Auto-filled from Fee Structure" : "Select Class & Type to auto-fill"}
+                                    {gstDetails && (
+                                        <span className="block mt-1 text-blue-600 font-medium">
+                                            {Number(gstDetails.rate) > 0 ? (
+                                                <>
+                                                    Includes {Number(gstDetails.rate)}% GST
+                                                    ({gstDetails.inclusive ? "Inclusive" : "Exclusive - Tax will be added on top"})
+                                                </>
+                                            ) : (
+                                                "Tax Exempt (0% GST)"
+                                            )}
+                                        </span>
+                                    )}
                                 </p>
                             </div>
 

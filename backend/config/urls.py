@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from schools.views import SchoolViewSet, AchievementViewSet, AcademicYearViewSet, ClassViewSet, SectionViewSet, NoticeViewSet, HomeworkViewSet
-from students.views import StudentViewSet, AttendanceViewSet, FeeViewSet, StudentHistoryViewSet
+from students.views import StudentViewSet, AttendanceViewSet, StudentHistoryViewSet
 from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
@@ -13,7 +13,7 @@ router.register(r'years', AcademicYearViewSet)
 router.register(r'classes', ClassViewSet)
 router.register(r'sections', SectionViewSet)
 router.register(r'attendance', AttendanceViewSet)
-router.register(r'fees', FeeViewSet)
+# router.register(r'fees', FeeViewSet) # Removed in favor of finance/invoices/
 router.register(r'achievements', AchievementViewSet)
 router.register(r'notices', NoticeViewSet, basename='notice')
 router.register(r'homework', HomeworkViewSet, basename='homework')

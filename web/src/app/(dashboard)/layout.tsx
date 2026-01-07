@@ -58,6 +58,7 @@ const MENU_ITEMS: MenuItem[] = [
         permission: 'can_access_finance',
         submenu: [
             { href: '/fees', label: 'Fees & Invoices', icon: Calculator },
+            { href: '/finance/collect', label: 'Collect Fees', icon: IndianRupee },
             { href: '/finance/create', label: 'Create Invoice', icon: FileText },
             { href: '/finance/payroll', label: 'Payroll Dashboard', icon: IndianRupee },
             { href: '/finance/discounts', label: 'Discounts & Scholarships', icon: Gift },

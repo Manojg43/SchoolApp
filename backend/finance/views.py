@@ -129,7 +129,7 @@ from .models import FeeInstallment, FeeDiscount, CertificateFee
 from .serializers import (
     FeeInstallmentSerializer, FeeDiscountSerializer, CertificateFeeSerializer
 )
-from .services import FeeSettlementService
+from .services import FeeService
 from schools.models import AcademicYear
 from students.models import Student
 
@@ -164,7 +164,7 @@ class BulkFeeGenerationView(APIView):
             academic_year = AcademicYear.objects.get(id=academic_year_id)
             
             # Generate fees
-            result = FeeSettlementService.generate_annual_fees(
+            result = FeeService.generate_annual_fees(
                 academic_year,
                 request.user.school,
                 options
@@ -193,7 +193,7 @@ class YearSettlementView(APIView):
         try:
             academic_year = AcademicYear.objects.get(id=year_id)
             
-            result = FeeSettlementService.settle_year(
+            result = FeeService.settle_year(
                 academic_year,
                 request.user.school
             )
@@ -221,7 +221,7 @@ class SettlementSummaryView(APIView):
         try:
             academic_year = AcademicYear.objects.get(id=year_id)
             
-            summary = FeeSettlementService.get_settlement_summary(
+            summary = FeeService.get_settlement_summary(
                 academic_year,
                 request.user.school
             )
@@ -269,7 +269,7 @@ class StudentPromotionView(APIView):
             new_class = Class.objects.get(id=new_class_id)
             new_year = AcademicYear.objects.get(id=new_year_id)
             
-            result = FeeSettlementService.handle_class_promotion(
+            result = FeeService.handle_class_promotion(
                 student,
                 new_class,
                 new_year
@@ -412,7 +412,49 @@ class CertificateFeeViewSet(ModelViewSet):
 
 
 from .models import Receipt
-from .serializers import ReceiptSerializer, ReceiptCreateSerializer
+from .serializers import ReceiptSerializer, ReceiptCreateSerializer, InvoiceSerializer
+
+class InvoiceViewSet(ModelViewSet):
+    """
+    ViewSet for managing Invoices.
+    Replaces the old 'fees' endpoint in students app.
+    Centralized source of truth for all invoices.
+    """
+    queryset = Invoice.objects.all()
+    serializer_class = InvoiceSerializer
+    permission_classes = [StandardPermission]
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Invoice.objects.select_related(
+            'student', 'student__current_class', 'student__section', 
+            'fee_structure', 'academic_year'
+        ).all()
+        
+        school_id = get_current_school_id()
+        if school_id:
+            queryset = queryset.filter(school__school_id=school_id)
+            
+        # Filter by student
+        student_id = self.request.query_params.get('student')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+            
+        # Filter by academic year
+        year_id = self.request.query_params.get('academic_year')
+        if year_id:
+            queryset = queryset.filter(academic_year_id=year_id)
+            
+        # Filter by status
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        return queryset.order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(school=self.request.user.school)
+
 
 class ReceiptViewSet(ModelViewSet):
     """
@@ -692,44 +734,78 @@ class SettleInvoiceView(APIView):
         if invoice.status == 'PAID':
             return Response({'error': 'Invoice is already fully paid'}, status=400)
         
-        if invoice.is_settled:
-            return Response({'error': 'Invoice is already settled'}, status=400)
+        # Updated Logic: "is_settled" removed from Model.
+        # We now check if fully paid, or check if settlement note exists?
+        # Actually proper way is: Invoice is settled if balance is 0.
+        # "Settlement" here acts as a "Discount/Waiver".
         
-        settlement_note = request.data.get('settlement_note', '')
+        balance = invoice.balance_due
+        if balance <= 0:
+             return Response({'error': 'Invoice has no balance due to settle'}, status=400)
+             
         waive_amount = request.data.get('waive_amount')
+        settlement_note = request.data.get('settlement_note', '')
         
         if not settlement_note:
             return Response({'error': 'Settlement note is required'}, status=400)
+
+        # Logic: 
+        # 1. Create a "Waiver" discount (FeeDiscount)
+        # 2. Or just reduce the Total Amount? (Bad practice)
+        # 3. Or add a "Credit Note"?
+        # 4. Previously: invoice.discount_amount += waive.
+        #    BUT `discount_amount` is not in new `Invoice` model shown in `views.py` 
+        #    (Wait, let me double check Model... `models.py` lines 48-71 do NOT show discount_amount)
+        #    (It shows total_amount, paid_amount, status).
         
-        balance = invoice.balance_due
+        # Checking `backend/finance/models.py` again...
+        # Lines 48-92: Invoice has total_amount, round_off_amount, paid_amount. NO discount_amount.
+        # So previous code would crash! 
+        
+        # SOLUTION: Create a `FeeDiscount` entry and link it? 
+        # Or better (simpler for now since FeeDiscount is separate): 
+        # Create a "Settlement" Payment (Mode='WAIVER')?
+        # Yes! Create a Receipt with mode='WAIVER'. This balances the books perfectly.
         
         if waive_amount:
             waive_amount = float(waive_amount)
-            if waive_amount > balance:
+            if waive_amount > float(balance):
                 return Response({'error': 'Waive amount cannot exceed balance due'}, status=400)
-            # Add to discount
-            invoice.discount_amount += waive_amount
-            invoice.discount_reason = f"{invoice.discount_reason}; Settlement: {settlement_note}" if invoice.discount_reason else f"Settlement: {settlement_note}"
-            invoice.paid_amount += waive_amount  # Mark as paid
         else:
-            # Waive full balance
-            invoice.discount_amount += balance
-            invoice.discount_reason = f"{invoice.discount_reason}; Settlement: {settlement_note}" if invoice.discount_reason else f"Settlement: {settlement_note}"
-            invoice.paid_amount = invoice.total_amount  # Mark as fully paid
+            waive_amount = float(balance)
+            
+        # Create "Waiver" Receipt
+        from .models import Receipt
+        Receipt.objects.create(
+            school=request.user.school,
+            invoice=invoice,
+            amount=waive_amount,
+            mode='WAIVER', # Special mode
+            created_by=request.user,
+            remarks=f"Settlement: {settlement_note}"
+        )
         
-        invoice.is_settled = True
-        invoice.settled_date = date.today()
-        invoice.settlement_note = f"Settled by {request.user.get_full_name()} on {date.today()}: {settlement_note}"
-        invoice.save()
+        # Update Invoice Paid Amount logic is triggered by Receipt? 
+        # No, my Service usually handles it.
+        # Let's use FeeService.process_payment with mode='WAIVER'.
+        
+        from .services import FeeService
+        from decimal import Decimal
+        
+        FeeService.process_payment(
+            invoice=invoice,
+            amount=Decimal(str(waive_amount)),
+            mode='WAIVER',
+            created_by=request.user,
+            transaction_id=f"SETTLE-{date.today()}"
+        )   
         
         return Response({
             'success': True,
-            'message': 'Invoice settled successfully',
+            'message': 'Invoice settled successfully via Waiver Receipt',
             'invoice_id': invoice.invoice_id,
-            'new_status': invoice.status,
-            'waived_amount': float(waive_amount) if waive_amount else float(balance),
+            'waived_amount': float(waive_amount),
             'settled_by': request.user.get_full_name(),
-            'settled_date': str(invoice.settled_date),
         })
 
 

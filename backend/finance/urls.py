@@ -24,7 +24,7 @@ from .views import (
     # Fee Settlement ViewSets
     FeeInstallmentViewSet, FeeDiscountViewSet, CertificateFeeViewSet,
     # Receipt ViewSet
-    ReceiptViewSet,
+    ReceiptViewSet, InvoiceViewSet, # Added InvoiceViewSet
     # Views
     BulkFeeGenerationView, YearSettlementView, SettlementSummaryView,
     StudentPromotionView, CertificateFeeCheckView,
@@ -40,6 +40,7 @@ router.register(r'installments', FeeInstallmentViewSet)
 router.register(r'discounts', FeeDiscountViewSet)
 router.register(r'certificate-fees', CertificateFeeViewSet)
 router.register(r'receipts', ReceiptViewSet)  # Payment receipts
+router.register(r'invoices', InvoiceViewSet)  # Centralized Invoices
 
 urlpatterns += [
     # Bulk operations

@@ -9,6 +9,20 @@ class FeeCategory(models.Model):
     name = models.CharField(_("Category Name"), max_length=100) # e.g. Tuition, Transport
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     description = models.TextField(blank=True)
+    
+    # GST Configuration
+    gst_rate = models.DecimalField(
+        _("GST Rate (%)"), 
+        max_digits=5, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="GST Percentage (e.g. 18.00)"
+    )
+    is_tax_inclusive = models.BooleanField(
+        _("Is Tax Inclusive"), 
+        default=False,
+        help_text="If True, amount includes tax. If False, tax is added on top."
+    )
 
     def __str__(self):
         return self.name
@@ -17,19 +31,19 @@ class FeeStructure(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     class_assigned = models.ForeignKey(Class, on_delete=models.CASCADE)
+    # Added Section support as per requirements ("Can be different for each class and section")
+    section = models.ForeignKey('schools.Section', on_delete=models.CASCADE, null=True, blank=True)
     category = models.ForeignKey(FeeCategory, on_delete=models.CASCADE)
     amount = models.DecimalField(_("Amount"), max_digits=10, decimal_places=2)
     
     class Meta:
-        unique_together = ('academic_year', 'class_assigned', 'category')
+        unique_together = ('academic_year', 'class_assigned', 'section', 'category')
         indexes = [
             models.Index(fields=['school', 'academic_year'], name='feestructure_school_year_idx'),
-            models.Index(fields=['class_assigned'], name='feestructure_class_idx'),
-            models.Index(fields=['category'], name='feestructure_category_idx'),
         ]
 
     def __str__(self):
-        return f"{self.class_assigned} - {self.category}: {self.amount}"
+        return f"{self.class_assigned} ({self.section if self.section else 'All'}) - {self.category}: {self.amount}"
 
 class Invoice(models.Model):
     id = models.AutoField(primary_key=True)
@@ -37,11 +51,11 @@ class Invoice(models.Model):
     
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='invoices')
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     
-    # Can be linked to a structure or ad-hoc
-    fee_structure = models.ForeignKey(FeeStructure, on_delete=models.SET_NULL, null=True, blank=True)
-    title = models.CharField(_("Title"), max_length=200) # e.g. "Term 1 Tuition"
+    # Snapshot of totals
     total_amount = models.DecimalField(_("Total Amount"), max_digits=10, decimal_places=2)
+    round_off_amount = models.DecimalField(_("Round Off Amount"), max_digits=5, decimal_places=2, default=0.00)
     paid_amount = models.DecimalField(_("Paid Amount"), max_digits=10, decimal_places=2, default=0)
     due_date = models.DateField(_("Due Date"))
     
@@ -53,112 +67,55 @@ class Invoice(models.Model):
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     
-    # Fee Settlement Enhancement - Phase 1
-    academic_year = models.ForeignKey(
-        AcademicYear, 
-        on_delete=models.CASCADE,
-        null=True,  # Nullable for backward compatibility
-        blank=True,
-        help_text="Academic year for this invoice"
-    )
-    
-    FEE_TERM_CHOICES = [
-        ('TERM1', 'Term 1'),
-        ('TERM2', 'Term 2'),
-        ('TERM3', 'Term 3'),
-        ('ANNUAL', 'Annual'),
-        ('MONTHLY', 'Monthly'),
-        ('ONETIME', 'One-Time'),
-    ]
-    fee_term = models.CharField(
-        max_length=20,
-        choices=FEE_TERM_CHOICES,
-        default='ANNUAL',
-        help_text="Payment term for this invoice"
-    )
-    
-    # Settlement tracking
-    is_settled = models.BooleanField(
-        default=False,
-        help_text="Whether this invoice has been settled for the year"
-    )
-    settled_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when invoice was settled"
-    )
-    settlement_note = models.TextField(
-        blank=True,
-        help_text="Notes about settlement"
-    )
-    
-    # Late fee management
-    late_fee = models.DecimalField(
-        _("Late Fee"),
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        help_text="Late payment fee charged"
-    )
-    late_fee_applied_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when late fee was applied"
-    )
-    
-    # Discount tracking
-    discount_amount = models.DecimalField(
-        _("Discount Amount"),
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        help_text="Discount applied to this invoice"
-    )
-    discount_reason = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text="Reason for discount (e.g., Scholarship, Sibling Discount)"
-    )
-    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.invoice_id:
             self.invoice_id = generate_business_id('INV')
         
-        # Auto update status
+        # Auto update status base on amounts
         if self.paid_amount >= self.total_amount:
             self.status = 'PAID'
         elif self.paid_amount > 0:
             self.status = 'PARTIAL'
+        else:
+            self.status = 'PENDING'
             
         super().save(*args, **kwargs)
     
     @property
     def balance_due(self):
-        """Calculate remaining balance"""
         return self.total_amount - self.paid_amount
-    
-    @property
-    def is_overdue(self):
-        """Check if invoice is overdue"""
-        from datetime import date
-        return self.due_date < date.today() and self.status != 'PAID'
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['school', 'status'], name='invoice_school_status_idx'),
-            models.Index(fields=['student', 'created_at'], name='invoice_student_created_idx'),
-            models.Index(fields=['due_date'], name='invoice_due_date_idx'),
-            models.Index(fields=['invoice_id'], name='invoice_id_idx'),
-            models.Index(fields=['status'], name='invoice_status_idx'),
-            # New indexes for settlement
-            models.Index(fields=['academic_year', 'is_settled'], name='invoice_year_settled_idx'),
-            models.Index(fields=['fee_term'], name='invoice_term_idx'),
-        ]
 
     def __str__(self):
         return f"{self.invoice_id} - {self.student.first_name}"
+
+class StudentFeeBreakup(models.Model):
+    """
+    IMMUTABLE SNAPSHOT: This table stores the fee heads and amounts 
+    at the time of invoice generation. Future changes to FeeStructure 
+    will NOT affect this.
+    """
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='breakups')
+    head = models.ForeignKey(FeeCategory, on_delete=models.PROTECT) # Protect history
+    
+    amount = models.DecimalField(_("Original Amount"), max_digits=10, decimal_places=2)
+    
+    # Tax Breakdown (Audit)
+    tax_amount = models.DecimalField(_("Tax Amount"), max_digits=10, decimal_places=2, default=0.00)
+    base_amount = models.DecimalField(_("Base Amount"), max_digits=10, decimal_places=2, default=0.00)
+    
+    paid_amount = models.DecimalField(_("Paid Amount"), max_digits=10, decimal_places=2, default=0)
+    
+    @property
+    def balance(self):
+        return self.amount - self.paid_amount
+
+    class Meta:
+        unique_together = ('invoice', 'head')
+
+    def __str__(self):
+        return f"{self.invoice.invoice_id} - {self.head.name}"
 
 class Receipt(models.Model):
     id = models.AutoField(primary_key=True)
@@ -167,6 +124,7 @@ class Receipt(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='receipts')
     amount = models.DecimalField(_("Amount Paid"), max_digits=10, decimal_places=2)
+    round_off_amount = models.DecimalField(_("Round Off Amount"), max_digits=5, decimal_places=2, default=0.00)
     date = models.DateField(_("Payment Date"), auto_now_add=True)
     mode = models.CharField(_("Payment Mode"), max_length=50, choices=[
         ('CASH', 'Cash'), 
@@ -178,45 +136,31 @@ class Receipt(models.Model):
     ])
     transaction_id = models.CharField(max_length=100, blank=True)
     
-    # Payment tracking - who created and when
+    # Tracking
     created_by = models.ForeignKey(CoreUser, on_delete=models.SET_NULL, null=True, related_name='receipts_created')
-    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp with IST
-    
-    # Who collected the payment (may be different from created_by)
-    collected_by = models.ForeignKey(
-        CoreUser, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='receipts_collected',
-        help_text="Staff who physically collected the payment"
-    )
-    
-    remarks = models.TextField(blank=True, help_text="Any notes about this payment")
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.receipt_no:
             self.receipt_no = generate_business_id('RCP')
-        
-        # Set collected_by to created_by if not specified
-        if not self.collected_by:
-            self.collected_by = self.created_by
-            
         super().save(*args, **kwargs)
-        
-        # Update Invoice paid amount
-        self.invoice.paid_amount += self.amount
-        self.invoice.save()
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['school', 'date'], name='receipt_school_date_idx'),
-            models.Index(fields=['invoice'], name='receipt_invoice_idx'),
-            models.Index(fields=['created_at'], name='receipt_created_at_idx'),
-        ]
-    
+        # Note: Invoice paid_amount update and Allocation logic should handle 
+        # centrally via Signals or Service layer to avoid circular logic here.
+
     def __str__(self):
-        return f"{self.receipt_no} - ₹{self.amount}"
+        return f"{self.receipt_no} - {self.amount}"
+
+class PaymentAllocation(models.Model):
+    """
+    Tracks how a single receipt amount was distributed across fee heads.
+    Example: Receipt 5000 -> (Library: 1000, Sports: 4000)
+    """
+    receipt = models.ForeignKey(Receipt, on_delete=models.CASCADE, related_name='allocations')
+    fee_breakup = models.ForeignKey(StudentFeeBreakup, on_delete=models.CASCADE, related_name='allocations')
+    amount = models.DecimalField(_("Allocated Amount"), max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Alloc {self.amount} to {self.fee_breakup.head.name}"
 
 class Holiday(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
@@ -445,6 +389,21 @@ class CertificateFee(models.Model):
         default=True,
         help_text="Whether fee is currently active"
     )
+    
+    # GST Configuration
+    gst_rate = models.DecimalField(
+        _("GST Rate (%)"), 
+        max_digits=5, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="GST Percentage (e.g. 18.00)"
+    )
+    is_tax_inclusive = models.BooleanField(
+        _("Is Tax Inclusive"), 
+        default=False,
+        help_text="If True, amount includes tax. If False, tax is added on top."
+    )
+    round_off_amount = models.DecimalField(_("Round Off Amount"), max_digits=5, decimal_places=2, default=0.00)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

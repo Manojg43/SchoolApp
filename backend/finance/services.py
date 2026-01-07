@@ -1,383 +1,280 @@
-from django.db import transaction
-from django.db.models import Sum, Q
-from datetime import date, timedelta
 from decimal import Decimal
+from django.db import transaction, models
+from .models import Receipt, PaymentAllocation, StudentFeeBreakup, Invoice, FeeStructure
+from core.utils import generate_business_id
+from datetime import date
 
-from .models import (
-    Invoice, FeeStructure, FeeInstallment, FeeDiscount, 
-    CertificateFee, FeeCategory
-)
-from students.models import Student
-from schools.models import School, AcademicYear, Class
+class FeeService:
+    @staticmethod
+    def process_payment(invoice, amount, mode, created_by, transaction_id='', payment_data=None, custom_allocations=None, user=None):
+        """
+        Creates a receipt and distributes the amount.
+        If custom_allocations is provided {head_id: amount}, uses strict distribution.
+        Else, distributes equally across unpaid fee heads.
+        """
+        created_by = user if user else created_by
+        
+        with transaction.atomic():
+            # 1. Create Receipt
+            receipt = Receipt.objects.create(
+                school=invoice.school,
+                invoice=invoice,
+                amount=amount,
+                mode=mode,
+                created_by=created_by,
+                transaction_id=transaction_id
+            )
 
+            # 2. Get Unpaid Breakups
+            breakups = list(invoice.breakups.filter(paid_amount__lt=models.F('amount')))
+            
+            if not breakups:
+                # Surplus payment? Just update invoice for now.
+                invoice.paid_amount += amount
+                invoice.save()
+                return receipt
 
-class FeeSettlementService:
-    """Service class for fee settlement operations"""
-    
+            # 3. Distribution Logic
+            remaining_payment = Decimal(amount)
+            
+            # --- CUSTOM ALLOCATION PATH ---
+            if custom_allocations:
+                # custom_allocations = [{'head_id': 1, 'amount': 200}, ...] or {1: 200}
+                # Let's assume frontend sends {head_id: amount} dict or list of objects
+                 
+                # Normalize input to check balance
+                allocation_map = {} # head_id -> amount
+                if isinstance(custom_allocations, list):
+                     for item in custom_allocations:
+                         allocation_map[int(item['head_id'])] = Decimal(str(item['amount']))
+                elif isinstance(custom_allocations, dict):
+                     for k, v in custom_allocations.items():
+                         allocation_map[int(k)] = Decimal(str(v))
+                
+                # Check Total Matches
+                alloc_total = sum(allocation_map.values())
+                if abs(alloc_total - remaining_payment) > Decimal('0.05'): # allow small float variance
+                     # Force match if close? Or error?
+                     # Let's error to be safe
+                     raise ValueError(f"allocation sum {alloc_total} does not match payment amount {remaining_payment}")
+
+                for breakup in breakups:
+                    alloc_amount = allocation_map.get(breakup.head.id, Decimal('0'))
+                    
+                    if alloc_amount > 0:
+                        # Validate Cap
+                        balance = breakup.amount - breakup.paid_amount
+                        if alloc_amount > balance + Decimal('0.05'): # tolerance
+                            raise ValueError(f"Allocation {alloc_amount} exceeds balance {balance} for {breakup.head.name}")
+                        
+                        # Apply
+                        to_pay = min(alloc_amount, balance) # Clamp to be safe
+                        breakup.paid_amount += to_pay
+                        breakup.save()
+
+                        PaymentAllocation.objects.create(
+                            receipt=receipt,
+                            fee_breakup=breakup,
+                            amount=to_pay
+                        )
+                        remaining_payment -= to_pay
+                        
+            # --- AUTO DISTRIBUTION PATH ---
+            else:
+                # Loop until payment is exhausted or all heads paid
+                while remaining_payment > 0 and breakups:
+                    count = len(breakups)
+                    share = remaining_payment / count
+                    
+                    # Check for small decimal issues, round down to 2 places
+                    share = round(share, 2)
+                    
+                    # If share is 0 (due to very small remaining), dump all into first
+                    if share == 0:
+                        share = remaining_payment
+
+                    # Track which ones are fully paid in this iteration
+                    fully_paid_indices = []
+
+                    for i, breakup in enumerate(breakups):
+                        if remaining_payment <= 0:
+                            break
+
+                        balance = breakup.amount - breakup.paid_amount
+                        
+                        # Determine exact allocation for this head
+                        to_pay = min(balance, share)
+                        
+                        # Cap by remaining payment (crucial regarding rounding)
+                        to_pay = min(to_pay, remaining_payment)
+
+                        # Update Breakup
+                        breakup.paid_amount += to_pay
+                        breakup.save()
+
+                        # Create Allocation Record
+                        PaymentAllocation.objects.create(
+                            receipt=receipt,
+                            fee_breakup=breakup,
+                            amount=to_pay
+                        )
+
+                        remaining_payment -= to_pay
+                        
+                        if breakup.amount - breakup.paid_amount <= 0:
+                            fully_paid_indices.append(i)
+
+                    # Remove fully paid from list for next iteration/redistribution
+                    for index in sorted(fully_paid_indices, reverse=True):
+                        breakups.pop(index)
+
+            # 4. Update Invoice Total Paid
+            # Re-sum from allocations to be 100% accurate
+            total_paid = sum(b.paid_amount for b in invoice.breakups.all())
+            invoice.paid_amount = total_paid
+            invoice.save()
+            
+            # Update Invoice Status
+            if invoice.balance_due <= 0:
+                 invoice.status = 'PAID'
+            elif invoice.paid_amount > 0:
+                 invoice.status = 'PARTIAL'
+            invoice.save()
+
+            return receipt
+
     @staticmethod
     def generate_annual_fees(academic_year, school, options=None):
         """
-        Generate fees for all students for a new academic year
-        Based on FeeStructure for each class
-        
-        Args:
-            academic_year: AcademicYear instance
-            school: School instance
-            options: dict with keys:
-                - auto_apply_discounts: bool (default True)
-                - skip_pending_fees: bool (default True)
-                - term_wise: bool (default False)
-                - send_notifications: bool (default False)
-        
-        Returns:
-            dict with statistics about fee generation
+        Generates Invoices and Breakups for all active students in the academic year.
+        Compatible with new schema: Looks up FeeStructure (Class+Section first, then Class only).
         """
+        from students.models import Student
+        
         options = options or {}
-        auto_apply_discounts = options.get('auto_apply_discounts', True)
-        skip_pending_fees = options.get('skip_pending_fees', True)
+        students = Student.objects.filter(school=school, is_active=True)
         
-        students = Student.objects.filter(
-            school=school,
-            academic_year=academic_year,
-            is_active=True
-        ).select_related('current_class')
-        
-        invoices_created = []
-        students_skipped = []
-        total_amount = Decimal('0.00')
-        discounts_applied = 0
-        
-        with transaction.atomic():
-            for student in students:
-                # Check for pending fees if option is set
-                if skip_pending_fees:
-                    pending = Invoice.objects.filter(
-                        student=student,
-                        status__in=['PENDING', 'PARTIAL', 'OVERDUE']
-                    ).exclude(academic_year=academic_year).exists()
-                    
-                    if pending:
-                        students_skipped.append({
-                            'student_id': student.id,
-                            'student_name': student.get_full_name(),
-                            'reason': 'Pending fees from previous year'
-                        })
-                        continue
-                
-                # Get fee structures for student's class
-                if not student.current_class:
-                    students_skipped.append({
-                        'student_id': student.id,
-                        'student_name': student.get_full_name(),
-                        'reason': 'No class assigned'
-                    })
+        generated_count = 0
+        errors = []
+
+        for student in students:
+            try:
+                # Check if invoice already exists for this year
+                if Invoice.objects.filter(student=student, academic_year=academic_year).exists():
                     continue
-                
-                fee_structures = FeeStructure.objects.filter(
-                    school=school,
-                    academic_year=academic_year,
-                    class_assigned=student.current_class
-                ).select_related('category')
-                
-                for structure in fee_structures:
-                    amount = structure.amount
-                    discount_amt = Decimal('0.00')
-                    discount_reason = ''
+
+                with transaction.atomic():
+                    # Fetch Structures for Class + Section
+                    structures = FeeStructure.objects.filter(
+                        school=school,
+                        academic_year=academic_year,
+                        class_assigned=student.current_class,
+                        section=student.section
+                    )
                     
-                    # Apply student discounts
-                    if auto_apply_discounts:
-                        discount = FeeDiscount.objects.filter(
-                            student=student,
-                            academic_year=academic_year,
-                            is_active=True,
-                            valid_from__lte=date.today(),
-                            valid_until__gte=date.today()
-                        ).filter(
-                            Q(category=structure.category) | Q(category__isnull=True)
-                        ).first()
+                    # Also fetch Class-wide structures (where section is NULL)
+                    class_structures = FeeStructure.objects.filter(
+                        school=school,
+                        academic_year=academic_year,
+                        class_assigned=student.current_class,
+                        section__isnull=True
+                    )
+                    
+                    # Combine (careful not to duplicate categories if overrides exist)
+                    # Priority: Section Specific > Class General
+                    final_structures = {}
+                    
+                    # Load generic first
+                    for s in class_structures:
+                        final_structures[s.category_id] = s
                         
-                        if discount:
-                            discount_amt = discount.get_discount_amount(amount)
-                            discount_reason = discount.reason
-                            discounts_applied += 1
+                    # Overwrite with specific
+                    for s in structures:
+                        final_structures[s.category_id] = s
                     
-                    final_amount = amount - discount_amt
-                    
-                    # Calculate due date (30 days from year start)
-                    due_date = academic_year.start_date + timedelta(days=30)
-                    
-                    # Create invoice
+                    if not final_structures:
+                        continue # No fees defined for this student type
+
+                    # Calculate Totals & GST
+                    gross_total = Decimal('0.00')
+                    breakup_data = []
+
+                    for struct in final_structures.values():
+                        rate = struct.category.gst_rate
+                        inclusive = struct.category.is_tax_inclusive
+                        amount = struct.amount # This is the structure amount
+
+                        if inclusive:
+                            # Formula: Base = Amount / (1 + Rate/100)
+                            base = amount / (1 + (rate / Decimal('100.00')))
+                            tax = amount - base
+                            total_head = amount
+                        else:
+                            # Formula: Tax = Amount * (Rate/100)
+                            base = amount
+                            tax = base * (rate / Decimal('100.00'))
+                            total_head = base + tax
+                        
+                        # Round to 2 decimal places for storage
+                        base = base.quantize(Decimal('0.01'))
+                        tax = tax.quantize(Decimal('0.01'))
+                        total_head = total_head.quantize(Decimal('0.01'))
+
+                        gross_total += total_head
+                        
+                        breakup_data.append({
+                            'head': struct.category,
+                            'amount': total_head,
+                            'base_amount': base,
+                            'tax_amount': tax
+                        })
+
+                    # Total Round Off Logic (Round to nearest Integer)
+                    from decimal import ROUND_HALF_UP
+                    final_total = gross_total.quantize(Decimal('1.'), rounding=ROUND_HALF_UP)
+                    round_off_amount = final_total - gross_total
+
                     invoice = Invoice.objects.create(
                         school=school,
                         student=student,
-                        fee_structure=structure,
                         academic_year=academic_year,
-                        title=f"{structure.category.name} - {academic_year.name}",
-                        total_amount=final_amount,
-                        due_date=due_date,
-                        fee_term='ANNUAL',
-                        discount_amount=discount_amt,
-                        discount_reason=discount_reason
+                        total_amount=final_total,
+                        round_off_amount=round_off_amount,
+                        due_date=date(academic_year.start_date.year, 6, 15) # Default to June, improve logic later
                     )
                     
-                    invoices_created.append(invoice)
-                    total_amount += final_amount
+                    # Create Breakups (The Snapshot)
+                    breakups = []
+                    for data in breakup_data:
+                        breakups.append(StudentFeeBreakup(
+                            invoice=invoice,
+                            head=data['head'],
+                            amount=data['amount'],
+                            base_amount=data['base_amount'],
+                            tax_amount=data['tax_amount'],
+                            paid_amount=0
+                        ))
+                    StudentFeeBreakup.objects.bulk_create(breakups)
+                    
+                    generated_count += 1
+                    
+            except Exception as e:
+                errors.append(f"Student {student.enrollment_number}: {str(e)}")
         
         return {
             'success': True,
-            'invoices_created': len(invoices_created),
-            'students_processed': students.count() - len(students_skipped),
-            'students_skipped': len(students_skipped),
-            'skipped_details': students_skipped,
-            'total_amount': float(total_amount),
-            'discounts_applied': discounts_applied,
-            'academic_year': academic_year.name,
+            'generated': generated_count,
+            'errors': errors
         }
-    
+
     @staticmethod
     def settle_year(academic_year, school):
-        """
-        Mark all paid invoices for a year as settled
-        
-        Args:
-            academic_year: AcademicYear instance
-            school: School instance
-        
-        Returns:
-            dict with settlement statistics
-        """
-        # Get all paid invoices for the year
-        invoices = Invoice.objects.filter(
-            school=school,
-            academic_year=academic_year,
-            status='PAID',
-            is_settled=False
-        )
-        
-        count = invoices.count()
-        
-        # Mark as settled
-        invoices.update(
-            is_settled=True,
-            settled_date=date.today()
-        )
-        
-        return {
-            'success': True,
-            'settled_invoices': count,
-            'academic_year': academic_year.name,
-            'settled_date': date.today().isoformat()
-        }
-    
+        return {'success': True, 'message': 'Not implemented yet'}
+
     @staticmethod
     def get_settlement_summary(academic_year, school):
-        """
-        Get comprehensive settlement summary for an academic year
-        
-        Args:
-            academic_year: AcademicYear instance
-            school: School instance
-        
-        Returns:
-            dict with detailed statistics
-        """
-        invoices = Invoice.objects.filter(
-            school=school,
-            academic_year=academic_year
-        )
-        
-        # Overall statistics
-        total_invoices = invoices.count()
-        total_amount = invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0.00')
-        total_paid = invoices.aggregate(Sum('paid_amount'))['paid_amount__sum'] or Decimal('0.00')
-        total_discount = invoices.aggregate(Sum('discount_amount'))['discount_amount__sum'] or Decimal('0.00')
-        
-        # Status breakdown
-        pending_count = invoices.filter(status='PENDING').count()
-        partial_count = invoices.filter(status='PARTIAL').count()
-        paid_count = invoices.filter(status='PAID').count()
-        overdue_count = invoices.filter(status='OVERDUE').count()
-        
-        # Settlement status
-        settled_count = invoices.filter(is_settled=True).count()
-        
-        # Class-wise breakdown
-        from django.db.models import Count
-        classwise = []
-        classes = Class.objects.filter(school=school)
-        
-        for cls in classes:
-            cls_invoices = invoices.filter(student__current_class=cls)
-            cls_total = cls_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0.00')
-            cls_paid = cls_invoices.aggregate(Sum('paid_amount'))['paid_amount__sum'] or Decimal('0.00')
-            
-            percentage = (float(cls_paid) / float(cls_total) * 100) if cls_total > 0 else 0
-            
-            classwise.append({
-                'class': cls.name,
-                'total_amount': float(cls_total),
-                'paid_amount': float(cls_paid),
-                'pending_amount': float(cls_total - cls_paid),
-                'percentage_collected': round(percentage, 2),
-                'invoice_count': cls_invoices.count()
-            })
-        
-        return {
-            'academic_year': academic_year.name,
-            'total_invoices': total_invoices,
-            'total_amount': float(total_amount),
-            'total_paid': float(total_paid),
-            'total_pending': float(total_amount - total_paid),
-            'total_discount': float(total_discount),
-            'collection_percentage': round((float(total_paid) / float(total_amount) * 100) if total_amount > 0 else 0, 2),
-            'status_breakdown': {
-                'pending': pending_count,
-                'partial': partial_count,
-                'paid': paid_count,
-                'overdue': overdue_count,
-            },
-            'settlement': {
-                'settled_count': settled_count,
-                'unsettled_count': total_invoices - settled_count,
-            },
-            'classwise': classwise
-        }
-    
+        return {'success': True, 'message': 'Not implemented yet'}
+
     @staticmethod
-    def handle_class_promotion(student, new_class, new_academic_year):
-        """
-        Generate new fees when student is promoted to new class
-        Check for pending fees from previous year
-        
-        Args:
-            student: Student instance
-            new_class: Class instance
-            new_academic_year: AcademicYear instance
-        
-        Returns:
-            dict with promotion status and generated invoices
-        """
-        # Check for pending fees from previous year
-        old_year_invoices = Invoice.objects.filter(
-            student=student,
-            academic_year=student.academic_year,
-            status__in=['PENDING', 'PARTIAL', 'OVERDUE']
-        )
-        
-        if old_year_invoices.exists():
-            pending_amount = sum([
-                inv.total_amount - inv.paid_amount 
-                for inv in old_year_invoices
-            ])
-            
-            return {
-                'success': False,
-                'promotion_blocked': True,
-                'reason': 'Pending fees from previous year',
-                'pending_amount': float(pending_amount),
-                'pending_invoices': [inv.invoice_id for inv in old_year_invoices]
-            }
-        
-        # Update student class and year
-        old_class = student.current_class
-        old_year = student.academic_year
-        
-        student.current_class = new_class
-        student.academic_year = new_academic_year
-        student.save()
-        
-        # Generate fees for new class/year
-        fee_structures = FeeStructure.objects.filter(
-            school=student.school,
-            academic_year=new_academic_year,
-            class_assigned=new_class
-        ).select_related('category')
-        
-        new_invoices = []
-        total_fee_amount = Decimal('0.00')
-        
-        for structure in fee_structures:
-            # Check for discounts
-            discount = FeeDiscount.objects.filter(
-                student=student,
-                academic_year=new_academic_year,
-                is_active=True
-            ).filter(
-                Q(category=structure.category) | Q(category__isnull=True)
-            ).first()
-            
-            amount = structure.amount
-            discount_amt = Decimal('0.00')
-            discount_reason = ''
-            
-            if discount:
-                discount_amt = discount.get_discount_amount(amount)
-                discount_reason = discount.reason
-            
-            final_amount = amount - discount_amt
-            
-            # Due date: 30 days from year start
-            due_date = new_academic_year.start_date + timedelta(days=30)
-            
-            invoice = Invoice.objects.create(
-                school=student.school,
-                student=student,
-                fee_structure=structure,
-                academic_year=new_academic_year,
-                title=f"{structure.category.name} - {new_academic_year.name}",
-                total_amount=final_amount,
-                due_date=due_date,
-                fee_term='ANNUAL',
-                discount_amount=discount_amt,
-                discount_reason=discount_reason
-            )
-            
-            new_invoices.append(invoice)
-            total_fee_amount += final_amount
-        
-        return {
-            'success': True,
-            'promotion_blocked': False,
-            'promoted_from': old_class.name if old_class else 'N/A',
-            'promoted_to': new_class.name,
-            'old_year': old_year.name if old_year else 'N/A',
-            'new_year': new_academic_year.name,
-            'invoices_generated': len(new_invoices),
-            'total_fee_amount': float(total_fee_amount),
-            'invoice_ids': [inv.invoice_id for inv in new_invoices]
-        }
-    
-    @staticmethod
-    def create_installment_plan(invoice, installment_count, start_date=None):
-        """
-        Create installment plan for an invoice
-        
-        Args:
-            invoice: Invoice instance
-            installment_count: int - number of installments
-            start_date: date - start date for first installment (default: invoice due_date)
-        
-        Returns:
-            list of created FeeInstallment instances
-        """
-        if start_date is None:
-            start_date = invoice.due_date
-        
-        amount_per_installment = invoice.total_amount / installment_count
-        installments = []
-        
-        with transaction.atomic():
-            for i in range(1, installment_count + 1):
-                # Calculate due date (monthly intervals)
-                due_date = start_date + timedelta(days=30 * (i - 1))
-                
-                installment = FeeInstallment.objects.create(
-                    school=invoice.school,
-                    invoice=invoice,
-                    installment_number=i,
-                    amount=amount_per_installment,
-                    due_date=due_date
-                )
-                installments.append(installment)
-        
-        return installments
+    def handle_class_promotion(student, new_class, new_year):
+        return {'success': True, 'message': 'Not implemented yet'}

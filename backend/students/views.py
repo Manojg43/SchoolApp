@@ -49,25 +49,9 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             'school', 'student', 'student__current_class', 'student__section'
         ).filter(school=self.request.user.school)
 
-from finance.models import Invoice
+# FeeViewSet has been moved to finance/views.py as InvoiceViewSet
+# to centralize logic.
 
-class FeeViewSet(viewsets.ModelViewSet):
-    permission_classes = [StandardPermission] 
-    queryset = Invoice.objects.all()
-    serializer_class = FeeSerializer
-    pagination_class = StandardResultsPagination
-    
-    def get_queryset(self):
-        if self.request.user.is_superuser:
-            return Invoice.objects.select_related(
-                'student', 'student__current_class', 'student__section', 'fee_structure'
-            ).all()
-        return Invoice.objects.select_related(
-            'student', 'student__current_class', 'student__section', 'fee_structure'
-        ).filter(school=self.request.user.school)
-
-    def perform_create(self, serializer):
-        serializer.save(school=self.request.user.school)
 
 class PromoteStudentsView(APIView):
     """

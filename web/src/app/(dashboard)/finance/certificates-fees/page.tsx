@@ -27,7 +27,7 @@ export default function CertificateFeesPage() {
     const [fees, setFees] = useState<CertificateFee[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [editValues, setEditValues] = useState<{ [key: number]: { amount: string, active: boolean } }>({});
+    const [editValues, setEditValues] = useState<{ [key: number]: { amount: string, active: boolean, gst_rate: string, is_tax_inclusive: boolean } }>({});
 
     useEffect(() => {
         loadFees();
@@ -44,7 +44,9 @@ export default function CertificateFeesPage() {
             data.forEach(fee => {
                 values[fee.id] = {
                     amount: fee.fee_amount.toString(),
-                    active: fee.is_active
+                    active: fee.is_active,
+                    gst_rate: (fee as any).gst_rate || '0', // Cast as any if TS interface lacks it temporarily
+                    is_tax_inclusive: (fee as any).is_tax_inclusive || false
                 };
             });
             setEditValues(values);
@@ -59,7 +61,11 @@ export default function CertificateFeesPage() {
         try {
             await updateCertificateFee(id, {
                 fee_amount: Number(editValues[id].amount),
-                is_active: editValues[id].active
+                is_active: editValues[id].active,
+                // @ts-ignore
+                gst_rate: Number(editValues[id].gst_rate),
+                // @ts-ignore
+                is_tax_inclusive: editValues[id].is_tax_inclusive
             });
 
             setEditingId(null);
@@ -148,6 +154,7 @@ export default function CertificateFeesPage() {
                                 <tr>
                                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Certificate Type</th>
                                     <th className="text-center py-3 px-4 font-semibold text-gray-700">Fee Amount</th>
+                                    <th className="text-center py-3 px-4 font-semibold text-gray-700">GST</th>
                                     <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
                                     <th className="text-center py-3 px-4 font-semibold text-gray-700">Actions</th>
                                 </tr>
@@ -174,6 +181,48 @@ export default function CertificateFeesPage() {
                                                 <span className="font-semibold text-gray-900">
                                                     ₹{fee.fee_amount}
                                                 </span>
+                                            )}
+                                        </td>
+                                        <td className="text-center py-3 px-4">
+                                            {editingId === fee.id ? (
+                                                <div className="flex flex-col gap-2 items-center">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-sm">Rate %</span>
+                                                        <input
+                                                            type="number"
+                                                            value={editValues[fee.id]?.gst_rate || '0'}
+                                                            onChange={(e) => setEditValues({
+                                                                ...editValues,
+                                                                [fee.id]: { ...editValues[fee.id], gst_rate: e.target.value }
+                                                            })}
+                                                            className="w-16 p-1 border border-gray-300 rounded text-sm"
+                                                        />
+                                                    </div>
+                                                    <label className="flex items-center gap-1 text-xs text-gray-600">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={editValues[fee.id]?.is_tax_inclusive || false}
+                                                            onChange={(e) => setEditValues({
+                                                                ...editValues,
+                                                                [fee.id]: { ...editValues[fee.id], is_tax_inclusive: e.target.checked }
+                                                            })}
+                                                        />
+                                                        Inclusive?
+                                                    </label>
+                                                </div>
+                                            ) : (
+                                                <div className="text-sm">
+                                                    {((fee as any).gst_rate && Number((fee as any).gst_rate) > 0) ? (
+                                                        <>
+                                                            <div className="font-semibold text-blue-600">{(fee as any).gst_rate}%</div>
+                                                            <div className="text-xs text-gray-500">
+                                                                {(fee as any).is_tax_inclusive ? 'Inclusive' : '+ Extra'}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-gray-400">-</span>
+                                                    )}
+                                                </div>
                                             )}
                                         </td>
                                         <td className="text-center py-3 px-4">

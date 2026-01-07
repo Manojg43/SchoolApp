@@ -2,14 +2,14 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     PromoteStudentsView, StudentHistoryView, ToggleStudentActiveView,
-    StudentViewSet, AttendanceViewSet, FeeViewSet, StudentHistoryViewSet,
+    StudentViewSet, AttendanceViewSet, StudentHistoryViewSet,
     StudentCertificatesView
 )
 from .pdf_views import ReportCardPDFView
 
 router = DefaultRouter()
 router.register(r'attendance', AttendanceViewSet, basename='student-attendance')
-router.register(r'fees', FeeViewSet, basename='student-fees')
+# router.register(r'fees', FeeViewSet, basename='student-fees') # Moved to finance/invoices/
 router.register(r'history-manage', StudentHistoryViewSet, basename='student-history-manage')
 router.register(r'', StudentViewSet, basename='students')
 
