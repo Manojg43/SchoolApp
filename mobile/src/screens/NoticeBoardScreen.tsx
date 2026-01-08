@@ -85,9 +85,11 @@ export default function NoticeBoardScreen() {
                 <View style={{ width: 24 }} />
             </View>
 
-            {loading ? (
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
+            {loading && notices.length === 0 ? (
+                <View style={styles.list}>
+                    {[1, 2, 3].map(i => (
+                        <View key={i} style={[styles.card, { opacity: 0.5, height: 100 }]} />
+                    ))}
                 </View>
             ) : (
                 <FlatList

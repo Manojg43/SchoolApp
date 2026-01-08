@@ -186,8 +186,12 @@ export default function HomeworkScreen() {
                     </Card>
                 </ScrollView>
             ) : (
-                loading ? (
-                    <ActivityIndicator style={{ marginTop: 50 }} size="large" color={theme.colors.primary} />
+                loading && homeworkList.length === 0 ? (
+                    <View style={styles.list}>
+                        {[1, 2, 3].map(i => (
+                            <View key={i} style={[styles.card, { opacity: 0.5, height: 120, backgroundColor: '#f9fafb' }]} />
+                        ))}
+                    </View>
                 ) : (
                     <FlatList
                         data={homeworkList}

@@ -111,6 +111,18 @@ export default function EnquiryListScreen() {
         );
     };
 
+    const renderSkeleton = () => (
+        <View style={styles.listContent}>
+            {[1, 2, 3].map(i => (
+                <View key={i} style={[styles.card, { opacity: 0.5 }]}>
+                    <View style={[styles.cardHeader, { backgroundColor: '#f0f0f0', height: 20, borderRadius: 4, width: '40%' }]} />
+                    <View style={[styles.studentName, { backgroundColor: '#f0f0f0', height: 24, borderRadius: 4, width: '70%', marginTop: 12 }]} />
+                    <View style={[styles.cardFooter, { backgroundColor: '#f0f0f0', height: 16, borderRadius: 4, width: '50%', marginTop: 12 }]} />
+                </View>
+            ))}
+        </View>
+    );
+
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -118,7 +130,7 @@ export default function EnquiryListScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <ArrowLeft size={24} color={theme.colors.text.main} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>My Enquiries</Text>
+                <Text style={styles.headerTitle}>{isPrincipal ? 'All Enquiries' : 'My Enquiries'}</Text>
                 <TouchableOpacity
                     onPress={() => navigation.navigate('EnquiryForm')}
                     style={styles.addBtn}
@@ -127,10 +139,8 @@ export default function EnquiryListScreen() {
                 </TouchableOpacity>
             </View>
 
-            {loading ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
-                </View>
+            {loading && enquiries.length === 0 ? (
+                renderSkeleton()
             ) : enquiries.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <FileText size={48} color={theme.colors.text.muted} style={{ opacity: 0.3 }} />

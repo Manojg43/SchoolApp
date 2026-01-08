@@ -85,8 +85,12 @@ export default function TimetableScreen() {
             </View>
 
             {/* Schedule List */}
-            {loading ? (
-                <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 50 }} />
+            {loading && schedule.length === 0 ? (
+                <View style={styles.list}>
+                    {[1, 2, 3].map(i => (
+                        <View key={i} style={[styles.card, { opacity: 0.5, height: 80 }]} />
+                    ))}
+                </View>
             ) : (
                 <FlatList
                     data={schedule}

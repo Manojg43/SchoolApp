@@ -197,8 +197,8 @@ export default function HomeScreen() {
                 contentContainerStyle={styles.content}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
             >
-                <Animated.View style={{ opacity: fadeAnim }}>
-                    {adminStats ? renderPrincipalDashboard() : renderStaffDashboard()}
+                <View>
+                    {isPrincipal ? renderPrincipalDashboard() : renderStaffDashboard()}
 
                     {/* Common Grid Actions */}
                     <Text style={styles.sectionTitle}>Application Features</Text>
@@ -240,7 +240,7 @@ export default function HomeScreen() {
                             </Card>
                         </TouchableOpacity>
                     </View>
-                </Animated.View>
+                </View>
             </ScrollView>
         </View>
     );
