@@ -24,10 +24,15 @@ class StudentSerializer(serializers.ModelSerializer):
              raise serializers.ValidationError("User is not associated with any school.")
 
         # Auto-assign Academic Year if not provided
-        if 'academic_year' not in attrs or not attrs['academic_year']:
+             # Auto-assign Academic Year if not provided
              active_year = AcademicYear.objects.filter(school=user.school, is_active=True).first()
              if not active_year:
-                 raise serializers.ValidationError({"academic_year": "No active academic year found for this school. Please create one first."})
+                 # Fallback: Try to get *any* year, or raise clean validation error
+                 active_year = AcademicYear.objects.filter(school=user.school).order_by('-start_date').first()
+                 
+             if not active_year:
+                 raise serializers.ValidationError({"academic_year": "No academic year found. Please create an Academic Year first."})
+                 
              attrs['academic_year'] = active_year
         
         return attrs
