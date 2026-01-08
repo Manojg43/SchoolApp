@@ -23,6 +23,7 @@ export default function FinancePage() {
     const tabs = [
         { label: 'Invoices', href: '/finance' },
         { label: 'Create Invoice', href: '/finance/create' },
+        { label: 'Fee Structure', href: '/finance/structure' },
         { label: 'Payroll', href: '/finance/payroll' },
         { label: 'Discounts', href: '/finance/discounts' },
         { label: 'Certificates', href: '/finance/certificates-fees' },

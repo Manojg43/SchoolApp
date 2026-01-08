@@ -147,6 +147,62 @@ export async function getFeeCategories(schoolId?: string): Promise<FeeCategory[]
     return fetchWithSchool('/finance/categories/', schoolId);
 }
 
+// Fee Structure CRUD
+export async function getFeeStructures(schoolId?: string): Promise<FeeStructure[]> {
+    return fetchWithSchool('/finance/structure/', schoolId);
+}
+
+export async function createFeeStructure(data: Partial<FeeStructure>, schoolId?: string): Promise<FeeStructure> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/finance/structure/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId || '',
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error(`Failed to create structure: ${res.statusText}`);
+    return res.json();
+}
+
+export async function updateFeeStructure(id: number, data: Partial<FeeStructure>, schoolId?: string): Promise<FeeStructure> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/finance/structure/${id}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId || '',
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error(`Failed to update structure: ${res.statusText}`);
+    return res.json();
+}
+
+export async function deleteFeeStructure(id: number, schoolId?: string): Promise<void> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/finance/structure/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-School-ID': effectiveSchoolId || '',
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (!res.ok) throw new Error(`Failed to delete structure: ${res.statusText}`);
+}
+
 // Helper to fetch structure amount (Supports Section Override)
 export async function getFeeStructureAmount(classId: number, categoryId: number, sectionId?: number, schoolId?: string): Promise<{ amount: string, gst_rate: string, is_tax_inclusive: boolean } | null> {
     try {
