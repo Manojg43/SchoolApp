@@ -36,16 +36,30 @@ export default function StudentsPendingPage() {
 
     // Filters
     const [classFilter, setClassFilter] = useState('');
+    const [sectionFilter, setSectionFilter] = useState('');
     const [minPending, setMinPending] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Add sections state
+    const [sections, setSections] = useState<any[]>([]);
 
     useEffect(() => {
         loadClasses();
     }, []);
 
+    // Load sections when class changes
+    useEffect(() => {
+        if (classFilter) {
+            loadSections(classFilter);
+        } else {
+            setSections([]);
+            setSectionFilter('');
+        }
+    }, [classFilter]);
+
     useEffect(() => {
         loadData();
-    }, [classFilter, minPending]);
+    }, [classFilter, sectionFilter, minPending]);
 
     const loadClasses = async () => {
         try {
@@ -56,11 +70,24 @@ export default function StudentsPendingPage() {
         }
     };
 
+    const loadSections = async (classId: string) => {
+        try {
+            // Using existing API to get sections (assuming getSections or similar exists, or using direct call)
+            // Ideally use api.getSections(classId) if available, or direct:
+            const res = await api.get(`/schools/classes/${classId}/sections/`);
+            setSections(res.data || []);
+        } catch (error) {
+            console.error('Failed to load sections', error);
+            setSections([]);
+        }
+    };
+
     const loadData = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
             if (classFilter) params.append('class_id', classFilter);
+            if (sectionFilter) params.append('section_id', sectionFilter);
             if (minPending) params.append('min_pending', minPending);
 
             const queryString = params.toString() ? `?${params.toString()}` : '';
@@ -80,11 +107,12 @@ export default function StudentsPendingPage() {
 
     const clearFilters = () => {
         setClassFilter('');
+        setSectionFilter('');
         setMinPending('');
         setSearchQuery('');
     };
 
-    const hasActiveFilters = classFilter || minPending || searchQuery;
+    const hasActiveFilters = classFilter || sectionFilter || minPending || searchQuery;
 
     const filteredStudents = students.filter(s =>
         searchQuery === '' ||
@@ -160,6 +188,19 @@ export default function StudentsPendingPage() {
                                 <option value="">All Classes</option>
                                 {classes.map(cls => (
                                     <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                ))}
+                            </select>
+
+                            {/* Section Filter */}
+                            <select
+                                value={sectionFilter}
+                                onChange={(e) => setSectionFilter(e.target.value)}
+                                disabled={!classFilter}
+                                className="px-4 py-2 border border-border rounded-lg min-w-[140px] disabled:opacity-50"
+                            >
+                                <option value="">All Sections</option>
+                                {sections.map((sec: any) => (
+                                    <option key={sec.id} value={sec.id}>{sec.name}</option>
                                 ))}
                             </select>
 

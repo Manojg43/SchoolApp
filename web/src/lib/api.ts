@@ -135,7 +135,9 @@ export interface FeeStructure {
     id: number;
     academic_year: number;
     class_assigned: number;
+    class_name?: string;
     category: number;
+    category_name?: string;
     amount: string;
     section?: number;
     gst_rate: string;

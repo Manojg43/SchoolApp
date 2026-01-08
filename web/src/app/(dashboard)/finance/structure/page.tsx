@@ -109,8 +109,8 @@ export default function FeeStructurePage() {
 
     const columns: Column<FeeStructure>[] = [
         { header: "Academic Year", accessorKey: (row) => years.find(y => y.id === row.academic_year)?.name || row.academic_year },
-        { header: "Class", accessorKey: "class_name" },
-        { header: "Category", accessorKey: "category_name" },
+        { header: "Class", accessorKey: (row) => row.class_name || '-' },
+        { header: "Category", accessorKey: (row) => row.category_name || '-' },
         { header: "Amount", accessorKey: (row) => `₹${row.amount}` },
         { header: "GST", accessorKey: (row) => `${row.gst_rate}%` },
         {
@@ -147,7 +147,7 @@ export default function FeeStructurePage() {
 
                 {/* Creation Form */}
                 {showForm && (
-                    <Animate animation="slide-down">
+                    <Animate animation="slideUp">
                         <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-6">
                             <h3 className="text-lg font-bold mb-4">Add Fee Structure</h3>
                             <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-3 gap-4">

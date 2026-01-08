@@ -841,6 +841,11 @@ class StudentFeeSummaryView(APIView):
         class_id = request.query_params.get('class_id')
         if class_id:
             students_with_pending = students_with_pending.filter(current_class_id=class_id)
+
+        # Filter by section
+        section_id = request.query_params.get('section_id')
+        if section_id:
+            students_with_pending = students_with_pending.filter(section_id=section_id)
         
         # Filter by minimum pending
         min_pending = request.query_params.get('min_pending')
