@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    FeeCategory, FeeStructure, Invoice, Receipt, Salary,
+    FeeCategory, FeeStructure, Invoice, Receipt, Salary, StaffSalaryStructure,
     StudentFeeBreakup, PaymentAllocation,
     # Fee Settlement Models (Phase 2)
     FeeInstallment, FeeDiscount, CertificateFee
@@ -33,10 +33,15 @@ class ReceiptAdmin(admin.ModelAdmin):
     list_display = ('receipt_no', 'invoice', 'amount', 'date', 'mode')
     search_fields = ('receipt_no',)
 
+@admin.register(StaffSalaryStructure)
+class StaffSalaryStructureAdmin(admin.ModelAdmin):
+    list_display = ('staff', 'basic_salary', 'net_salary')
+    search_fields = ('staff__first_name', 'staff__email')
+
 @admin.register(Salary)
 class SalaryAdmin(admin.ModelAdmin):
-    list_display = ('salary_id', 'staff', 'month', 'net_salary', 'is_paid')
-    list_filter = ('is_paid', 'school', 'month')
+    list_display = ('salary_id', 'staff', 'month', 'net_salary', 'status')
+    list_filter = ('status', 'school', 'month')
 
 @admin.register(StudentFeeBreakup)
 class StudentFeeBreakupAdmin(admin.ModelAdmin):

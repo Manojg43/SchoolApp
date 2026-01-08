@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from django.utils import timezone
 from django.db import transaction
+import datetime
 
 from .models import (
     WorkflowTemplate, WorkflowStage, AssessmentTemplate,
@@ -18,6 +19,7 @@ from .serializers import (
 )
 from core.permissions import StandardPermission
 from core.pagination import StandardResultsPagination
+from core.utils import generate_business_id
 
 
 # ============================================
@@ -231,8 +233,47 @@ class EnquiryViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Already converted to student'}, status=400)
         
         from students.models import Student
+        from schools.models import Section
         
         with transaction.atomic():
+            # 1. Resolve Section
+            # Try to get section from request, or default to first available section for this class
+            section_id = request.data.get('section_id')
+            section = None
+            
+            if section_id:
+                section = Section.objects.filter(id=section_id, parent_class=enquiry.class_applied).first()
+            
+            if not section:
+                # Fallback: Assign to the first section (usually 'A')
+                section = Section.objects.filter(parent_class=enquiry.class_applied).order_by('name').first()
+                
+            if not section:
+                return Response({'error': f'No sections found for class {enquiry.class_applied.name}. Please create sections first.'}, status=400)
+
+            # 2. Generate Intelligent ID: [Class][Section]-[Sequence] (e.g. 10A-001)
+            # Count existing students in this specific Class & Section to find the sequence
+            current_count = Student.objects.filter(
+                school=enquiry.school,
+                current_class=enquiry.class_applied,
+                section=section
+            ).count()
+            
+            next_seq = current_count + 1
+            # Format: 10A-001
+            # Remove spaces from class name just in case (e.g. "Class 10" -> "10")
+            class_code = enquiry.class_applied.name.replace('Class', '').replace(' ', '').strip()
+            section_code = section.name.strip()
+            
+            custom_student_id = f"{class_code}{section_code}-{next_seq:03d}"
+            
+            # 3. Generate Permanent GR Number: GR-[Year]-[Sequence]
+            # e.g., GR-2024-0005. This stays with student forever.
+            current_year = datetime.date.today().year
+            # Get total student count for school for GR sequence
+            total_students = Student.objects.filter(school=enquiry.school).count() + 1
+            gr_number = f"GR-{current_year}-{total_students:04d}"
+
             # Create student from enquiry data
             student = Student.objects.create(
                 school=enquiry.school,
@@ -241,11 +282,14 @@ class EnquiryViewSet(viewsets.ModelViewSet):
                 date_of_birth=enquiry.date_of_birth,
                 gender=enquiry.gender,
                 current_class=enquiry.class_applied,
+                section=section,  # Assign the resolved section
                 academic_year=enquiry.academic_year,
                 father_name=enquiry.parent_name,  # Assuming parent is father
                 emergency_mobile=enquiry.parent_mobile,
                 address=enquiry.address,
-                enrollment_number=enquiry.enquiry_id.replace('ENQ', 'STU'),  # Generate enrollment
+                enrollment_number=custom_student_id,  # Dynamic Roll No
+                gr_number=gr_number, # Permanent ID
+                student_id=generate_business_id('STU'), # Internal System ID
             )
             
             # Copy photo if exists
@@ -263,7 +307,9 @@ class EnquiryViewSet(viewsets.ModelViewSet):
         return Response({
             'success': True,
             'student_id': student.student_id,
-            'message': f'Student {student.get_full_name()} created successfully'
+            'enrollment_number': student.enrollment_number,
+            'gr_number': student.gr_number,
+            'message': f'Admitted: {student.get_full_name()} | GR No: {gr_number} | Roll: {custom_student_id}'
         })
 
 

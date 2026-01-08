@@ -6,10 +6,8 @@ from django.http import FileResponse, Http404
 from django.template.loader import render_to_string
 from django.core.files.base import ContentFile
 from django.utils import timezone
-# from weasyprint import HTML  # TODO: Install GTK libraries on Windows - see WEASYPRINT_WINDOWS_ISSUE.md
 import qrcode
 from io import BytesIO
-import datetime
 
 from .models import Certificate, CertificateTemplate, CERTIFICATE_TYPES
 from students.models import Student
@@ -51,7 +49,7 @@ def generate_certificate_pdf(certificate, template, student, school, user):
         'enrollment_number': student.enrollment_number,
         'father_name': student.father_name or 'N/A',
         'mother_name': student.mother_name or 'N/A',
-        'dob': student.date_of_birth,
+        'dob': str(student.date_of_birth) if student.date_of_birth else 'N/A',
         'gender': student.get_gender_display() if hasattr(student, 'get_gender_display') else student.gender,
         
         # Class details
@@ -69,7 +67,7 @@ def generate_certificate_pdf(certificate, template, student, school, user):
         # Certificate details
         'certificate_no': certificate.certificate_no,
         'verification_code': certificate.verification_code,
-        'issue_date': certificate.issued_date,
+        'issue_date': str(certificate.issued_date),
         'purpose': certificate.purpose,
         
         # Template settings
@@ -108,9 +106,10 @@ def generate_certificate_pdf(certificate, template, student, school, user):
             save=False
         )
         
-        # Add QR code URL to context (for template rendering)
+        # Add QR code Path to context (for PDF generation)
         if certificate.qr_code_image:
-            certificate_data['qr_code_image'] = certificate.qr_code_image.url
+            # Use filesystem path for xhtml2pdf to find the image
+            certificate_data['qr_code_image'] = certificate.qr_code_image.path
     
     # Determine template file
     template_map = {
@@ -122,7 +121,18 @@ def generate_certificate_pdf(certificate, template, student, school, user):
         'CONDUCT': 'certificates/conduct.html',
         'STUDY': 'certificates/bonafide.html',  # Reuse bonafide template
         'ATTENDANCE': 'certificates/bonafide.html',  # Reuse bonafide template
+        'ID_CARD': 'certificates/id_card.html',
     }
+    
+    # Add ID Card specific data
+    if certificate.type == 'ID_CARD':
+        certificate_data.update({
+            'gr_number': student.gr_number or 'N/A',
+            'blood_group': student.blood_group or 'N/A',
+            'mobile': student.emergency_mobile or 'N/A',
+            'address': student.address or 'N/A',
+            'photo_url': student.photo.url if student.photo else None,
+        })
     
     template_path = template_map.get(certificate.type, 'certificates/bonafide.html')
     

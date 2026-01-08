@@ -112,6 +112,43 @@ export default function StudentHistoryPage() {
         }
     };
 
+    const handleGenerateIDCard = async () => {
+        try {
+            const token = localStorage.getItem('school_token');
+            const schoolId = localStorage.getItem('school_id') || '';
+
+            // Generate ID Card using standard fetch to handle Blob response
+            const res = await fetch(`${API_BASE_URL}/certificates/generate/${studentId}/ID_CARD/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`,
+                    'X-School-ID': schoolId
+                },
+                body: JSON.stringify({})
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to generate ID Card');
+            }
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ID_Card_${student?.first_name}_${student?.student_id}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success('ID Card generated successfully');
+        } catch (error: any) {
+            console.error('ID Card generation failed', error);
+            toast.error(error.message || 'Failed to generate ID Card');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -197,6 +234,13 @@ export default function StudentHistoryPage() {
                     >
                         <FileText className="w-4 h-4" />
                         Download Report Card
+                    </button>
+                    <button
+                        onClick={() => handleGenerateIDCard()}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 ml-2"
+                    >
+                        <Award className="w-4 h-4" />
+                        ID Card
                     </button>
                 </div>
 

@@ -102,10 +102,21 @@ class PromoteStudentsView(APIView):
                     if not target_year_id or not target_class_id:
                         return Response({'error': 'Target Year and Class required for promotion'}, status=400)
                     
-                    target_year = AcademicYear.objects.get(id=target_year_id, school=request.user.school)
-                    target_class = Class.objects.get(id=target_class_id, school=request.user.school)
+                    try:
+                        target_year = AcademicYear.objects.get(id=target_year_id, school=request.user.school)
+                    except AcademicYear.DoesNotExist:
+                        return Response({'error': 'Target Academic Year not found'}, status=404)
+
+                    try:
+                        target_class = Class.objects.get(id=target_class_id, school=request.user.school)
+                    except Class.DoesNotExist:
+                        return Response({'error': 'Target Class not found'}, status=404)
+
                     if target_section_id:
-                        target_section = Section.objects.get(id=target_section_id, school=request.user.school)
+                        try:
+                            target_section = Section.objects.get(id=target_section_id, school=request.user.school)
+                        except Section.DoesNotExist:
+                            return Response({'error': 'Target Section not found'}, status=404)
                 
                 for student in students_to_promote:
                     # Get individual student data if provided

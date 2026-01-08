@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth, PermissionGuard } from "@/context/AuthContext";
@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Briefcase, QrCode, UserPlus, Users, CheckCircle, Clock, Power } from "lucide-react";
 import QRCodeDisplay from "@/components/ui/QRCodeDisplay";
 import DataTable, { Column } from "@/components/ui/DataTable";
-import { getStaff, deleteStaff, toggleStaffActive, type Staff } from "@/lib/api";
+import { getStaff, deleteStaff, updateStaff, type Staff } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import StaffProfileDrawer from "@/components/staff/StaffProfileDrawer";
 import SalaryStructureModal from "@/components/finance/SalaryStructureModal";
@@ -35,13 +35,16 @@ export default function StaffPage() {
             setStaffList(data);
         } catch (e) {
             console.error(e);
+            toast.error("Failed to load staff list");
         } finally {
             setLoading(false);
         }
     }
 
     useEffect(() => {
-        if (hasPermission(['is_superuser', 'core.view_coreuser'])) {
+        // Checking permission might need adjustment based on actual AuthContext implementation
+        // Assuming hasPermission returns boolean
+        if (hasPermission('core.view_coreuser') || hasPermission('is_superuser')) {
             load();
         } else {
             setLoading(false);
@@ -67,28 +70,22 @@ export default function StaffPage() {
     };
 
     const handleDelete = async (staff: Staff) => {
-        toast.confirm({
-            title: `Delete ${staff.first_name} ${staff.last_name}?`,
-            description: 'This will permanently remove all staff records and cannot be undone.',
-            confirmText: 'Delete',
-            onConfirm: async () => {
-                const loadingToast = toast.loading('Deleting staff member...');
-                try {
-                    await deleteStaff(staff.id);
-                    load();
-                    toast.success('Staff member deleted',
-                        `${staff.first_name} ${staff.last_name} has been removed`
-                    );
-                } catch (e) {
-                    console.error(e);
-                    toast.error('Failed to delete staff member',
-                        'Please try again or contact support'
-                    );
-                } finally {
-                    toast.dismiss(loadingToast);
-                }
-            },
-        });
+        // Using window.confirm if toast.confirm is not available or reliable
+        if (confirm(`Delete ${staff.first_name} ${staff.last_name}? This cannot be undone.`)) {
+            const loadingToast = toast.loading('Deleting staff member...');
+            try {
+                await deleteStaff(staff.id);
+                load();
+                toast.success('Staff member deleted',
+                    `${staff.first_name} ${staff.last_name} has been removed`
+                );
+            } catch (e) {
+                console.error(e);
+                toast.error('Failed to delete staff member');
+            } finally {
+                toast.dismiss(loadingToast);
+            }
+        }
     };
 
     const handleSuccess = () => {
@@ -106,21 +103,20 @@ export default function StaffPage() {
             staff.is_active ? 'Deactivating staff...' : 'Activating staff...'
         );
         try {
-            const result = await toggleStaffActive(staff.id);
-            if (result.success) {
-                // Update staff in local state
-                setStaffList(prev => prev.map(s =>
-                    s.id === staff.id ? { ...s, is_active: result.is_active } : s
-                ));
-                toast.success(result.message,
-                    `${staff.first_name} ${staff.last_name}`
-                );
-            }
+            const updatedStaff = await updateStaff(staff.id, { is_active: !staff.is_active });
+
+            // Update staff in local state
+            setStaffList(prev => prev.map(s =>
+                s.id === staff.id ? updatedStaff : s
+            ));
+
+            toast.success(
+                `Staff member ${updatedStaff.is_active ? 'activated' : 'deactivated'}`,
+                `${updatedStaff.first_name} ${updatedStaff.last_name}`
+            );
         } catch (e) {
             console.error(e);
-            toast.error('Failed to toggle staff status',
-                'Please try again'
-            );
+            toast.error('Failed to toggle staff status');
         } finally {
             toast.dismiss(loadingToast);
         }
@@ -132,7 +128,7 @@ export default function StaffPage() {
             accessorKey: (row) => (
                 <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleView(row)}>
                     <div className="w-9 h-9 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-bold text-sm group-hover:bg-secondary group-hover:text-white transition-colors">
-                        {row.first_name[0]}{row.last_name[0]}
+                        {row.first_name?.[0]}{row.last_name?.[0]}
                     </div>
                     <div>
                         <div className="font-medium text-text-main group-hover:text-primary transition-colors">{row.first_name} {row.last_name}</div>
@@ -258,7 +254,6 @@ export default function StaffPage() {
                         <div className="px-6 py-4 border-b border-border bg-surface/50 flex justify-between items-center">
                             <h2 className="text-lg font-bold text-text-main">All Staff Members</h2>
                             <div className="flex gap-3">
-                                <a href="/staff/leaves" className="text-sm font-medium text-text-muted hover:text-primary transition-colors">Manage Leaves</a>
                                 {hasPermission('core.can_manage_payroll') && (
                                     <a href="/finance/payroll" className="text-sm font-medium text-text-muted hover:text-primary transition-colors">Payroll Dashboard</a>
                                 )}

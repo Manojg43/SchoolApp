@@ -1,19 +1,16 @@
 from django.urls import path
 from .views import CalculateSalaryView, DownloadInvoiceView
-from .pdf_views import GeneratePayslipPDF, GenerateReceiptPDF
-from .views_payroll import SalaryStructureView, GeneratePayrollView, PayrollDashboardView, MarkPaidView
+from .pdf_views import GenerateReceiptPDF
+from .views_payroll import SalaryStructureViewSet, PayrollViewSet, GeneratePayrollView
 from .views_pdf import DownloadPayslipView, GetPayslipLinkView
 
 urlpatterns = [
-    path('salary/calculate/', GeneratePayrollView.as_view(), name='calculate-salary'),
-    path('salary/payslip/<str:salary_id>/', GeneratePayslipPDF.as_view(), name='payslip-pdf'),
+    # path('salary/payslip/<str:salary_id>/', GeneratePayslipPDF.as_view(), name='payslip-pdf'), # Deprecated
     path('receipt/<str:receipt_no>/', GenerateReceiptPDF.as_view(), name='receipt-pdf'),
     path('invoice/<int:invoice_id>/pdf/', DownloadInvoiceView.as_view(), name='invoice-pdf'),
     
-    # Payroll Endpoints
-    path('payroll/structure/<int:staff_id>/', SalaryStructureView.as_view(), name='payroll-structure'),
-    path('payroll/dashboard/', PayrollDashboardView.as_view(), name='payroll-dashboard'),
-    path('payroll/mark-paid/<int:salary_id>/', MarkPaidView.as_view(), name='payroll-mark-paid'),
+    # Payroll Logic
+    path('payroll/generate/', GeneratePayrollView.as_view(), name='payroll-generate'),
     path('salary/<int:pk>/download/', DownloadPayslipView.as_view(), name='download-payslip-pdf'),
     path('salary/<int:pk>/link/', GetPayslipLinkView.as_view(), name='get-payslip-link'),
 ]
@@ -41,6 +38,8 @@ router.register(r'discounts', FeeDiscountViewSet)
 router.register(r'certificate-fees', CertificateFeeViewSet)
 router.register(r'receipts', ReceiptViewSet)  # Payment receipts
 router.register(r'invoices', InvoiceViewSet)  # Centralized Invoices
+router.register(r'payroll/structure', SalaryStructureViewSet, basename='salary-structure')
+router.register(r'payroll/list', PayrollViewSet, basename='salary')
 
 urlpatterns += [
     # Bulk operations

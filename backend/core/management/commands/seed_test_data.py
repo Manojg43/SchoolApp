@@ -243,8 +243,7 @@ class Command(BaseCommand):
             # Salary Structure
             StaffSalaryStructure.objects.get_or_create(
                 staff=staff_user,
-                school=school,
-                defaults={'base_salary': Decimal(str(salaries.get(staff_user.role, 25000)))}
+                defaults={'basic_salary': Decimal(str(salaries.get(staff_user.role, 25000)))}
             )
         
         self.stdout.write(f"   ✓ Created profiles & salary structures for {stats['staff']} staff members")
@@ -316,12 +315,10 @@ class Command(BaseCommand):
             inv, created = Invoice.objects.get_or_create(
                 school=school,
                 student=student,
-                title=f"Term 1 Fee - {ay.name}",
+                academic_year=ay,
                 defaults={
                     'total_amount': Decimal('25000'),
                     'due_date': datetime.date(current_year, 9, 15),
-                    'academic_year': ay,
-                    'fee_term': 'TERM1',
                     'status': random.choice(['PENDING', 'PAID', 'PARTIAL'])
                 }
             )

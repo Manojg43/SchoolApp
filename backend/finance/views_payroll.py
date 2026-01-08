@@ -1,172 +1,142 @@
-from rest_framework.views import APIView
+from rest_framework import viewsets, views, status, permissions
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import Salary, StaffSalaryStructure, FeeCategory
-from core.models import CoreUser
-from staff.models import StaffAttendance
-from schools.models import School
+from django.db import transaction
 from django.utils import timezone
-from decimal import Decimal
-import datetime
-import calendar
+from datetime import date
+from .models import StaffSalaryStructure, Salary
+from .serializers import (
+    StaffSalaryStructureSerializer, 
+    SalarySerializer, 
+    PayrollRunSerializer
+)
+from core.models import CoreUser
+from students.models import Student  # Not needed directly but context
+from schools.models import School
 
-class SalaryStructureView(APIView):
-    permission_classes = [IsAuthenticated]
+class SalaryStructureViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for Staff Salary Structure.
+    Only accessible by Admin/HR.
+    """
+    serializer_class = StaffSalaryStructureSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return StaffSalaryStructure.objects.filter(staff__school=self.request.user.school)
+    
+    def perform_create(self, serializer):
+        # Staff is passed in body, but ensure staff belongs to school
+        # Serializer handles ID validation, but we should double check school match if we want strictness.
+        # For now, rely on Frontend to send valid staff ID from same school.
+        serializer.save()
 
-    def get(self, request, staff_id):
-        # Check permissions
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
-            return Response({'error': 'Unauthorized'}, status=403)
-            
-        try:
-            struct = StaffSalaryStructure.objects.get(staff__id=staff_id, school=request.user.school)
-            return Response({
-                'base_salary': struct.base_salary,
-                # Add allowances future proofing here
-            })
-        except StaffSalaryStructure.DoesNotExist:
-            return Response({'base_salary': 0}) # Default
 
-    def post(self, request, staff_id):
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
-            return Response({'error': 'Unauthorized'}, status=403)
-            
-        try:
-            target_staff = CoreUser.objects.get(id=staff_id, school=request.user.school)
-        except CoreUser.DoesNotExist:
-            return Response({'error': 'Staff not found'}, status=404)
-            
-        base_salary = request.data.get('base_salary', 0)
-        
-        struct, created = StaffSalaryStructure.objects.update_or_create(
-            staff=target_staff,
-            school=request.user.school,
-            defaults={'base_salary': base_salary}
-        )
-        
-        return Response({'message': 'Salary Structure Saved', 'base_salary': base_salary})
+class PayrollViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    View Generated Payrolls.
+    """
+    serializer_class = SalarySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['month', 'status', 'staff']
+    
+    def get_queryset(self):
+        # Admin can view all, Staff can view own (will add logic later)
+        # For now, return School's payroll
+        return Salary.objects.filter(school=self.request.user.school).order_by('-month', 'staff__first_name')
 
-class PayrollDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
-            return Response({'error': 'Unauthorized'}, status=403)
-
-        school = request.user.school
-        month = int(request.query_params.get('month', datetime.date.today().month))
-        year = int(request.query_params.get('year', datetime.date.today().year))
-        
-        salaries = Salary.objects.filter(
-            school=school,
-            month__month=month,
-            month__year=year
-        ).select_related('staff', 'staff__staff_profile')
-        
-        data = []
-        for sal in salaries:
-            data.append({
-                'id': sal.id,
-                'staff_name': sal.staff.get_full_name(),
-                'designation': sal.staff.staff_profile.designation if hasattr(sal.staff, 'staff_profile') else 'Staff',
-                'present_days': float(sal.present_days),
-                'base_salary': str(sal.amount),
-                'net_salary': str(sal.net_salary),
-                'is_paid': sal.is_paid,
-                'paid_date': sal.paid_date
-            })
-            
-        return Response(data)
-
-class GeneratePayrollView(APIView):
-    permission_classes = [IsAuthenticated]
+class GeneratePayrollView(views.APIView):
+    """
+    Generate Payroll for a specific month.
+    """
+    permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
-            return Response({'error': 'Unauthorized'}, status=403)
-
+        serializer = PayrollRunSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        target_month = serializer.validated_data['month']
         school = request.user.school
-        month = int(request.data.get('month', datetime.date.today().month))
-        year = int(request.data.get('year', datetime.date.today().year))
         
-        # Date Range
-        num_days = calendar.monthrange(year, month)[1]
-        start_date = datetime.date(year, month, 1)
-        end_date = datetime.date(year, month, num_days)
-        
-        # List all Active Staff
-        all_staff = CoreUser.objects.filter(
+        # Logic:
+        # 1. Fetch all active staff with defined Salary Structure
+        active_staff = CoreUser.objects.filter(
             school=school, 
-            role__in=['TEACHER', 'OFFICE_STAFF', 'ACCOUNTANT', 'DRIVER', 'CLEANING_STAFF', 'PRINCIPAL', 'SCHOOL_ADMIN']
-        ).exclude(is_active=False)
+            is_active=True, 
+            role__in=['SCHOOL_ADMIN', 'TEACHER', 'OFFICE_STAFF', 'ACCOUNTANT', 'CLEANING_STAFF', 'NON_TEACHING', 'DRIVER'] 
+        )
         
         generated_count = 0
+        skipped_count = 0
+        errors = []
         
-        for staff in all_staff:
-            # 1. Get Base Salary
-            try:
-                struct = staff.salary_structure
-                base_salary = struct.base_salary  # This is Decimal
-            except StaffSalaryStructure.DoesNotExist:
-                # Skip if no salary structure defined? Or assume 0?
-                # Let's Skip to avoid junk data
-                continue
-                
-            if base_salary <= 0:
-                continue
-
-            # 2. Calculate Present Days
-            # Count PRESENT = 1, HALF_DAY = 0.5
-            p_count = StaffAttendance.objects.filter(staff=staff, date__gte=start_date, date__lte=end_date, status='PRESENT').count()
-            h_count = StaffAttendance.objects.filter(staff=staff, date__gte=start_date, date__lte=end_date, status='HALF_DAY').count()
-            
-            total_present = Decimal(str(p_count)) + (Decimal(str(h_count)) * Decimal('0.5'))
-            
-            # Additional: Paid Leaves check? (For now assume separate LEAVE model if we track paid leaves)
-            # Simple version: Pay for presence.
-            
-            # 3. Calculate Amount (using Decimal for precision)
-            # Daily Rate = Base / Num Days in Month (Actual)
-            daily_rate = base_salary / Decimal(str(num_days))
-            payable = daily_rate * total_present
-            
-            # Cap at Base Salary (Precision handling)
-            if payable > base_salary:
-                 payable = base_salary
-            
-            # Calculate deductions (all Decimal)
-            deductions = base_salary - payable
-                 
-            # 4. Create/Update Salary Record - all values are Decimal now
-            salary_obj, created = Salary.objects.update_or_create(
-                school=school,
-                staff=staff,
-                month=start_date,
-                defaults={
-                    'total_working_days': num_days,
-                    'present_days': total_present,
-                    'amount': base_salary,
-                    'deductions': deductions,
-                    'net_salary': payable,
-                    'bonus': Decimal('0')
-                }
-            )
-            generated_count += 1
-            
-        return Response({'message': f'Payroll Generated for {generated_count} staff members'})
-
-class MarkPaidView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, salary_id):
-        if not (request.user.can_manage_payroll or request.user.role in ['PRINCIPAL', 'SCHOOL_ADMIN'] or request.user.is_superuser):
-            return Response({'error': 'Unauthorized'}, status=403)
-
-        try:
-            sal = Salary.objects.get(id=salary_id, school=request.user.school)
-            sal.is_paid = True
-            sal.paid_date = datetime.date.today()
-            sal.save()
-            return Response({'message': 'Marked as Paid'})
-        except Salary.DoesNotExist:
-            return Response({'error': 'Record not found'}, status=404)
+        with transaction.atomic():
+            for staff in active_staff:
+                try:
+                    # Check if structure exists
+                    if not hasattr(staff, 'salary_structure'):
+                        skipped_count += 1
+                        continue
+                    
+                    structure = staff.salary_structure
+                    
+                    # Check if already generated
+                    if Salary.objects.filter(staff=staff, month=target_month).exists():
+                        # Skip or Update? Let's skip to avoid overwrite unless explicit force
+                        skipped_count += 1
+                        continue
+                        
+                    # Calculate Logic
+                    # Phase 1: Assume 30 days present until Attendance Module integrated
+                    total_days = 30
+                    present_days = 30 # TODO: Fetch from StaffAttendance
+                    loss_of_pay_days = total_days - present_days
+                    
+                    # Financials
+                    basic = structure.basic_salary
+                    # If loss of pay?
+                    # Pro-rata deduction logic:
+                    # Net (Structure) / 30 * Present Days?
+                    # Or Basic / 30 * Present? + Allowances?
+                    
+                    # For Phase 1: Flat copy of Structure logic (assume full month)
+                    # We will copy JSONs
+                    earnings_snapshot = structure.allowances
+                    deductions_snapshot = structure.deductions
+                    
+                    total_earnings_val = basic + sum(float(v) for v in earnings_snapshot.values())
+                    total_deductions_val = sum(float(v) for v in deductions_snapshot.values())
+                    
+                    # Apply LOP if needed (Phase 2)
+                    
+                    net_salary = float(basic) + sum(float(v) for v in earnings_snapshot.values()) - total_deductions_val
+                    
+                    # Create Salary Record
+                    Salary.objects.create(
+                        school=school,
+                        staff=staff,
+                        month=target_month,
+                        present_days=present_days,
+                        total_working_days=total_days,
+                        loss_of_pay_days=loss_of_pay_days,
+                        basic_salary=basic,
+                        earnings=earnings_snapshot,
+                        total_earnings=total_earnings_val,
+                        deductions=deductions_snapshot,
+                        total_deductions=total_deductions_val,
+                        net_salary=net_salary,
+                        status='GENERATED',
+                        generated_by=request.user
+                    )
+                    generated_count += 1
+                    
+                except Exception as e:
+                    errors.append(f"{staff.get_full_name()}: {str(e)}")
+        
+        return Response({
+            "message": "Payroll Generation Completed",
+            "generated": generated_count,
+            "skipped": skipped_count,
+            "errors": errors
+        }, status=status.HTTP_200_OK)

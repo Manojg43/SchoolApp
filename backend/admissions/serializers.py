@@ -254,10 +254,17 @@ class EnquiryCreateSerializer(serializers.ModelSerializer):
                 school=school, is_active=True
             ).first()
         
+        # 'school' comes from perform_create -> serializer.save(school=...), so it is in validated_data
+        # We ensure it's there, but don't pass it twice.
+        if 'school' not in validated_data:
+            validated_data['school'] = school
+            
+        # Ensure filled_by is set but not duplicated
+        if 'filled_by' not in validated_data:
+            validated_data['filled_by'] = request.user
+            
         enquiry = Enquiry.objects.create(
-            school=school,
             workflow=default_workflow,
-            filled_by=request.user,
             filled_via='MOBILE' if request.META.get('HTTP_X_MOBILE_APP') else 'WEB',
             **validated_data
         )

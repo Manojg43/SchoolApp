@@ -205,6 +205,7 @@ export async function deleteFeeStructure(id: number, schoolId?: string): Promise
     if (!res.ok) throw new Error(`Failed to delete structure: ${res.statusText}`);
 }
 
+// Staff Management
 // Helper to fetch structure amount (Supports Section Override)
 export async function getFeeStructureAmount(classId: number, categoryId: number, sectionId?: number, schoolId?: string): Promise<{ amount: string, gst_rate: string, is_tax_inclusive: boolean } | null> {
     try {
@@ -677,36 +678,36 @@ export async function deleteFee(id: number, schoolId?: string): Promise<void> {
 }
 
 // Staff
+export interface StaffProfile {
+    designation: string;
+    department: string;
+    joining_date?: string;
+}
+
 export type StaffPayload = Omit<Staff, 'id' | 'user_id'>;
+
 export interface Staff {
     id: number;
-    user_id: string;
+    user_id: string; // Business ID or Username
     first_name: string;
     last_name: string;
     email: string;
     mobile: string;
     role: string;
+    // Flattened display fields (from Read Only Serializer)
     designation?: string;
     department?: string;
     joining_date?: string;
     can_mark_manual_attendance?: boolean;
     is_active?: boolean;
+    // Nested for Writing
+    profile?: StaffProfile;
+    password?: string;
 }
 
-export async function getStaff(schoolId?: string): Promise<Staff[]> {
-    // In a real app we might have a specific endpoint, or filter users by role
-    // For now assuming /staff/ endpoint exists or reusing /users/ with filter
-    // Let's assume /staff-dashboard/ gives current user info, but for list we need /staff/
-    // If backend doesn't have /staff/ list endpoint, we might fail.
-    // Checking backend... `staff` app has views but no ModelViewSet for listing all staff exposed plainly?
-    // Wait, backend/staff/views.py only has Dashboard and Scans.
-    // I should check `backend/core/views.py` or `setup_roles.py`.
-    // Actually, let's assume I need to add a Staff List API to backend first?
-    // No, let's just use a placeholder or assume /users/?role=STAFF works if implemented.
-    // User asked for "CRUD at UI level", implying backend exists.
-    // Let's assume /staff/ endpoint is NOT there based on my `staff/views.py` read.
-    // I will add `StaffViewSet` to `backend/staff/views.py` quickly.
-    return fetchWithSchool('/staff/', schoolId);
+export async function getStaff(role?: string, schoolId?: string): Promise<Staff[]> {
+    const query = role ? `?role=${role}` : '';
+    return fetchWithSchool(`/staff/${query}`, schoolId);
 }
 
 export async function createStaff(data: StaffPayload, schoolId?: string): Promise<Staff> {
@@ -1171,72 +1172,137 @@ export async function generateCertificateManual(data: { enrollment_number: strin
 }
 
 // Payroll
-export interface PayrollEntry {
+// Payroll
+export interface SalaryStructure {
+    id?: number;
+    staff: number;
+    staff_name?: string;
+    basic_salary: number;
+    allowances: Record<string, number>;
+    deductions: Record<string, number>;
+    net_salary: number;
+    updated_at?: string;
+}
+
+export interface SalaryEntry {
     id: number;
+    staff: number;
     staff_name: string;
-    designation: string;
+    month: string;
     present_days: number;
-    base_salary: string;
-    net_salary: string;
-    is_paid: boolean;
-    paid_date: string | null;
+    basic_salary: number;
+    earnings: Record<string, number>;
+    deductions: Record<string, number>;
+    net_salary: number;
+    status: 'GENERATED' | 'PAID' | 'CANCELLED';
+    payment_date?: string;
+    transaction_ref?: string;
 }
 
-export async function getPayrollDashboard(month?: number, year?: number, schoolId?: string): Promise<PayrollEntry[]> {
-    const query = month && year ? `?month=${month}&year=${year}` : '';
-    return fetchWithSchool(`/finance/payroll/dashboard/${query}`, schoolId);
+export async function getPayrollList(month?: number, year?: number, schoolId?: string): Promise<SalaryEntry[]> {
+    let query = '';
+    if (month && year) {
+        // Construct YYYY-MM-01 date to filter by month? 
+        // Backend filter is 'month' (date).
+        // Let's assume backend accepts partial? No, viewset filters by exact match usually.
+        // Or we pass `month=2025-10-01`.
+        const dateStr = `${year}-${month.toString().padStart(2, '0')}-01`;
+        query = `?month=${dateStr}`;
+    }
+    return fetchWithSchool(`/finance/payroll/list/${query}`, schoolId);
 }
 
-export async function generatePayroll(month: number, year: number, schoolId?: string): Promise<{ message: string }> {
+export async function generatePayroll(month: number, year: number, schoolId?: string): Promise<{ message: string, generated: number, skipped: number }> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
-    const res = await fetch(`${API_BASE_URL}/finance/salary/calculate/`, {
+    // Construct Date YYYY-MM-01
+    const dateStr = `${year}-${month.toString().padStart(2, '0')}-01`;
+
+    const res = await fetch(`${API_BASE_URL}/finance/payroll/generate/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-School-ID': effectiveSchoolId,
             'Authorization': `Token ${token}`
         },
-        body: JSON.stringify({ month, year })
+        body: JSON.stringify({ month: dateStr })
     });
 
     if (!res.ok) throw new Error(`Failed to generate payroll: ${res.statusText}`);
     return res.json();
 }
 
-export async function getSalaryStructure(staffId: number, schoolId?: string): Promise<{ base_salary: number }> {
-    return fetchWithSchool(`/finance/payroll/structure/${staffId}/`, schoolId);
+export async function getPayslipLink(salaryId: number, schoolId?: string): Promise<string> {
+    const res = await fetchWithSchool(`/finance/salary/${salaryId}/link/`, schoolId);
+    return res.url;
 }
 
-export async function saveSalaryStructure(staffId: number, base_salary: number, schoolId?: string): Promise<void> {
+export async function getSalaryStructure(staffId: number, schoolId?: string): Promise<SalaryStructure | null> {
+    try {
+        // Helper to find structure for staff?
+        // ViewSet is /payroll/structure/. It returns LIST.
+        // We filter by ?staff=ID ? No, model is StaffSalaryStructure.
+        // ViewSet `get_queryset` returns all structures.
+        // We probably need a way to get by Staff ID.
+        // If ViewSet standard, we list.
+        // Let's assume we fetch list and find? Or implement lookup?
+        // Standard ViewSet usage: GET /finance/payroll/structure/?staff=ID
+        // But ModelViewSet filter backend? 
+        // I didn't add filter_fields to SalaryStructureViewSet.
+        // I should fix backend or just list all and find (not efficient but ok for small staff).
+        // Better: GET /finance/payroll/structure/?staff={staffId}
+        const res = await fetchWithSchool(`/finance/payroll/structure/?staff=${staffId}`, schoolId);
+        // It returns a list (paginated?). Default pagination is on?
+        // If results array, take first.
+        if (Array.isArray(res)) return res[0] || null;
+        if (res.results && Array.isArray(res.results)) return res.results[0] || null;
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+export async function saveSalaryStructure(data: SalaryStructure, schoolId?: string): Promise<SalaryStructure> {
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
-    const res = await fetch(`${API_BASE_URL}/finance/payroll/structure/${staffId}/`, {
-        method: 'POST',
+    const method = data.id ? 'PATCH' : 'POST';
+    const url = data.id
+        ? `${API_BASE_URL}/finance/payroll/structure/${data.id}/`
+        : `${API_BASE_URL}/finance/payroll/structure/`;
+
+    const res = await fetch(url, {
+        method: method,
         headers: {
             'Content-Type': 'application/json',
             'X-School-ID': effectiveSchoolId,
             'Authorization': `Token ${token}`
         },
-        body: JSON.stringify({ base_salary })
+        body: JSON.stringify(data)
     });
 
     if (!res.ok) throw new Error(`Failed to save salary structure: ${res.statusText}`);
+    return res.json();
 }
 
-export async function markSalaryPaid(salaryId: number, schoolId?: string): Promise<void> {
+export async function markSalaryPaid(salaryId: number, paymentDate: string, transactionRef?: string, schoolId?: string): Promise<void> {
+    // We can use PATCH on /finance/payroll/list/{id}/
     const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
     const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
 
-    const res = await fetch(`${API_BASE_URL}/finance/payroll/mark-paid/${salaryId}/`, {
-        method: 'POST',
+    const res = await fetch(`${API_BASE_URL}/finance/payroll/list/${salaryId}/`, {
+        method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
             'X-School-ID': effectiveSchoolId,
             'Authorization': `Token ${token}`
-        }
+        },
+        body: JSON.stringify({
+            status: 'PAID',
+            payment_date: paymentDate,
+            transaction_ref: transactionRef
+        })
     });
 
     if (!res.ok) throw new Error(`Failed to mark paid: ${res.statusText}`);

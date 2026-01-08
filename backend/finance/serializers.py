@@ -54,7 +54,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
         model = Invoice
         fields = [
             'id', 'invoice_id', 'student', 'student_name', 'class_name',
-            'title', 'total_amount', 'paid_amount', 'balance_due',
+            'total_amount', 'paid_amount', 'balance_due',
             'round_off_amount',
             'due_date', 'status', 'is_overdue',
             'academic_year', 'breakups', # Added field
@@ -212,4 +212,54 @@ class ReceiptCreateSerializer(serializers.ModelSerializer):
             )
         except Exception as e:
             raise serializers.ValidationError(str(e))
+
+
+# -----------------------------------------------------------------------------
+# PAYROLL SERIALIZERS
+# -----------------------------------------------------------------------------
+
+from .models import StaffSalaryStructure, Salary
+
+class StaffSalaryStructureSerializer(serializers.ModelSerializer):
+    staff_name = serializers.CharField(source='staff.get_full_name', read_only=True)
+    
+    class Meta:
+        model = StaffSalaryStructure
+        fields = [
+            'id', 'staff', 'staff_name', 
+            'basic_salary', 'allowances', 'deductions', 
+            'net_salary', 'updated_at'
+        ]
+        read_only_fields = ['net_salary', 'updated_at']
+
+
+class SalarySerializer(serializers.ModelSerializer):
+    staff_name = serializers.CharField(source='staff.get_full_name', read_only=True)
+    generated_by_name = serializers.CharField(source='generated_by.get_full_name', read_only=True)
+    
+    class Meta:
+        model = Salary
+        fields = [
+            'id', 'salary_id', 'staff', 'staff_name', 'month',
+            'present_days', 'total_working_days', 'loss_of_pay_days',
+            'basic_salary', 'earnings', 'total_earnings',
+            'deductions', 'total_deductions',
+            'net_salary', 
+            'status', 'payment_date', 'transaction_ref',
+            'generated_by', 'generated_by_name', 'created_at'
+        ]
+        read_only_fields = [
+            'salary_id', 'generated_by', 'created_at', 
+            'total_earnings', 'total_deductions', 'net_salary'
+            # Note: earnings/deductions/basic can be editable if manual correction needed
+        ]
+
+class PayrollRunSerializer(serializers.Serializer):
+    """Serializer for triggering payroll generation"""
+    month = serializers.DateField(format="%Y-%m-%d", input_formats=["%Y-%m-%d"])
+    
+    def validate_month(self, value):
+        # Ensure it's the 1st of the month
+        return value.replace(day=1)
+
 

@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from schools.models import School, AcademicYear, Class
 from students.models import Student
 from core.models import CoreUser
@@ -182,50 +183,7 @@ class Leave(models.Model):
     STATUS_CHOICES = [('PENDING', 'Pending'), ('APPROVED', 'Approved'), ('REJECTED', 'Rejected')]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
 
-class StaffSalaryStructure(models.Model):
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
-    staff = models.OneToOneField(CoreUser, on_delete=models.CASCADE, related_name='salary_structure')
-    base_salary = models.DecimalField(_("Monthly Base Salary"), max_digits=10, decimal_places=2, default=0)
-    # Placeholder for future complexity (HRA, DA, etc.)
-    
-    def __str__(self):
-        return f"Structure: {self.staff.get_full_name()} - {self.base_salary}"
 
-class Salary(models.Model):
-    id = models.AutoField(primary_key=True)
-    salary_id = models.CharField(max_length=50, unique=True, editable=False)
-    
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
-    staff = models.ForeignKey(CoreUser, on_delete=models.CASCADE, related_name='salaries')
-    
-    month = models.DateField(_("Salary Month")) # Store as 1st of month
-    
-    # Calculation Metrics
-    total_working_days = models.IntegerField(default=30)
-    present_days = models.DecimalField(max_digits=4, decimal_places=1, default=0)
-    paid_leaves = models.DecimalField(max_digits=4, decimal_places=1, default=0)
-    
-    amount = models.DecimalField(_("Base Salary"), max_digits=10, decimal_places=2)
-    deductions = models.DecimalField(_("Deductions"), max_digits=10, decimal_places=2, default=0)
-    bonus = models.DecimalField(_("Bonus"), max_digits=10, decimal_places=2, default=0)
-    net_salary = models.DecimalField(_("Net Salary"), max_digits=10, decimal_places=2)
-    
-    is_paid = models.BooleanField(default=False)
-    paid_date = models.DateField(null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-        if not self.salary_id:
-            self.salary_id = generate_business_id('SAL')
-        self.net_salary = self.amount + self.bonus - self.deductions
-        super().save(*args, **kwargs)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['school', 'month'], name='salary_school_month_idx'),
-            models.Index(fields=['staff', 'month'], name='salary_staff_month_idx'),
-            models.Index(fields=['is_paid'], name='salary_is_paid_idx'),
-            models.Index(fields=['salary_id'], name='salary_id_idx'),
-        ]
 
 
 # Fee Settlement Enhancement - New Models (Phase 1)
@@ -416,3 +374,124 @@ class CertificateFee(models.Model):
     
     def __str__(self):
         return f"{self.get_certificate_type_display()} - ₹{self.fee_amount}"
+
+
+# -----------------------------------------------------------------------------
+# PAYROLL MODULE (Phase 2)
+# -----------------------------------------------------------------------------
+
+class StaffSalaryStructure(models.Model):
+    """
+    Defines the salary structure for a staff member.
+    Includes Basic Salary and JSON-based Allowances/Deductions.
+    """
+    staff = models.OneToOneField(
+        'core.CoreUser', 
+        on_delete=models.CASCADE, 
+        related_name='salary_structure'
+    )
+    basic_salary = models.DecimalField(
+        _("Basic Salary"), 
+        max_digits=12, 
+        decimal_places=2,
+        help_text="Base salary amount",
+        default=0
+    )
+    
+    # Store dynamic components as JSON: {"HRA": 5000, "Travel": 2000}
+    allowances = models.JSONField(
+        _("Allowances"), 
+        default=dict, 
+        blank=True,
+        help_text="Dictionary of allowance names and amounts"
+    )
+    
+    # Store dynamic deductions as JSON: {"Tax": 1000, "PF": 1800}
+    deductions = models.JSONField(
+        _("Deductions"), 
+        default=dict, 
+        blank=True,
+        help_text="Dictionary of deduction names and amounts"
+    )
+    
+    # Pre-calculated net (for quick reference, though actual depends on month)
+    net_salary = models.DecimalField(
+        _("Net Salary (Est)"), 
+        max_digits=12, 
+        decimal_places=2,
+        editable=False,
+        default=0
+    )
+    
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        # Auto-calculate net_salary
+        total_allowance = sum(float(v) for v in self.allowances.values())
+        total_deduction = sum(float(v) for v in self.deductions.values())
+        self.net_salary = float(self.basic_salary) + total_allowance - total_deduction
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Salary Structure: {self.staff.get_full_name()} (₹{self.net_salary})"
+
+
+class Salary(models.Model):
+    """
+    Represents a monthly salary slip (Payroll Entry).
+    Snapshots the structure at the time of generation and accounts for attendance.
+    """
+    salary_id = models.CharField(max_length=50, unique=True, editable=False)
+    
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    staff = models.ForeignKey('core.CoreUser', on_delete=models.CASCADE, related_name='salaries')
+    
+    # Period: Usually 1st of the month (e.g., 2025-10-01 for October Salary)
+    month = models.DateField(_("Salary Month"))
+    
+    # Attendance Stats
+    present_days = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+    total_working_days = models.IntegerField(default=30)
+    loss_of_pay_days = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+    
+    # Financials (Snapshot)
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    earnings = models.JSONField(_("Earnings Breakdown"), default=dict)
+    total_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    deductions = models.JSONField(_("Deductions Breakdown"), default=dict)
+    total_deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    net_salary = models.DecimalField(_("Net Salary"), max_digits=12, decimal_places=2, default=0)
+    
+    # Payment Status
+    STATUS_CHOICES = [
+        ('GENERATED', 'Generated'),
+        ('PAID', 'Paid'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='GENERATED')
+    payment_date = models.DateField(null=True, blank=True)
+    transaction_ref = models.CharField(max_length=100, blank=True, null=True)
+    
+    generated_by = models.ForeignKey('core.CoreUser', on_delete=models.SET_NULL, null=True, related_name='generated_salaries')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        unique_together = ('staff', 'month')
+        indexes = [
+            models.Index(fields=['school', 'month'], name='salary_school_month_idx'),
+            models.Index(fields=['staff', 'month'], name='salary_staff_month_idx'),
+            models.Index(fields=['status'], name='salary_status_idx'),
+        ]
+        ordering = ['-month']
+
+    def save(self, *args, **kwargs):
+        if not self.salary_id:
+            self.salary_id = generate_business_id('PAY')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Payroll: {self.staff.get_full_name()} - {self.month.strftime('%b %Y')}"

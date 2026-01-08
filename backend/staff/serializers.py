@@ -14,6 +14,9 @@ class StaffSerializer(serializers.ModelSerializer):
     joining_date = serializers.SerializerMethodField()
 
     password = serializers.CharField(write_only=True, required=False) 
+    
+    # Writable Nested Profile
+    profile = StaffProfileSerializer(source='staff_profile', required=False)
 
     def get_designation(self, obj):
         if hasattr(obj, 'staff_profile'):
@@ -42,22 +45,19 @@ class StaffSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CoreUser
-        fields = ['id', 'user_id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'designation', 'department', 'joining_date', 'password', 'is_active', 'can_mark_manual_attendance']
-        read_only_fields = ['id', 'user_id']
+        fields = ['id', 'user_id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'designation', 'department', 'joining_date', 'password', 'is_active', 'can_mark_manual_attendance', 'profile']
+        read_only_fields = ['id', 'user_id', 'designation', 'department', 'joining_date'] # derive from profile
 
     def create(self, validated_data):
         profile_data = {}
-        # Extract profile fields
-        manual_attendance = validated_data.pop('can_mark_manual_attendance', False)
-        
         if 'staff_profile' in validated_data:
              profile_data = validated_data.pop('staff_profile')
         
-        # Create User
-        # Remove 'staff_profile' from validated_data to avoid error in create_user
-        password = validated_data.pop('password', 'Staff@123') # Default password
+        manual_attendance = validated_data.pop('can_mark_manual_attendance', False)
         
-        # Auto-generate username from email if not provided
+        # Create User
+        password = validated_data.pop('password', 'Staff@123')
+        
         if 'username' not in validated_data and 'email' in validated_data:
             validated_data['username'] = validated_data['email']
             

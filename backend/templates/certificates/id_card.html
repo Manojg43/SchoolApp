@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        @page {
+            size: 85.6mm 53.98mm;
+            margin: 0;
+        }
+
+        body {
+            font-family: Helvetica;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+
+        .card-container {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #ddd;
+            position: relative;
+            background: white;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #000000;
+            color: white;
+            padding: 5px;
+            text-align: center;
+            height: 12mm;
+        }
+
+        .school-name {
+            font-size: 10pt;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .school-address {
+            font-size: 5pt;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 5px;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .photo-box {
+            width: 22mm;
+            height: 26mm;
+            background: #eee;
+            margin-right: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .details {
+            flex: 1;
+            padding-top: 2px;
+        }
+
+        .student-name {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .info-row {
+            font-size: 7pt;
+            margin-bottom: 2px;
+            color: #555;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #333;
+            display: inline-block;
+            width: 35px;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8mm;
+            background-color: #eee;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 6pt;
+            padding-top: 2px;
+        }
+
+        .gr-number {
+            position: absolute;
+            right: 5px;
+            top: 40px;
+            background: #333;
+            color: white;
+            padding: 2px 4px;
+            font-size: 6pt;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+
+        .qr-code {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 15mm;
+            height: 15mm;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card-container">
+        <div class="header">
+            <h1 class="school-name">{{ school_name }}</h1>
+            <p class="school-address">{{ school_address }}</p>
+        </div>
+
+        <div class="content">
+            <div class="photo-box">
+                {% if photo_url %}
+                <img src="{{ photo_url }}" alt="Photo">
+                {% else %}
+                <div style="text-align: center; margin-top: 10mm; font-size: 6pt;">No Photo</div>
+                {% endif %}
+            </div>
+
+            <div class="details">
+                <div class="student-name">{{ student_name }}</div>
+                <div class="info-row"><span class="label">Class:</span> {{ class_name }} - {{ section }}</div>
+                <div class="info-row"><span class="label">DOB:</span> {{ dob }}</div>
+                <div class="info-row"><span class="label">Blood:</span> {{ blood_group }}</div>
+                <div class="info-row"><span class="label">Mobile:</span> {{ mobile }}</div>
+
+                <div class="info-row" style="margin-top: 2px;">
+                    <span class="label">Roll No:</span> {{ enrollment_number }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Distinct GR Number Badge -->
+        <div class="gr-number">GR: {{ gr_number }}</div>
+
+        {% if include_qr_code and qr_code_image %}
+        <img src="{{ qr_code_image }}" class="qr-code">
+        {% endif %}
+
+        <div class="footer">
+            Principal Signature
+        </div>
+    </div>
+</body>
+
+</html>

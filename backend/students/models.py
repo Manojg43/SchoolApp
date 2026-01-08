@@ -13,7 +13,8 @@ class Student(models.Model):
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.SET_NULL, null=True, related_name='students')
     current_class = models.ForeignKey(Class, on_delete=models.SET_NULL, null=True, related_name='students')
     section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, related_name='students')
-    enrollment_number = models.CharField(_("Enrollment Number"), max_length=50)
+    enrollment_number = models.CharField(_("Class Roll No"), max_length=50, help_text="Dynamic Roll No (e.g. 10A-001)")
+    gr_number = models.CharField(_("GR Number"), max_length=50, unique=True, blank=True, null=True, help_text="Permanent General Register No")
     
     # Personal Details
     first_name = models.CharField(_("First Name"), max_length=100)

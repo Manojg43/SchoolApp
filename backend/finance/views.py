@@ -266,8 +266,15 @@ class StudentPromotionView(APIView):
                 }, status=400)
             
             from schools.models import Class
-            new_class = Class.objects.get(id=new_class_id)
-            new_year = AcademicYear.objects.get(id=new_year_id)
+            try:
+                new_class = Class.objects.get(id=new_class_id)
+            except Class.DoesNotExist:
+                return Response({'success': False, 'error': 'Target Class not found'}, status=404)
+
+            try:
+                new_year = AcademicYear.objects.get(id=new_year_id)
+            except AcademicYear.DoesNotExist:
+                return Response({'success': False, 'error': 'Target Academic Year not found'}, status=404)
             
             result = FeeService.handle_class_promotion(
                 student,

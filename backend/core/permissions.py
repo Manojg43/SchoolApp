@@ -61,7 +61,7 @@ class StandardPermission(permissions.BasePermission):
 
         # Fallback: Allow SCHOOL_ADMIN to manage data if they don't have explicit Django perm
         # This handles cases where Group permissions weren't set up perfectly in seeding
-        if request.user.role == CoreUser.ROLE_SCHOOL_ADMIN:
+        if request.user.role in [CoreUser.ROLE_SCHOOL_ADMIN, CoreUser.ROLE_PRINCIPAL]:
             return True
 
         return False

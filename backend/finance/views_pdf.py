@@ -21,20 +21,33 @@ class GetPayslipLinkView(APIView):
     def get(self, request, pk):
         # Generate a signed token valid for 5 minutes
         # Data: "salary_id:user_id"
-        salary = Salary.objects.get(id=pk, staff=request.user) # Verify ownership
+        
+        # Allow if staff matches OR if user is Admin/Principal of the same school
+        try:
+            salary = Salary.objects.get(id=pk)
+            
+            # Check permission
+            is_owner = (salary.staff == request.user)
+            is_admin = (
+                request.user.role in ['SCHOOL_ADMIN', 'PRINCIPAL'] and 
+                salary.school == request.user.school
+            )
+            
+            if not (is_owner or is_admin):
+                return Response({'error': 'Permission Denied'}, status=403)
+                
+        except Salary.DoesNotExist:
+            return Response({'error': 'Salary not found'}, status=404)
+
         token = signer.sign(f"{salary.id}:{request.user.id}")
         
         # Build URL
-        # Assuming typical setup, we return relative or absolute
-        # For Linking.openURL, we need full URL.
-        # We can construct it from request.build_absolute_uri
-        
         # Target: /api/finance/salary/<pk>/download/?token=<token>
         path = f"/api/finance/salary/{salary.id}/download/?token={token}"
         full_url = request.build_absolute_uri(path)
         
         return Response({'url': full_url})
-
+        
 import logging
 logger = logging.getLogger(__name__)
 
@@ -67,77 +80,50 @@ class DownloadPayslipView(APIView):
         else:
             return Response({'error': 'Authentication Required'}, status=401)
             
-        # Proceed with Generation (Code same as before)
+        # Proceed with Generation
         try:
-            salary = Salary.objects.get(id=salary_id, staff=user)
+            salary = Salary.objects.get(id=salary_id)
+            
+            # Verify Access again for the authenticated/token user
+            is_owner = (salary.staff == user)
+            is_admin = (
+                user.role in ['SCHOOL_ADMIN', 'PRINCIPAL'] and 
+                salary.school == user.school
+            )
+            
+            if not (is_owner or is_admin):
+                 return Response({'error': 'Permission Denied'}, status=403)
+                 
         except Salary.DoesNotExist:
             return Response({'error': 'Salary record not found'}, status=404)
         
-        # Create PDF Buffer
+        # Prepare Context
+        from django.conf import settings
+        from django.template.loader import render_to_string
+        from xhtml2pdf import pisa
+        from datetime import datetime
+        
+        # Parse earnings/deductions if they are JSON strings
+        earnings = salary.earnings # Fixed from allowances
+        deductions = salary.deductions
+        
+        context = {
+            'school': user.school,
+            'salary': salary,
+            'earnings': earnings,
+            'deductions': deductions,
+            'current_date': datetime.now(),
+            'amount_in_words': f"{salary.net_salary} Only", # Placeholder
+            'base_url': request.build_absolute_uri('/')[:-1]
+        }
+        
+        html = render_to_string('finance/payslip.html', context)
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
-        elements = []
+        pisa_status = pisa.CreatePDF(html, dest=buffer)
         
-        styles = getSampleStyleSheet()
-        title_style = styles['Heading1']
-        title_style.alignment = 1 # Center
-        
-        # Header
-        school_name = user.school.name if user.school else "School App"
-        elements.append(Paragraph(school_name, title_style))
-        elements.append(Paragraph(f"Payslip for {salary.month.strftime('%B %Y')}", styles['Heading2']))
-        elements.append(Spacer(1, 20))
-        
-        # Staff Details
-        details_data = [
-            ["Staff Name:", f"{user.first_name} {user.last_name}"],
-            ["Designation:", getattr(user.staff_profile, 'designation', 'Staff') if hasattr(user, 'staff_profile') else 'Staff'],
-            ["Department:", getattr(user.staff_profile, 'department', '-') if hasattr(user, 'staff_profile') else '-'],
-            ["Present Days:", str(salary.present_days)]
-        ]
-        
-        t_details = Table(details_data, colWidths=[150, 300])
-        t_details.setStyle(TableStyle([
-            ('FONTNAME', (0,0), (0, -1), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ]))
-        elements.append(t_details)
-        elements.append(Spacer(1, 20))
-        
-        # Salary Table
-        data = [
-            ["Earnings", "Amount (INR)", "Deductions", "Amount (INR)"],
-            ["Base Salary", str(salary.base_salary), "Tax/TDS", "0.00"],
-            ["Allowances", str(salary.allowances), "PF", "0.00"],
-            ["Bonus", str(salary.bonus), "Other Deductions", str(salary.deductions)],
-            ["", "", "", ""],
-            ["Gross Salary", str(salary.base_salary + salary.allowances + salary.bonus), "Total Deductions", str(salary.deductions)],
-        ]
-        
-        t = Table(data)
-        t.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.grey),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0,0), (-1,0), 12),
-            ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),
-            ('GRID', (0,0), (-1,-1), 1, colors.black),
-        ]))
-        elements.append(t)
-        elements.append(Spacer(1, 20))
-        
-        # Net Salary
-        net_style = ParagraphStyle('Net', parent=styles['Heading2'], alignment=2) # Right
-        elements.append(Paragraph(f"Net Salary: INR {salary.net_salary}", net_style))
-        elements.append(Spacer(1, 40))
-        
-        # Footer
-        footer = Paragraph("This is a computer generated payslip and does not require signature.", styles['Italic'])
-        elements.append(footer)
-        
-        doc.build(elements)
-        
+        if pisa_status.err:
+            return Response({'error': 'PDF Generation Error'}, status=500)
+            
         buffer.seek(0)
         response = HttpResponse(buffer, content_type='application/pdf')
         filename = f"Payslip_{salary.month.strftime('%b%Y')}.pdf"

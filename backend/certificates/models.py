@@ -21,6 +21,7 @@ CERTIFICATE_TYPES = [
     ('ACHIEVEMENT', 'Achievement Certificate'),
     ('FEE_CLEARANCE', 'Fee Clearance Certificate'),
     ('COURSE_COMPLETION', 'Course Completion'),
+    ('ID_CARD', 'Student ID Card'),
     ('CUSTOM', 'Custom Certificate')
 ]
 
