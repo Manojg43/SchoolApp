@@ -16,12 +16,19 @@ class Command(BaseCommand):
             # Create Classes 1 to 12
             for i in range(1, 13):
                 class_name = f"Class {i}"
-                cls, created = Class.objects.get_or_create(
-                    school=school,
-                    name=class_name,
-                    defaults={'order': i}
-                )
-                if created:
+                # Check for existing class (handle duplicates gracefully)
+                existing_classes = Class.objects.filter(school=school, name=class_name)
+                if existing_classes.exists():
+                    cls = existing_classes.first()
+                    # clean up duplicates if any
+                    if existing_classes.count() > 1:
+                        self.stdout.write(self.style.WARNING(f"  - Found {existing_classes.count()} duplicates for {class_name}. Using first."))
+                else:
+                    cls = Class.objects.create(
+                        school=school,
+                        name=class_name,
+                        order=i
+                    )
                     self.stdout.write(f"  - Created {class_name}")
 
                 # Create Sections A and B
