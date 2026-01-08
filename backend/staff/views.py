@@ -95,9 +95,35 @@ class StaffDashboardView(APIView):
             'is_paid': False,
             'generated': False
         }
+        
+        # 5. Admin/Principal Global Stats
+        admin_stats = None
+        is_principal = False
         try:
-            # Use the existing Report logic or simple summary
-            from finance.models import Salary
+            sp = user.staff_profile
+            is_principal = sp.designation == 'Principal'
+        except:
+             pass
+
+        if user.is_superuser or is_principal:
+            from students.models import Student
+            from admissions.models import Enquiry
+            from staff.models import StaffProfile, StaffAttendance
+            
+            # Use school filter for all
+            school = user.school
+            
+            admin_stats = {
+                'student_count': Student.objects.filter(school=school, is_active=True).count(),
+                'staff_count': StaffProfile.objects.filter(user__school=school).count(),
+                'students_present_today': 0, # Placeholder until student attendance is fully integrated
+                'staff_present_today': StaffAttendance.objects.filter(school=school, date=today, status='PRESENT').count(),
+                'pending_enquiries': Enquiry.objects.filter(school=school, status='PENDING').count(),
+                'pending_leaves': Leave.objects.filter(school=school, status='PENDING').count()
+            }
+
+        try:
+            from finance.models import Salary, Leave
             sal_obj = Salary.objects.filter(staff=user, month=month_start).first()
             if sal_obj:
                 salary_data['total_earned'] = float(sal_obj.net_salary)
@@ -110,7 +136,8 @@ class StaffDashboardView(APIView):
             'user': profile_data,
             'attendance': stats,
             'today': today_status,
-            'salary': salary_data
+            'salary': salary_data,
+            'admin_stats': admin_stats
         })
 
     def patch(self, request):

@@ -13,13 +13,23 @@ class TeacherTimetableView(APIView):
         user = request.user
         school = user.school
         
-        # Filter by Day
-        day = request.query_params.get('day') # MONDAY, TUESDAY...
+        # Filter by Day & Teacher
+        day = request.query_params.get('day')
+        teacher_id = request.query_params.get('teacher_id')
         
-        schedules = ClassSchedule.objects.filter(
-            school=school,
-            teacher=user
-        )
+        is_principal = False
+        try:
+            is_principal = user.staff_profile.designation == 'Principal'
+        except AttributeError:
+            pass
+
+        if user.is_superuser or user.role in ['SCHOOL_ADMIN', 'PRINCIPAL'] or is_principal:
+            if teacher_id:
+                schedules = ClassSchedule.objects.filter(school=school, teacher_id=teacher_id)
+            else:
+                schedules = ClassSchedule.objects.filter(school=school)
+        else:
+            schedules = ClassSchedule.objects.filter(school=school, teacher=user)
         
         if day:
             schedules = schedules.filter(day_of_week=day.upper())
@@ -35,7 +45,8 @@ class TeacherTimetableView(APIView):
                 'end_time': s.end_time.strftime("%H:%M"),
                 'subject': s.subject,
                 'class_name': s.class_assigned.name,
-                'section': s.section
+                'section': s.section,
+                'teacher_name': f"{s.teacher.first_name} {s.teacher.last_name}"
             })
             
         return Response(data)
@@ -46,10 +57,25 @@ class HomeworkView(APIView):
     def get(self, request):
         # View History
         user = request.user
-        hw = schools.models.Homework.objects.filter(
-            school=user.school,
-            teacher=user
-        ).order_by('-created_at')
+        school = user.school
+        
+        is_principal = False
+        try:
+            is_principal = user.staff_profile.designation == 'Principal'
+        except AttributeError:
+            pass
+
+        if user.is_superuser or user.role in ['SCHOOL_ADMIN', 'PRINCIPAL'] or is_principal:
+            # Principal/Admin sees everything in the school
+            hw = schools.models.Homework.objects.filter(
+                school=school
+            ).order_by('-created_at')
+        else:
+            # Teachers only see their own
+            hw = schools.models.Homework.objects.filter(
+                school=school,
+                teacher=user
+            ).order_by('-created_at')
         
         data = []
         for h in hw:
@@ -60,6 +86,7 @@ class HomeworkView(APIView):
                 'subject': h.subject,
                 'title': h.title,
                 'description': h.description,
+                'teacher_name': f"{h.teacher.first_name} {h.teacher.last_name}",
                 'due_date': h.due_date.strftime("%Y-%m-%d"),
                 'created_at': h.created_at.strftime("%d %b")
             })

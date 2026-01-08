@@ -17,6 +17,7 @@ import HomeworkScreen from '../screens/HomeworkScreen';
 import EnquiryFormScreen from '../screens/EnquiryFormScreen';
 import EnquiryListScreen from '../screens/EnquiryListScreen';
 import EnquiryDetailScreen from '../screens/EnquiryDetailScreen';
+import LeaveApprovalScreen from '../screens/LeaveApprovalScreen';
 import { theme } from '../constants/theme';
 
 const Stack = createNativeStackNavigator();
@@ -75,6 +76,7 @@ export default function AppNavigator() {
                 <Stack.Screen name="EnquiryForm" component={EnquiryFormScreen} />
                 <Stack.Screen name="EnquiryList" component={EnquiryListScreen} />
                 <Stack.Screen name="EnquiryDetail" component={EnquiryDetailScreen} />
+                <Stack.Screen name="LeaveApproval" component={LeaveApprovalScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

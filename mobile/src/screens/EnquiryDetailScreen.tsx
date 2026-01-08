@@ -53,9 +53,14 @@ export default function EnquiryDetailScreen() {
     const [enquiry, setEnquiry] = useState<EnquiryDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [isPrincipal, setIsPrincipal] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
 
     const loadEnquiry = async () => {
         try {
+            const profile = await mobileApi.getMyProfile();
+            setIsPrincipal(profile.user.designation === 'Principal');
+
             const data = await mobileApi.getEnquiryDetail(id);
             setEnquiry(data);
         } catch (error) {
@@ -76,6 +81,57 @@ export default function EnquiryDetailScreen() {
     const onRefresh = () => {
         setRefreshing(true);
         loadEnquiry();
+    };
+
+    const handleAdvance = async () => {
+        Alert.alert(
+            "Advance Stage",
+            "Are you sure you want to move this enquiry to the next stage?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Advance",
+                    onPress: async () => {
+                        setActionLoading(true);
+                        try {
+                            await mobileApi.advanceEnquiryStage(id);
+                            Alert.alert("Success", "Enquiry moved to next stage");
+                            loadEnquiry();
+                        } catch (e: any) {
+                            Alert.alert("Error", e.message || "Failed to advance stage");
+                        } finally {
+                            setActionLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleReject = async () => {
+        Alert.alert(
+            "Reject Enquiry",
+            "Are you sure you want to reject this enquiry?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Reject",
+                    style: "destructive",
+                    onPress: async () => {
+                        setActionLoading(true);
+                        try {
+                            await mobileApi.rejectEnquiry(id);
+                            Alert.alert("Success", "Enquiry rejected");
+                            loadEnquiry();
+                        } catch (e: any) {
+                            Alert.alert("Error", e.message || "Failed to reject enquiry");
+                        } finally {
+                            setActionLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const formatDate = (dateStr: string) => {
@@ -301,6 +357,31 @@ export default function EnquiryDetailScreen() {
                     </Text>
                 </View>
 
+                {/* Principal Actions */}
+                {isPrincipal && (enquiry.status === 'PENDING' || enquiry.status === 'IN_PROGRESS') && (
+                    <View style={styles.actionsContainer}>
+                        <TouchableOpacity
+                            style={[styles.actionBtn, styles.rejectBtn]}
+                            onPress={handleReject}
+                            disabled={actionLoading}
+                        >
+                            <XCircle size={20} color="#fff" />
+                            <Text style={styles.actionBtnText}>Reject</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.actionBtn, styles.advanceBtn]}
+                            onPress={handleAdvance}
+                            disabled={actionLoading}
+                        >
+                            <ArrowRight size={20} color="#fff" />
+                            <Text style={styles.actionBtnText}>
+                                {enquiry.status === 'PENDING' ? 'Start Process' : 'Next Stage'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
                 <View style={{ height: 40 }} />
             </ScrollView>
         </View>
@@ -505,5 +586,31 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: theme.colors.text.muted,
         textAlign: 'center',
+    },
+    actionsContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        gap: 12,
+        marginTop: 10,
+    },
+    actionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 14,
+        borderRadius: 12,
+    },
+    rejectBtn: {
+        backgroundColor: theme.colors.error,
+    },
+    advanceBtn: {
+        backgroundColor: theme.colors.success,
+    },
+    actionBtnText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 15,
     },
 });

@@ -186,29 +186,27 @@ export default function Dashboard() {
 
                 {/* Recent Activity */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Recent Students */}
                     {/* Recent Details */}
                     <Animate animation="fade" delay={0.4} className="h-full">
                         <Card className="h-full border border-white/40 shadow-xl bg-white/60 backdrop-blur-md">
                             <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 p-6">
-                                <CardTitle className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">Recent Activity</CardTitle>
+                                <CardTitle className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">New Admissions</CardTitle>
+                                <Link href="/students" className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline">View All</Link>
                             </CardHeader>
-                            <div className="p-6 space-y-6">
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">New Admissions</h3>
-                                        <Link href="/students" className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline">View All</Link>
-                                    </div>
-                                    <DataTable columns={studentColumns} data={recentStudents} isLoading={loading} />
-                                </div>
+                            <div className="p-6">
+                                <DataTable columns={studentColumns} data={recentStudents} isLoading={loading} />
+                            </div>
+                        </Card>
+                    </Animate>
 
-                                <div className="space-y-4 pt-4 border-t border-gray-100">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Recent Fee Collections</h3>
-                                        <Link href="/fees" className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline">View All</Link>
-                                    </div>
-                                    <DataTable columns={feeColumns} data={recentFees} isLoading={loading} />
-                                </div>
+                    <Animate animation="fade" delay={0.5} className="h-full">
+                        <Card className="h-full border border-white/40 shadow-xl bg-white/60 backdrop-blur-md">
+                            <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 p-6">
+                                <CardTitle className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600">Recent Collections</CardTitle>
+                                <Link href="/fees" className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline">View All</Link>
+                            </CardHeader>
+                            <div className="p-6">
+                                <DataTable columns={feeColumns} data={recentFees} isLoading={loading} />
                             </div>
                         </Card>
                     </Animate>

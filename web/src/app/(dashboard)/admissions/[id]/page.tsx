@@ -79,7 +79,7 @@ export default function EnquiryDetailPage() {
         setError(null);
         try {
             const res = await api.get(`/admissions/enquiries/${enquiryId}/`);
-            setEnquiry(res.data);
+            setEnquiry(res?.data ?? res);
         } catch (err: any) {
             console.error('Failed to load enquiry', err);
             const message = err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to load enquiry';

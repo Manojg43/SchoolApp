@@ -37,6 +37,10 @@ class FeeStructure(models.Model):
     category = models.ForeignKey(FeeCategory, on_delete=models.CASCADE)
     amount = models.DecimalField(_("Amount"), max_digits=10, decimal_places=2)
     
+    # GST Configuration (Overridable per structure)
+    gst_rate = models.DecimalField(_("GST Rate (%)"), max_digits=5, decimal_places=2, default=0.00)
+    is_tax_inclusive = models.BooleanField(_("Tax Inclusive"), default=False)
+    
     class Meta:
         unique_together = ('academic_year', 'class_assigned', 'section', 'category')
         indexes = [

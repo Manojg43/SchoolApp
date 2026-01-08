@@ -259,10 +259,6 @@ export default function StudentList() {
                 <PageTabs tabs={tabs} />
 
                 {/* KPI Cards */}
-
-                <PageTabs tabs={tabs} />
-
-                {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <StatCard
                         index={0}

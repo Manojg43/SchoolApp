@@ -64,7 +64,7 @@ export default function HomeworkScreen() {
                 </View>
                 <View style={{ marginLeft: 12, flex: 1 }}>
                     <Text style={styles.subject}>{item.subject}</Text>
-                    <Text style={styles.className}>{item.class_name} {item.section}</Text>
+                    <Text style={styles.className}>{item.class_name} {item.section} • {item.teacher_name || 'Teacher'}</Text>
                 </View>
                 <Text style={styles.date}>{item.created_at}</Text>
             </View>

@@ -44,6 +44,17 @@ export const theme = {
             shadowOpacity: 0.1,
             shadowRadius: 4,
             elevation: 3,
+        },
+        glass: {
+            shadowColor: '#2563eb',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.1,
+            shadowRadius: 20,
+            elevation: 10,
         }
+    },
+    linearGradient: {
+        primary: ['#2563eb', '#1e40af'] as const,
+        secondary: ['#06b6d4', '#0891b2'] as const,
     }
 };

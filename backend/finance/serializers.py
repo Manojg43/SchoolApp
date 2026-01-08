@@ -14,9 +14,7 @@ class FeeCategorySerializer(serializers.ModelSerializer):
 class FeeStructureSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     class_name = serializers.CharField(source='class_assigned.name', read_only=True)
-    # Read-only GST info for frontend convenience
-    gst_rate = serializers.DecimalField(source='category.gst_rate', max_digits=5, decimal_places=2, read_only=True)
-    is_tax_inclusive = serializers.BooleanField(source='category.is_tax_inclusive', read_only=True)
+    # GST info is now on the model itself, not just category default
 
     class Meta:
         model = FeeStructure

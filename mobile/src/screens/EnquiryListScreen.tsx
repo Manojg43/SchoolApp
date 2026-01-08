@@ -29,10 +29,18 @@ export default function EnquiryListScreen() {
     const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [isPrincipal, setIsPrincipal] = useState(false);
 
     const loadEnquiries = async () => {
         try {
-            const data = await mobileApi.getMyEnquiries();
+            // First check profile for role
+            const profile = await mobileApi.getMyProfile();
+            const principal = profile.user.designation === 'Principal';
+            setIsPrincipal(principal);
+
+            const data = principal
+                ? await mobileApi.getAllEnquiries()
+                : await mobileApi.getMyEnquiries();
             setEnquiries(data);
         } catch (error) {
             console.error('Failed to load enquiries', error);

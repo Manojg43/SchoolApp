@@ -128,6 +128,22 @@ export const mobileApi = {
     getMyEnquiries: () =>
         apiRequest('/admissions/enquiries/?filled_by=me', 'GET'),
 
+    getAllEnquiries: () =>
+        apiRequest('/admissions/enquiries/', 'GET'),
+
     getEnquiryDetail: (id: number) =>
         apiRequest(`/admissions/enquiries/${id}/`, 'GET'),
+
+    advanceEnquiryStage: (id: number, remarks: string = '') =>
+        apiRequest(`/admissions/enquiries/${id}/advance_stage/`, 'POST', { remarks }),
+
+    rejectEnquiry: (id: number, reason: string = '') =>
+        apiRequest(`/admissions/enquiries/${id}/reject/`, 'POST', { reason }),
+
+    // Leave Management (Admin/Principal)
+    getPendingLeaves: () =>
+        apiRequest('/staff/leaves/manage/?status=PENDING', 'GET'),
+
+    processLeaveAction: (id: number, action: 'APPROVE' | 'REJECT', isPaid: boolean = false) =>
+        apiRequest(`/staff/leaves/manage/${id}/`, 'POST', { action, is_paid: isPaid }),
 };

@@ -14,6 +14,7 @@ export default function TimetableScreen() {
     const [selectedDay, setSelectedDay] = useState(DAYS[new Date().getDay() - 1] || 'MONDAY');
     const [loading, setLoading] = useState(false);
     const [schedule, setSchedule] = useState<any[]>([]);
+    const [isPrincipal, setIsPrincipal] = useState(false);
 
     useEffect(() => {
         loadSchedule();
@@ -22,6 +23,9 @@ export default function TimetableScreen() {
     const loadSchedule = async () => {
         setLoading(true);
         try {
+            const profile = await mobileApi.getMyProfile();
+            setIsPrincipal(profile.user.designation === 'Principal');
+
             const data = await mobileApi.getTimetable(selectedDay);
             setSchedule(data);
         } catch (e: any) {
@@ -40,7 +44,10 @@ export default function TimetableScreen() {
             <View style={styles.divider} />
             <View style={styles.infoCol}>
                 <Text style={styles.subject}>{item.subject}</Text>
-                <Text style={styles.classInfo}>{item.class_name} {item.section ? `(${item.section})` : ''}</Text>
+                <Text style={styles.classInfo}>
+                    {item.class_name} {item.section ? `(${item.section})` : ''}
+                    {isPrincipal && ` • ${item.teacher_name}`}
+                </Text>
             </View>
         </Card>
     );
@@ -52,7 +59,7 @@ export default function TimetableScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <ArrowLeft color={theme.colors.text.main} size={24} />
                 </TouchableOpacity>
-                <Text style={styles.title}>My Timetable</Text>
+                <Text style={styles.title}>{isPrincipal ? 'School Timetable' : 'My Timetable'}</Text>
                 <View style={{ width: 24 }} />
             </View>
 

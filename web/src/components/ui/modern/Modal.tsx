@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ModalProps {
@@ -32,6 +32,13 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
         lg: 'max-w-3xl',
         xl: 'max-w-5xl',
     };
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
 
     return createPortal(
         <AnimatePresence>

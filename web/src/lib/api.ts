@@ -150,8 +150,14 @@ export async function getFeeCategories(schoolId?: string): Promise<FeeCategory[]
 }
 
 // Fee Structure CRUD
-export async function getFeeStructures(schoolId?: string): Promise<FeeStructure[]> {
-    return fetchWithSchool('/finance/structure/', schoolId);
+export async function getFeeStructures(filters?: { academic_year?: number, class_assigned?: number, section?: number }, schoolId?: string): Promise<FeeStructure[]> {
+    const params = new URLSearchParams();
+    if (filters?.academic_year) params.append('academic_year', filters.academic_year.toString());
+    if (filters?.class_assigned) params.append('class_assigned', filters.class_assigned.toString());
+    if (filters?.section) params.append('section', filters.section.toString());
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return fetchWithSchool(`/finance/structure/${query}`, schoolId);
 }
 
 export async function createFeeStructure(data: Partial<FeeStructure>, schoolId?: string): Promise<FeeStructure> {
@@ -913,8 +919,9 @@ export interface Route {
     stops: { id: number; name: string; fee_amount: string }[];
 }
 
-export async function getVehicles(schoolId?: string): Promise<Vehicle[]> {
-    return fetchWithSchool('/transport/vehicles/', schoolId);
+export async function getVehicles(schoolId?: string, page: number = 1, pageSize: number = 10): Promise<Vehicle[]> {
+    const query = `?page=${page}&page_size=${pageSize}`;
+    return fetchWithSchool(`/transport/vehicles/${query}`, schoolId);
 }
 
 // Transport Payloads
@@ -962,8 +969,9 @@ export async function deleteVehicle(id: number, schoolId?: string): Promise<void
     if (!res.ok) throw new Error(`Failed to delete vehicle: ${res.statusText}`);
 }
 
-export async function getRoutes(schoolId?: string): Promise<Route[]> {
-    return fetchWithSchool('/transport/routes/', schoolId);
+export async function getRoutes(schoolId?: string, page: number = 1, pageSize: number = 10): Promise<Route[]> {
+    const query = `?page=${page}&page_size=${pageSize}`;
+    return fetchWithSchool(`/transport/routes/${query}`, schoolId);
 }
 
 export type RoutePayload = Omit<Route, 'id'>;
@@ -982,6 +990,23 @@ export async function createRoute(data: RoutePayload, schoolId?: string): Promis
         body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error(`Failed to create route: ${res.statusText}`);
+    return res.json();
+}
+
+export async function updateRoute(id: number, data: Partial<Route>, schoolId?: string): Promise<Route> {
+    const effectiveSchoolId = schoolId || (typeof window !== 'undefined' ? localStorage.getItem('school_id') : undefined) || DEFAULT_SCHOOL_ID;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('school_token') : null;
+
+    const res = await fetch(`${API_BASE_URL}/transport/routes/${id}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-School-ID': effectiveSchoolId,
+            'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`Failed to update route: ${res.statusText}`);
     return res.json();
 }
 
@@ -1556,6 +1581,8 @@ export async function uploadEnquiryDocument(
     if (!res.ok) throw new Error(`Failed to upload document: ${res.statusText}`);
     return res.json();
 }
+
+
 
 // ============================================
 // TRANSPORT SUBSCRIPTIONS

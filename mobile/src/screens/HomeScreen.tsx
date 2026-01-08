@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { mobileApi } from '../lib/api';
-import { QrCode, LogOut, User, Menu, Calendar, IndianRupee, CalendarCheck, Bell, BookOpen, FileText } from 'lucide-react-native';
+import { QrCode, LogOut, User, Menu, Calendar, IndianRupee, CalendarCheck, Bell, BookOpen, FileText, CheckSquare, Users, GraduationCap, ClipboardList } from 'lucide-react-native';
 import { theme } from '../constants/theme';
 import { Card } from '../components/ui/Card';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -48,6 +48,136 @@ export default function HomeScreen() {
     const user = dashboardData?.user || {};
     const att = dashboardData?.attendance || {};
     const salary = dashboardData?.salary || {};
+    const adminStats = dashboardData?.admin_stats;
+    const isPrincipal = user.designation === 'Principal';
+
+    const renderStaffDashboard = () => (
+        <>
+            {/* Attendance Summary */}
+            <Text style={styles.sectionTitle}>Attendance ({new Date().toLocaleString('default', { month: 'long' })})</Text>
+            <View style={styles.statsRow}>
+                <Card style={[styles.statCard]}>
+                    <Text style={styles.cardLabel}>Present</Text>
+                    <Text style={[styles.cardValue, { color: theme.colors.success }]}>{att.present || 0}</Text>
+                </Card>
+                <Card style={[styles.statCard]}>
+                    <Text style={styles.cardLabel}>Absent</Text>
+                    <Text style={[styles.cardValue, { color: theme.colors.error }]}>{att.absent || 0}</Text>
+                </Card>
+                <Card style={[styles.statCard]}>
+                    <Text style={styles.cardLabel}>Leaves</Text>
+                    <Text style={[styles.cardValue, { color: theme.colors.warning }]}>{att.leaves || 0}</Text>
+                </Card>
+            </View>
+
+            {/* Salary Card */}
+            <Text style={styles.sectionTitle}>Salary Status</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Salary')}>
+                <Card style={styles.salaryCard}>
+                    <View style={styles.salaryHeader}>
+                        <View style={styles.iconContainer}>
+                            <IndianRupee color={theme.colors.primary} size={24} />
+                        </View>
+                        <Text style={styles.salaryTitle}>Last Month: {salary.month || '-'}</Text>
+                    </View>
+                    <View style={styles.salaryContent}>
+                        <Text style={styles.salaryAmount}>₹{salary.net_salary || '0.00'}</Text>
+                        <View style={[styles.badge, salary.is_paid ? styles.badgePaid : styles.badgePending]}>
+                            <Text style={[styles.badgeText, salary.is_paid ? styles.textPaid : styles.textPending]}>
+                                {salary.is_paid ? 'PAID' : 'PENDING'}
+                            </Text>
+                        </View>
+                    </View>
+                    <Text style={styles.salaryFooter}>Based on {salary.present_days || 0} Working Days</Text>
+                </Card>
+            </TouchableOpacity>
+
+            {/* Primary Action */}
+            <TouchableOpacity
+                style={styles.scanButtonWrapper}
+                onPress={() => navigation.navigate('Scan')}
+                activeOpacity={0.9}
+            >
+                <LinearGradient
+                    colors={theme.linearGradient.primary}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.scanButton}
+                >
+                    <QrCode color="white" size={32} />
+                    <View style={styles.scanTextContainer}>
+                        <Text style={styles.scanButtonText}>Scan Attendance</Text>
+                        <Text style={styles.scanButtonSubText}>Scan School QR to Mark Check-In</Text>
+                    </View>
+                </LinearGradient>
+            </TouchableOpacity>
+        </>
+    );
+
+    const renderPrincipalDashboard = () => (
+        <>
+            {/* School Overview Stats */}
+            <Text style={styles.sectionTitle}>School Overview</Text>
+            <View style={styles.grid}>
+                <Card style={[styles.statCard, { width: '48%' }]}>
+                    <Users color={theme.colors.primary} size={24} style={{ marginBottom: 8 }} />
+                    <Text style={styles.cardLabel}>Total Staff</Text>
+                    <Text style={styles.cardValue}>{adminStats.staff_count || 0}</Text>
+                </Card>
+                <Card style={[styles.statCard, { width: '48%' }]}>
+                    <GraduationCap color={theme.colors.secondary} size={24} style={{ marginBottom: 8 }} />
+                    <Text style={styles.cardLabel}>Students</Text>
+                    <Text style={styles.cardValue}>{adminStats.student_count || 0}</Text>
+                </Card>
+                <Card style={[styles.statCard, { width: '48%' }]}>
+                    <CalendarCheck color={theme.colors.success} size={24} style={{ marginBottom: 8 }} />
+                    <Text style={styles.cardLabel}>Staff Present</Text>
+                    <Text style={styles.cardValue}>{adminStats.staff_present_today || 0}</Text>
+                </Card>
+                <Card style={[styles.statCard, { width: '48%' }]}>
+                    <ClipboardList color={theme.colors.warning} size={24} style={{ marginBottom: 8 }} />
+                    <Text style={styles.cardLabel}>Enquiries</Text>
+                    <Text style={styles.cardValue}>{adminStats.pending_enquiries || 0}</Text>
+                </Card>
+            </View>
+
+            {/* Principal Special Actions */}
+            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Management Tools</Text>
+            <View style={styles.managementStats}>
+                <TouchableOpacity
+                    style={styles.manageCard}
+                    onPress={() => navigation.navigate('LeaveApproval')}
+                >
+                    <Card style={[styles.innerManageCard, { borderColor: theme.colors.warning + '40', borderWidth: 1 }]}>
+                        <View style={styles.manageIconContainer}>
+                            <CheckSquare color={theme.colors.warning} size={28} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.manageTitle}>Leave Approvals</Text>
+                            <Text style={styles.manageSub}>{adminStats.pending_leaves || 0} Requests Pending</Text>
+                        </View>
+                        <Text style={[styles.manageCount, { color: theme.colors.warning }]}>{adminStats.pending_leaves || 0}</Text>
+                    </Card>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.manageCard}
+                    onPress={() => navigation.navigate('EnquiryList')}
+                >
+                    <Card style={[styles.innerManageCard, { borderColor: theme.colors.secondary + '40', borderWidth: 1 }]}>
+                        <View style={[styles.manageIconContainer, { backgroundColor: theme.colors.secondary + '10' }]}>
+                            <FileText color={theme.colors.secondary} size={28} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.manageTitle}>Admission Enquiries</Text>
+                            <Text style={styles.manageSub}>Track new leads</Text>
+                        </View>
+                        <Text style={[styles.manageCount, { color: theme.colors.secondary }]}>{adminStats.pending_enquiries || 0}</Text>
+                    </Card>
+                </TouchableOpacity>
+            </View>
+        </>
+    );
 
     return (
         <View style={styles.container}>
@@ -68,83 +198,27 @@ export default function HomeScreen() {
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
             >
                 <Animated.View style={{ opacity: fadeAnim }}>
-                    {/* Attendance Summary */}
-                    <Text style={styles.sectionTitle}>Attendance ({new Date().toLocaleString('default', { month: 'long' })})</Text>
-                    <View style={styles.statsRow}>
-                        <Card style={[styles.statCard]}>
-                            <Text style={styles.cardLabel}>Present</Text>
-                            <Text style={[styles.cardValue, { color: theme.colors.success }]}>{att.present || 0}</Text>
-                        </Card>
-                        <Card style={[styles.statCard]}>
-                            <Text style={styles.cardLabel}>Absent</Text>
-                            <Text style={[styles.cardValue, { color: theme.colors.error }]}>{att.absent || 0}</Text>
-                        </Card>
-                        <Card style={[styles.statCard]}>
-                            <Text style={styles.cardLabel}>Leaves</Text>
-                            <Text style={[styles.cardValue, { color: theme.colors.warning }]}>{att.leaves || 0}</Text>
-                        </Card>
-                    </View>
+                    {adminStats ? renderPrincipalDashboard() : renderStaffDashboard()}
 
-                    {/* Salary Card */}
-                    <Text style={styles.sectionTitle}>Salary Status</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Salary')}>
-                        <Card style={styles.salaryCard}>
-                            <View style={styles.salaryHeader}>
-                                <View style={styles.iconContainer}>
-                                    <IndianRupee color={theme.colors.primary} size={24} />
-                                </View>
-                                <Text style={styles.salaryTitle}>Last Month: {salary.month || '-'}</Text>
-                            </View>
-                            <View style={styles.salaryContent}>
-                                <Text style={styles.salaryAmount}>₹{salary.net_salary || '0.00'}</Text>
-                                <View style={[styles.badge, salary.is_paid ? styles.badgePaid : styles.badgePending]}>
-                                    <Text style={[styles.badgeText, salary.is_paid ? styles.textPaid : styles.textPending]}>
-                                        {salary.is_paid ? 'PAID' : 'PENDING'}
-                                    </Text>
-                                </View>
-                            </View>
-                            <Text style={styles.salaryFooter}>Based on {salary.present_days || 0} Working Days</Text>
-                        </Card>
-                    </TouchableOpacity>
-
-                    {/* Primary Action */}
-                    <TouchableOpacity
-                        style={styles.scanButtonWrapper}
-                        onPress={() => navigation.navigate('Scan')}
-                        activeOpacity={0.9}
-                    >
-                        <LinearGradient
-                            colors={[theme.colors.linearGradientStart, theme.colors.linearGradientEnd]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.scanButton}
-                        >
-                            <QrCode color="white" size={32} />
-                            <View style={styles.scanTextContainer}>
-                                <Text style={styles.scanButtonText}>Scan Attendance</Text>
-                                <Text style={styles.scanButtonSubText}>Scan School QR to Mark Check-In</Text>
-                            </View>
-                        </LinearGradient>
-                    </TouchableOpacity>
-
-                    {/* Other Actions */}
+                    {/* Common Grid Actions */}
+                    <Text style={styles.sectionTitle}>Application Features</Text>
                     <View style={styles.grid}>
                         <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('Profile')}>
                             <Card style={styles.gridItem}>
                                 <User color={theme.colors.primary} size={28} />
-                                <Text style={styles.gridLabel}>Profile</Text>
+                                <Text style={styles.gridLabel}>My Profile</Text>
                             </Card>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('Leave')}>
                             <Card style={styles.gridItem}>
                                 <Menu color={theme.colors.primary} size={28} />
-                                <Text style={styles.gridLabel}>Leave</Text>
+                                <Text style={styles.gridLabel}>My Leave</Text>
                             </Card>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('DailyAttendance')}>
                             <Card style={styles.gridItem}>
                                 <CalendarCheck color={theme.colors.primary} size={28} />
-                                <Text style={styles.gridLabel}>Logs</Text>
+                                <Text style={styles.gridLabel}>My Logs</Text>
                             </Card>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('Timetable')}>
@@ -163,12 +237,6 @@ export default function HomeScreen() {
                             <Card style={styles.gridItem}>
                                 <BookOpen color={theme.colors.primary} size={28} />
                                 <Text style={styles.gridLabel}>Homework</Text>
-                            </Card>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.gridItemContainer} onPress={() => navigation.navigate('EnquiryList')}>
-                            <Card style={styles.gridItem}>
-                                <FileText color={theme.colors.secondary} size={28} />
-                                <Text style={styles.gridLabel}>Enquiries</Text>
                             </Card>
                         </TouchableOpacity>
                     </View>
@@ -343,5 +411,36 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         fontSize: 12,
         textAlign: 'center',
+    },
+    managementStats: {
+        gap: 16,
+    },
+    manageCard: {
+        width: '100%',
+    },
+    innerManageCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        gap: 16,
+    },
+    manageIconContainer: {
+        padding: 12,
+        backgroundColor: theme.colors.warning + '10',
+        borderRadius: 12,
+    },
+    manageTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: theme.colors.text.main,
+        marginBottom: 2,
+    },
+    manageSub: {
+        fontSize: 12,
+        color: theme.colors.text.muted,
+    },
+    manageCount: {
+        fontSize: 20,
+        fontWeight: 'bold',
     }
 });

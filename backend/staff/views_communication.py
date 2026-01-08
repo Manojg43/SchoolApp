@@ -13,17 +13,29 @@ class NoticeBoardView(APIView):
         school = user.school
         
         # Determine User Role for Filtering
-        role_filter = Q(target_role='ALL')
-        
-        if user.role == CoreUser.ROLE_TEACHER:
-             role_filter |= Q(target_role='TEACHER')
-        elif user.role == CoreUser.ROLE_DRIVER:
-             role_filter |= Q(target_role='DRIVER')
-             
-        notices = Notice.objects.filter(
-            school=school,
-            is_active=True
-        ).filter(role_filter).order_by('-date')
+        is_principal = False
+        try:
+            is_principal = user.staff_profile.designation == 'Principal'
+        except AttributeError:
+            pass
+
+        if user.is_superuser or user.role in ['SCHOOL_ADMIN', 'PRINCIPAL'] or is_principal:
+            # Principal sees all active notices
+            notices = Notice.objects.filter(
+                school=school,
+                is_active=True
+            ).order_by('-date')
+        else:
+            role_filter = Q(target_role='ALL')
+            if user.role == CoreUser.ROLE_TEACHER:
+                role_filter |= Q(target_role='TEACHER')
+            elif user.role == CoreUser.ROLE_DRIVER:
+                role_filter |= Q(target_role='DRIVER')
+            
+            notices = Notice.objects.filter(
+                school=school,
+                is_active=True
+            ).filter(role_filter).order_by('-date')
         
         data = []
         for n in notices:
