@@ -102,6 +102,8 @@ class FeeStructureViewSet(viewsets.ModelViewSet):
         ).all()
         school_id = get_current_school_id()
         class_id = self.request.query_params.get('class_assigned')
+        section_id = self.request.query_params.get('section')
+        academic_year_id = self.request.query_params.get('academic_year')
         category_id = self.request.query_params.get('category')
         
         if school_id:
@@ -109,6 +111,14 @@ class FeeStructureViewSet(viewsets.ModelViewSet):
         
         if class_id:
             queryset = queryset.filter(class_assigned_id=class_id)
+        if section_id:
+            # handle '0' for class-wide (null section)
+            if section_id == '0':
+                queryset = queryset.filter(section__isnull=True)
+            else:
+                queryset = queryset.filter(section_id=section_id)
+        if academic_year_id:
+            queryset = queryset.filter(academic_year_id=academic_year_id)
         if category_id:
             queryset = queryset.filter(category_id=category_id)
             

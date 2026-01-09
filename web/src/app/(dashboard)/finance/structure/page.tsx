@@ -325,11 +325,12 @@ export default function FeeStructurePage() {
                                 className="bg-white border border-border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-w-[120px]"
                             >
                                 <option value="">All Sections</option>
-                                {classes.find(c => c.id.toString() === filters.class_assigned) && (
+                                {filters.class_assigned && (
                                     <>
                                         <option value="0">General (Class-wide)</option>
-                                        {/* Sections would be fetched based on class filter if needed, 
-                                            for now keep it simple or implement recursive fetch */}
+                                        {sections.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
                                     </>
                                 )}
                             </select>

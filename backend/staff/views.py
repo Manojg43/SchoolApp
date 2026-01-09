@@ -109,6 +109,7 @@ class StaffDashboardView(APIView):
             from students.models import Student
             from admissions.models import Enquiry
             from staff.models import StaffProfile, StaffAttendance
+            from finance.models import Leave
             
             # Use school filter for all
             school = user.school
@@ -123,7 +124,7 @@ class StaffDashboardView(APIView):
             }
 
         try:
-            from finance.models import Salary, Leave
+            from finance.models import Salary
             sal_obj = Salary.objects.filter(staff=user, month=month_start).first()
             if sal_obj:
                 salary_data['total_earned'] = float(sal_obj.net_salary)
